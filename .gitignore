@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+.env
+.vscode/
+.DS_Store
+models/
+checkpoints/
+*.h5
+*.pt
+*.ckpt
+data/raw/
+data/processed/
+logs/
+*.log
+# Ignore large model files
+models/**/*.safetensors
+models/**/*.pt

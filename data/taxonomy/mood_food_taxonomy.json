@@ -1,0 +1,830 @@
+{
+    "WEATHER_HOT": {
+        "descriptors": [
+            "hot day",
+            "summer",
+            "sweltering",
+            "humid",
+            "sunny",
+            "tropical"
+        ],
+        "labels": [
+            "weather_hot",
+            "temperature_hot",
+            "season_summer",
+            "sensory_refreshing",
+            "sensory_cooling",
+            "goal_hydration"
+        ],
+        "foods": [
+            {
+                "name": "ice cream",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["cold", "sweet", "refreshing"]
+            },
+            {
+                "name": "smoothie",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["cold", "healthy", "refreshing"]
+            },
+            {
+                "name": "cold noodles",
+                "region": "East Asia",
+                "culture": "Japanese",
+                "tags": ["cold", "light", "refreshing"]
+            },
+            {
+                "name": "gazpacho",
+                "region": "Europe",
+                "culture": "Spanish",
+                "tags": ["cold", "savory", "refreshing"]
+            },
+            {
+                "name": "fruit salad",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["cold", "sweet", "hydrating"]
+            }
+        ]
+    },
+    "WEATHER_COLD": {
+        "descriptors": [
+            "cold day",
+            "winter",
+            "chilly",
+            "freezing",
+            "snowy",
+            "frosty"
+        ],
+        "labels": [
+            "weather_cold",
+            "temperature_cold",
+            "season_winter",
+            "sensory_warming",
+            "goal_comfort",
+            "sensory_hearty"
+        ],
+        "foods": [
+            {
+                "name": "hot pot",
+                "region": "East Asia",
+                "culture": "Chinese",
+                "tags": ["hot", "warming", "communal"]
+            },
+            {
+                "name": "ramen",
+                "region": "East Asia",
+                "culture": "Japanese",
+                "tags": ["hot", "warming", "comforting"]
+            },
+            {
+                "name": "beef stew",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["hot", "hearty", "warming"]
+            },
+            {
+                "name": "hot chocolate",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["hot", "sweet", "warming"]
+            },
+            {
+                "name": "congee",
+                "region": "East Asia",
+                "culture": "Chinese",
+                "tags": ["hot", "warming", "gentle"]
+            }
+        ]
+    },
+    "ENERGY_LIGHT": {
+        "descriptors": [
+            "light meal",
+            "not too heavy",
+            "easy to digest",
+            "gentle on stomach",
+            "subtle"
+        ],
+        "labels": [
+            "goal_light",
+            "energy_level_low",
+            "digestion_gentle",
+            "meal_snack",
+            "sensory_subtle"
+        ],
+        "foods": [
+            {
+                "name": "quinoa salad",
+                "region": "Latin America",
+                "culture": "Peruvian",
+                "tags": ["light", "healthy", "nutritious"]
+            },
+            {
+                "name": "soup",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["light", "warming", "gentle"]
+            },
+            {
+                "name": "yogurt",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["light", "probiotic", "gentle"]
+            },
+            {
+                "name": "toast",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["light", "simple", "gentle"]
+            },
+            {
+                "name": "smoothie bowl",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["light", "healthy", "refreshing"]
+            }
+        ]
+    },
+    "ENERGY_HEAVY": {
+        "descriptors": [
+            "heavy meal",
+            "filling",
+            "substantial",
+            "hearty",
+            "satisfying"
+        ],
+        "labels": [
+            "goal_filling",
+            "energy_level_high",
+            "meal_dinner",
+            "sensory_rich",
+            "goal_satisfaction"
+        ],
+        "foods": [
+            {
+                "name": "pasta carbonara",
+                "region": "Europe",
+                "culture": "Italian",
+                "tags": ["heavy", "rich", "filling"]
+            },
+            {
+                "name": "burger",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["heavy", "filling", "satisfying"]
+            },
+            {
+                "name": "pizza",
+                "region": "Europe",
+                "culture": "Italian",
+                "tags": ["heavy", "filling", "satisfying"]
+            },
+            {
+                "name": "curry",
+                "region": "South Asia",
+                "culture": "Indian",
+                "tags": ["heavy", "spicy", "filling"]
+            },
+            {
+                "name": "steak",
+                "region": "Global",
+                "culture": "Western",
+                "tags": ["heavy", "protein", "filling"]
+            }
+        ]
+    },
+    "ENERGY_GREASY": {
+        "descriptors": [
+            "greasy",
+            "oily",
+            "fried",
+            "indulgent",
+            "comfort food",
+            "satisfying"
+        ],
+        "labels": [
+            "texture_greasy",
+            "goal_indulgence",
+            "goal_comfort",
+            "cooking_fried",
+            "sensory_rich"
+        ],
+        "foods": [
+            {
+                "name": "fried chicken",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["greasy", "fried", "comforting"]
+            },
+            {
+                "name": "french fries",
+                "region": "Europe",
+                "culture": "Belgian",
+                "tags": ["greasy", "fried", "satisfying"]
+            },
+            {
+                "name": "fish and chips",
+                "region": "Europe",
+                "culture": "British",
+                "tags": ["greasy", "fried", "hearty"]
+            },
+            {
+                "name": "onion rings",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["greasy", "fried", "crunchy"]
+            },
+            {
+                "name": "mozzarella sticks",
+                "region": "Europe",
+                "culture": "Italian",
+                "tags": ["greasy", "fried", "cheesy"]
+            }
+        ]
+    },
+    "EMOTIONAL_COMFORT": {
+        "descriptors": [
+            "comforting",
+            "soothing",
+            "nurturing",
+            "familiar",
+            "homey",
+            "warm"
+        ],
+        "labels": [
+            "emotion_comfort",
+            "goal_soothing",
+            "sensory_warm",
+            "occasion_home",
+            "meal_dinner"
+        ],
+        "foods": [
+            {
+                "name": "mac and cheese",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["comforting", "cheesy", "warm"]
+            },
+            {
+                "name": "chicken soup",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["comforting", "warming", "nurturing"]
+            },
+            {
+                "name": "mashed potatoes",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["comforting", "soft", "warm"]
+            },
+            {
+                "name": "grilled cheese",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["comforting", "familiar", "warm"]
+            },
+            {
+                "name": "pudding",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["comforting", "sweet", "smooth"]
+            }
+        ]
+    },
+    "EMOTIONAL_ROMANTIC": {
+        "descriptors": [
+            "romantic",
+            "date night",
+            "intimate",
+            "special",
+            "elegant",
+            "sophisticated"
+        ],
+        "labels": [
+            "occasion_romantic",
+            "social_couple",
+            "meal_dinner",
+            "atmosphere_intimate",
+            "sensory_exotic"
+        ],
+        "foods": [
+            {
+                "name": "oysters",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["romantic", "elegant", "sophisticated"]
+            },
+            {
+                "name": "chocolate fondue",
+                "region": "Europe",
+                "culture": "Swiss",
+                "tags": ["romantic", "interactive", "sweet"]
+            },
+            {
+                "name": "wine pairing",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["romantic", "sophisticated", "elegant"]
+            },
+            {
+                "name": "truffle pasta",
+                "region": "Europe",
+                "culture": "Italian",
+                "tags": ["romantic", "luxurious", "sophisticated"]
+            },
+            {
+                "name": "chocolate covered strawberries",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["romantic", "sweet", "elegant"]
+            }
+        ]
+    },
+    "EMOTIONAL_CELEBRATORY": {
+        "descriptors": [
+            "celebration",
+            "party",
+            "festive",
+            "joyful",
+            "exciting",
+            "special occasion"
+        ],
+        "labels": [
+            "occasion_celebration",
+            "emotion_joy",
+            "social_group",
+            "atmosphere_festive",
+            "sensory_exciting"
+        ],
+        "foods": [
+            {
+                "name": "champagne",
+                "region": "Europe",
+                "culture": "French",
+                "tags": ["celebratory", "bubbly", "elegant"]
+            },
+            {
+                "name": "birthday cake",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["celebratory", "sweet", "festive"]
+            },
+            {
+                "name": "tapas",
+                "region": "Europe",
+                "culture": "Spanish",
+                "tags": ["celebratory", "communal", "variety"]
+            },
+            {
+                "name": "sushi platter",
+                "region": "East Asia",
+                "culture": "Japanese",
+                "tags": ["celebratory", "elegant", "variety"]
+            },
+            {
+                "name": "chocolate fountain",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["celebratory", "interactive", "indulgent"]
+            }
+        ]
+    },
+    "FLAVOR_SWEET": {
+        "descriptors": [
+            "sweet",
+            "dessert",
+            "candy-like",
+            "sugary",
+            "indulgent"
+        ],
+        "labels": [
+            "taste_sweet",
+            "goal_indulgence",
+            "meal_dessert",
+            "sensory_sweet",
+            "texture_soft"
+        ],
+        "foods": [
+            {
+                "name": "tiramisu",
+                "region": "Europe",
+                "culture": "Italian",
+                "tags": ["sweet", "coffee", "elegant"]
+            },
+            {
+                "name": "chocolate cake",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["sweet", "chocolate", "rich"]
+            },
+            {
+                "name": "ice cream sundae",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["sweet", "cold", "indulgent"]
+            },
+            {
+                "name": "creme brulee",
+                "region": "Europe",
+                "culture": "French",
+                "tags": ["sweet", "creamy", "elegant"]
+            },
+            {
+                "name": "fruit tart",
+                "region": "Europe",
+                "culture": "French",
+                "tags": ["sweet", "fruity", "light"]
+            }
+        ]
+    },
+    "FLAVOR_SPICY": {
+        "descriptors": [
+            "spicy",
+            "hot",
+            "fiery",
+            "pungent",
+            "bold",
+            "intense"
+        ],
+        "labels": [
+            "taste_spicy",
+            "goal_excitement",
+            "sensory_intense",
+            "texture_bold",
+            "flavor_profile_strong"
+        ],
+        "foods": [
+            {
+                "name": "hot wings",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["spicy", "fried", "exciting"]
+            },
+            {
+                "name": "curry",
+                "region": "South Asia",
+                "culture": "Indian",
+                "tags": ["spicy", "aromatic", "warming"]
+            },
+            {
+                "name": "mapo tofu",
+                "region": "East Asia",
+                "culture": "Chinese",
+                "tags": ["spicy", "numbing", "exciting"]
+            },
+            {
+                "name": "jambalaya",
+                "region": "North America",
+                "culture": "Cajun",
+                "tags": ["spicy", "hearty", "bold"]
+            },
+            {
+                "name": "kimchi",
+                "region": "East Asia",
+                "culture": "Korean",
+                "tags": ["spicy", "fermented", "bold"]
+            }
+        ]
+    },
+    "FLAVOR_SALTY": {
+        "descriptors": [
+            "salty",
+            "savory",
+            "umami",
+            "rich",
+            "satisfying"
+        ],
+        "labels": [
+            "taste_salty",
+            "taste_umami",
+            "goal_satisfaction",
+            "sensory_rich",
+            "flavor_profile_strong"
+        ],
+        "foods": [
+            {
+                "name": "chips",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["salty", "crunchy", "satisfying"]
+            },
+            {
+                "name": "olives",
+                "region": "Mediterranean",
+                "culture": "Greek",
+                "tags": ["salty", "briny", "rich"]
+            },
+            {
+                "name": "cheese",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["salty", "rich", "satisfying"]
+            },
+            {
+                "name": "nuts",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["salty", "crunchy", "nutritious"]
+            },
+            {
+                "name": "cured meats",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["salty", "rich", "satisfying"]
+            }
+        ]
+    },
+    "OCCASION_FAMILY_DINNER": {
+        "descriptors": [
+            "family dinner",
+            "home cooking",
+            "traditional",
+            "communal",
+            "nurturing"
+        ],
+        "labels": [
+            "occasion_family",
+            "social_family",
+            "meal_dinner",
+            "atmosphere_home",
+            "goal_nurturing"
+        ],
+        "foods": [
+            {
+                "name": "roast chicken",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["family", "traditional", "nurturing"]
+            },
+            {
+                "name": "lasagna",
+                "region": "Europe",
+                "culture": "Italian",
+                "tags": ["family", "communal", "hearty"]
+            },
+            {
+                "name": "meatloaf",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["family", "traditional", "comforting"]
+            },
+            {
+                "name": "casserole",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["family", "easy", "communal"]
+            },
+            {
+                "name": "pot roast",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["family", "traditional", "hearty"]
+            }
+        ]
+    },
+    "OCCASION_LUNCH_BREAK": {
+        "descriptors": [
+            "lunch break",
+            "quick meal",
+            "office lunch",
+            "midday",
+            "efficient"
+        ],
+        "labels": [
+            "occasion_work",
+            "meal_lunch",
+            "goal_quick",
+            "goal_efficient",
+            "time_midday"
+        ],
+        "foods": [
+            {
+                "name": "sandwich",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["quick", "portable", "efficient"]
+            },
+            {
+                "name": "salad",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["quick", "healthy", "light"]
+            },
+            {
+                "name": "soup",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["quick", "warming", "efficient"]
+            },
+            {
+                "name": "wrap",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["quick", "portable", "efficient"]
+            },
+            {
+                "name": "bento box",
+                "region": "East Asia",
+                "culture": "Japanese",
+                "tags": ["quick", "organized", "efficient"]
+            }
+        ]
+    },
+    "OCCASION_HANGOVER_CURE": {
+        "descriptors": [
+            "hangover cure",
+            "recovery",
+            "nausea",
+            "dehydrated",
+            "gentle on stomach"
+        ],
+        "labels": [
+            "health_recovery",
+            "goal_gentle",
+            "goal_hydration",
+            "digestion_gentle",
+            "sensory_mild"
+        ],
+        "foods": [
+            {
+                "name": "ginger tea",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "soothing", "gentle"]
+            },
+            {
+                "name": "toast",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "simple"]
+            },
+            {
+                "name": "banana",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "nutritious"]
+            },
+            {
+                "name": "crackers",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "simple"]
+            },
+            {
+                "name": "sports drink",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["recovery", "hydration", "electrolytes"]
+            }
+        ]
+    },
+    "OCCASION_PARTY_SNACKS": {
+        "descriptors": [
+            "party snacks",
+            "finger food",
+            "appetizers",
+            "social",
+            "fun",
+            "variety"
+        ],
+        "labels": [
+            "occasion_party",
+            "social_group",
+            "meal_appetizer",
+            "goal_social",
+            "atmosphere_fun"
+        ],
+        "foods": [
+            {
+                "name": "chips and dip",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["party", "social", "fun"]
+            },
+            {
+                "name": "mini sliders",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["party", "portable", "satisfying"]
+            },
+            {
+                "name": "spring rolls",
+                "region": "East Asia",
+                "culture": "Vietnamese",
+                "tags": ["party", "portable", "fresh"]
+            },
+            {
+                "name": "cheese board",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["party", "elegant", "variety"]
+            },
+            {
+                "name": "popcorn",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["party", "light", "fun"]
+            }
+        ]
+    },
+    "HEALTH_ILLNESS": {
+        "descriptors": [
+            "sick",
+            "recovering",
+            "weak",
+            "nauseous",
+            "gentle",
+            "nourishing"
+        ],
+        "labels": [
+            "health_illness",
+            "goal_recovery",
+            "digestion_gentle",
+            "goal_nourishment",
+            "sensory_mild"
+        ],
+        "foods": [
+            {
+                "name": "chicken soup",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "warming", "nourishing"]
+            },
+            {
+                "name": "rice",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "simple"]
+            },
+            {
+                "name": "applesauce",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "easy"]
+            },
+            {
+                "name": "herbal tea",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "soothing", "gentle"]
+            },
+            {
+                "name": "oatmeal",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "nourishing"]
+            }
+        ]
+    },
+    "HEALTH_DETOX": {
+        "descriptors": [
+            "detox",
+            "clean eating",
+            "healthy",
+            "light",
+            "fresh",
+            "natural"
+        ],
+        "labels": [
+            "goal_healthy",
+            "goal_detox",
+            "goal_light",
+            "sensory_fresh",
+            "texture_clean"
+        ],
+        "foods": [
+            {
+                "name": "green smoothie",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["detox", "healthy", "fresh"]
+            },
+            {
+                "name": "quinoa bowl",
+                "region": "Latin America",
+                "culture": "Peruvian",
+                "tags": ["detox", "healthy", "nutritious"]
+            },
+            {
+                "name": "kale salad",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["detox", "healthy", "fresh"]
+            },
+            {
+                "name": "cucumber water",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["detox", "hydration", "fresh"]
+            },
+            {
+                "name": "chia pudding",
+                "region": "Global",
+                "culture": "Modern",
+                "tags": ["detox", "healthy", "nutritious"]
+            }
+        ]
+    }
+}
