@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Union
 from datetime import datetime, timedelta
 import asyncio
+from path.to.module import SentimentAnalyzer
 
 class FeedbackType(Enum):
     EXPLICIT_RATING = "explicit_rating"
