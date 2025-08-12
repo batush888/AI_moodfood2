@@ -230,28 +230,89 @@ class MoodBasedRecommendationEngine:
     
     def _semantic_intent_matching(self, user_input: str) -> List[str]:
         """Use semantic similarity to match user intent to mood categories."""
-        # Simple keyword-based fallback
-        fallback_mapping = {
-            "light": ["ENERGY_LIGHT", "HEALTH_DETOX"],
-            "heavy": ["ENERGY_HEAVY", "goal_filling"],
-            "greasy": ["ENERGY_GREASY", "goal_indulgence"],
-            "warm": ["WEATHER_COLD", "EMOTIONAL_COMFORT"],
-            "cold": ["WEATHER_HOT", "sensory_refreshing"],
-            "comfort": ["EMOTIONAL_COMFORT", "goal_soothing"],
-            "romantic": ["EMOTIONAL_ROMANTIC", "occasion_romantic"],
-            "party": ["EMOTIONAL_CELEBRATORY", "occasion_party"],
-            "sweet": ["FLAVOR_SWEET", "goal_indulgence"],
-            "spicy": ["FLAVOR_SPICY", "goal_excitement"],
-            "salty": ["FLAVOR_SALTY", "goal_satisfaction"],
-            "quick": ["OCCASION_LUNCH_BREAK", "goal_quick"],
-            "family": ["OCCASION_FAMILY_DINNER", "social_family"],
-            "sick": ["HEALTH_ILLNESS", "health_recovery"],
-            "healthy": ["HEALTH_DETOX", "goal_healthy"]
+        # Enhanced semantic mapping with more comprehensive coverage
+        semantic_mapping = {
+            # Energy and texture preferences
+            "light": ["ENERGY_LIGHT", "HEALTH_DETOX", "sensory_light"],
+            "heavy": ["ENERGY_HEAVY", "goal_filling", "sensory_hearty"],
+            "greasy": ["ENERGY_GREASY", "goal_indulgence", "sensory_rich"],
+            "crunchy": ["sensory_crunchy", "texture_crispy"],
+            "smooth": ["sensory_smooth", "texture_creamy"],
+            
+            # Temperature and weather preferences
+            "warm": ["WEATHER_COLD", "EMOTIONAL_COMFORT", "sensory_warm"],
+            "cold": ["WEATHER_HOT", "sensory_refreshing", "sensory_cool"],
+            "hot": ["WEATHER_COLD", "sensory_warming", "sensory_spicy"],
+            "cool": ["WEATHER_HOT", "sensory_refreshing"],
+            
+            # Emotional states
+            "comfort": ["EMOTIONAL_COMFORT", "goal_soothing", "sensory_comforting"],
+            "romantic": ["EMOTIONAL_ROMANTIC", "occasion_romantic", "sensory_elegant"],
+            "excited": ["EMOTIONAL_CELEBRATORY", "sensory_exciting", "goal_adventure"],
+            "sad": ["EMOTIONAL_COMFORT", "goal_soothing", "sensory_comforting"],
+            "stressed": ["EMOTIONAL_COMFORT", "goal_relaxing", "sensory_soothing"],
+            
+            # Flavor profiles
+            "sweet": ["FLAVOR_SWEET", "goal_indulgence", "sensory_sweet"],
+            "spicy": ["FLAVOR_SPICY", "goal_excitement", "sensory_spicy"],
+            "salty": ["FLAVOR_SALTY", "goal_satisfaction", "sensory_savory"],
+            "savory": ["FLAVOR_SAVORY", "sensory_umami", "goal_satisfaction"],
+            "bitter": ["FLAVOR_BITTER", "sensory_sophisticated"],
+            "sour": ["FLAVOR_SOUR", "sensory_refreshing"],
+            
+            # Occasions and social contexts
+            "quick": ["OCCASION_LUNCH_BREAK", "goal_quick", "sensory_efficient"],
+            "family": ["OCCASION_FAMILY_DINNER", "social_family", "sensory_comforting"],
+            "party": ["EMOTIONAL_CELEBRATORY", "occasion_party", "sensory_festive"],
+            "date": ["EMOTIONAL_ROMANTIC", "occasion_romantic", "sensory_elegant"],
+            "alone": ["EMOTIONAL_COMFORT", "sensory_simple", "goal_soothing"],
+            
+            # Health and wellness
+            "sick": ["HEALTH_ILLNESS", "health_recovery", "sensory_gentle"],
+            "healthy": ["HEALTH_DETOX", "goal_healthy", "sensory_fresh"],
+            "fresh": ["HEALTH_DETOX", "sensory_fresh", "goal_healthy"],
+            "organic": ["HEALTH_DETOX", "goal_healthy", "sensory_natural"],
+            
+            # Time-based preferences
+            "breakfast": ["OCCASION_BREAKFAST", "sensory_light", "goal_energizing"],
+            "lunch": ["OCCASION_LUNCH_BREAK", "sensory_balanced", "goal_sustaining"],
+            "dinner": ["OCCASION_DINNER", "sensory_satisfying", "goal_completing"],
+            "snack": ["OCCASION_SNACK", "sensory_light", "goal_quick"],
+            
+            # Cultural and regional preferences
+            "asian": ["CULTURE_ASIAN", "sensory_exotic", "goal_adventure"],
+            "italian": ["CULTURE_ITALIAN", "sensory_romantic", "goal_comfort"],
+            "mexican": ["CULTURE_MEXICAN", "sensory_spicy", "goal_excitement"],
+            "indian": ["CULTURE_INDIAN", "sensory_spicy", "goal_adventure"],
+            "american": ["CULTURE_AMERICAN", "sensory_comforting", "goal_familiar"]
         }
         
         matched_categories = []
-        for keyword, categories in fallback_mapping.items():
-            if keyword in user_input.lower():
+        user_input_lower = user_input.lower()
+        
+        # Direct keyword matching
+        for keyword, categories in semantic_mapping.items():
+            if keyword in user_input_lower:
+                matched_categories.extend(categories)
+        
+        # Enhanced phrase matching for better context understanding
+        phrase_mappings = {
+            "comfort food": ["EMOTIONAL_COMFORT", "sensory_comforting", "goal_soothing"],
+            "comforting": ["EMOTIONAL_COMFORT", "sensory_comforting"],
+            "warm and cozy": ["EMOTIONAL_COMFORT", "sensory_warm", "goal_soothing"],
+            "refreshing": ["sensory_refreshing", "WEATHER_HOT"],
+            "hearty meal": ["sensory_hearty", "goal_filling", "ENERGY_HEAVY"],
+            "light and fresh": ["sensory_light", "sensory_fresh", "HEALTH_DETOX"],
+            "spicy and exciting": ["sensory_spicy", "goal_excitement", "FLAVOR_SPICY"],
+            "romantic dinner": ["EMOTIONAL_ROMANTIC", "occasion_romantic", "sensory_elegant"],
+            "family meal": ["OCCASION_FAMILY_DINNER", "social_family", "sensory_comforting"],
+            "quick bite": ["goal_quick", "OCCASION_SNACK", "sensory_efficient"],
+            "healthy choice": ["goal_healthy", "HEALTH_DETOX", "sensory_fresh"],
+            "indulgent treat": ["goal_indulgence", "sensory_rich", "FLAVOR_SWEET"]
+        }
+        
+        for phrase, categories in phrase_mappings.items():
+            if phrase in user_input_lower:
                 matched_categories.extend(categories)
         
         return list(set(matched_categories))

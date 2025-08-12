@@ -2,9 +2,18 @@
 Enhanced API Routes for Phase 3: Advanced AI Features
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+try:
+    from fastapi import FastAPI, HTTPException, UploadFile, File
+    from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel
+except ImportError:
+    # Fallback placeholders if imports fail
+    FastAPI = None
+    HTTPException = None
+    UploadFile = None
+    File = None
+    CORSMiddleware = None
+    BaseModel = None
 from typing import List, Dict, Any, Optional, Union
 import time
 import uuid
@@ -36,6 +45,7 @@ enhanced_classifier = None
 multimodal_processor = None
 learning_system = None
 recommendation_engine = None
+phase3_manager = None
 
 try:
     from core.nlu.enhanced_intent_classifier import EnhancedIntentClassifier
@@ -64,6 +74,19 @@ try:
     logger.info("Recommendation engine initialized")
 except Exception as e:
     logger.warning(f"Failed to initialize recommendation engine: {e}")
+
+try:
+    from core.phase3_enhancements import Phase3FeatureManager, Phase3Config
+    phase3_config = Phase3Config(
+        enable_multimodal=True,
+        enable_realtime_learning=True,
+        enable_semantic_search=True,
+        enable_context_awareness=True
+    )
+    phase3_manager = Phase3FeatureManager(phase3_config)
+    logger.info("Phase 3 feature manager initialized")
+except Exception as e:
+    logger.warning(f"Failed to initialize Phase 3 manager: {e}")
 
 # Pydantic models for requests and responses
 class UserContext(BaseModel):
@@ -202,7 +225,7 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
         if recommendation_engine:
             recommendations = recommendation_engine.get_recommendations(
                 user_input=request.text_input or "general food preference",
-                user_context=request.user_context or {},
+                user_context=request.user_context.dict() if request.user_context else {},
                 top_k=request.top_k
             )
             
@@ -338,11 +361,11 @@ async def enhanced_feedback(request: FeedbackRequest):
         learning_system.record_feedback(
             user_id=request.user_id,
             session_id=request.session_id,
-            user_input=request.input_text,
-            recommendations=request.recommendations,
-            selected_recommendation=request.selected_recommendation,
+            input_text=request.input_text,
+            recommended_foods=[rec.get("food_name", "") for rec in request.recommendations],
+            selected_food=request.selected_recommendation,
             rating=request.rating,
-            text_feedback=request.feedback_text,
+            feedback_text=request.feedback_text,
             context=request.context
         )
         
@@ -400,6 +423,55 @@ async def get_model_info():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Model info error: {str(e)}")
 
+# Phase 3 comprehensive endpoint
+@app.post("/phase3-analysis")
+async def phase3_comprehensive_analysis(request: EnhancedRecommendationRequest):
+    """Comprehensive Phase 3 analysis using all advanced AI features."""
+    if not phase3_manager:
+        raise HTTPException(status_code=503, detail="Phase 3 manager not available")
+    
+    try:
+        # Convert base64 inputs
+        image_data = None
+        audio_data = None
+        
+        if request.image_base64:
+            image_data = base64.b64decode(request.image_base64)
+        
+        if request.audio_base64:
+            audio_data = base64.b64decode(request.audio_base64)
+        
+        # Process with Phase 3 manager
+        results = phase3_manager.process_user_request(
+            text_input=request.text_input,
+            image_input=image_data,
+            audio_input=audio_data,
+            user_context=request.user_context.dict() if request.user_context else None,
+            user_id=request.user_id
+        )
+        
+        return {
+            "phase": "Phase 3: Advanced AI",
+            "analysis": results,
+            "capabilities_used": results.get("components_used", []),
+            "processing_time": results.get("processing_time", 0.0)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Phase 3 analysis error: {str(e)}")
+
+# Phase 3 status endpoint
+@app.get("/phase3-status")
+async def get_phase3_status():
+    """Get comprehensive Phase 3 system status."""
+    if not phase3_manager:
+        raise HTTPException(status_code=503, detail="Phase 3 manager not available")
+    
+    try:
+        return phase3_manager.get_system_status()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Phase 3 status error: {str(e)}")
+
 # Image upload endpoint
 @app.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
@@ -442,7 +514,8 @@ async def health_check():
             "enhanced_classifier": "operational" if enhanced_classifier else "not_available",
             "multimodal_processor": "operational" if multimodal_processor else "not_available",
             "learning_system": "operational" if learning_system else "not_available",
-            "recommendation_engine": "operational" if recommendation_engine else "not_available"
+            "recommendation_engine": "operational" if recommendation_engine else "not_available",
+            "phase3_manager": "operational" if phase3_manager else "not_available"
         },
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")
     }
@@ -501,5 +574,8 @@ async def get_advanced_features():
     }
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    try:
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    except ImportError:
+        print("uvicorn not available. Install with: pip install uvicorn")

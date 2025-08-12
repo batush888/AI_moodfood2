@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend-Backend Connection Test</title>
+</head>
+<body>
+    <h1>Frontend-Backend Connection Test</h1>
+    <button onclick="testConnection()">Test API Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                console.log('Testing API connection...');
+                
+                const response = await fetch('http://127.0.0.1:8000/enhanced-recommend', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:8080'
+                    },
+                    body: JSON.stringify({
+                        text_input: "I want something warm",
+                        user_context: {},
+                        user_id: "test_user",
+                        session_id: "test_session",
+                        top_k: 3
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Response data:', data);
+                    resultDiv.innerHTML = `
+                        <h3>✅ SUCCESS!</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>Recommendations: ${data.recommendations.length}</p>
+                        <p>Processing time: ${(data.processing_time * 1000).toFixed(0)}ms</p>
+                        <p>Intent: ${data.intent_prediction?.primary_intent || 'None'}</p>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    resultDiv.innerHTML = `
+                        <h3>❌ ERROR</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>Error: ${errorText}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultDiv.innerHTML = `
+                    <h3>❌ FETCH ERROR</h3>
+                    <p>Error: ${error.message}</p>
+                    <p>Type: ${error.name}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -854,7 +854,22 @@
             if (energyLevel) context.energy_level = energyLevel;
 
             try {
-                // Get enhanced recommendations
+                console.log('🚀 Starting API request...');
+                console.log('API URL:', `${API_BASE}/enhanced-recommend`);
+                console.log('Request payload:', {
+                    text_input: textInput,
+                    image_base64: imageBase64 ? 'present' : 'none',
+                    audio_base64: audioBase64 ? 'present' : 'none',
+                    user_context: context,
+                    user_id: 'demo_user_' + Date.now(),
+                    session_id: 'session_' + Date.now(),
+                    top_k: 10
+                });
+                
+                // Get enhanced recommendations with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+                
                 const response = await fetch(`${API_BASE}/enhanced-recommend`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -866,22 +881,43 @@
                         user_id: 'demo_user_' + Date.now(),
                         session_id: 'session_' + Date.now(),
                         top_k: 10
-                    })
+                    }),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
+                
+                console.log('📡 Response received:', response.status, response.statusText);
 
                 if (response.ok) {
+                    console.log('✅ Response is OK, parsing JSON...');
                     const data = await response.json();
+                    console.log('📊 Data received:', {
+                        recommendations: data.recommendations?.length || 0,
+                        processing_time: data.processing_time,
+                        intent: data.intent_prediction?.primary_intent
+                    });
                     showAIAnalysis(data);
                     showResults(data);
                     showFeedbackSection(data);
                 } else {
+                    console.error('❌ Response not OK:', response.status, response.statusText);
                     throw new Error(`Recommendations failed: ${response.status}`);
                 }
 
             } catch (error) {
-                console.error('Error:', error);
-                showError(error.message);
+                console.error('💥 Error caught:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                
+                if (error.name === 'AbortError') {
+                    showError('Request timed out after 30 seconds. Please try again.');
+                } else {
+                    showError(error.message);
+                }
             } finally {
+                console.log('🏁 Finally block - hiding loading');
                 hideLoading();
             }
         }

@@ -73,7 +73,17 @@ class MultiModalProcessor:
         image_model_name: str = "microsoft/resnet-50",
         device: Optional[str] = None,
     ):
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        # Enhanced device detection for Apple Silicon
+        if device is None:
+            if torch.cuda.is_available():
+                self.device = "cuda"
+            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                self.device = "mps"
+            else:
+                self.device = "cpu"
+        else:
+            self.device = device
+            
         self.text_model_name = text_model_name
         self.image_model_name = image_model_name
 
@@ -127,18 +137,29 @@ class MultiModalProcessor:
     def _ensure_image_models(self):
         if self.image_classifier is None or self.image_captioner is None:
             logger.info("Initializing image pipelines for multi-modal processor (lazy)...")
-            # Pipelines handle their own processors/models internally
-            self.image_classifier = pipeline(
-                "image-classification",
-                model=self.image_model_name,
-                device=0 if self.device == "cuda" else -1,
-            )
-            self.image_captioner = pipeline(
-                "image-to-text",
-                model="nlpconnect/vit-gpt2-image-captioning",
-                device=0 if self.device == "cuda" else -1,
-            )
-            logger.info("Image pipelines ready")
+            try:
+                # Enhanced device mapping for different platforms
+                device_id = 0 if self.device == "cuda" else -1
+                if self.device == "mps":
+                    device_id = -1  # MPS not fully supported by all pipelines yet
+                
+                # Pipelines handle their own processors/models internally
+                self.image_classifier = pipeline(
+                    "image-classification",
+                    model=self.image_model_name,
+                    device=device_id,
+                )
+                self.image_captioner = pipeline(
+                    "image-to-text",
+                    model="nlpconnect/vit-gpt2-image-captioning",
+                    device=device_id,
+                )
+                logger.info("Image pipelines ready")
+            except Exception as e:
+                logger.error(f"Error initializing image models: {e}")
+                # Fallback to basic image processing
+                self.image_classifier = None
+                self.image_captioner = None
 
     def _ensure_speech_models(self):
         if self.speech_recognizer is None:
