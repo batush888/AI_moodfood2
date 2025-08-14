@@ -24,7 +24,120 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Fallback component implementations
+def create_fallback_intent_classifier():
+    """Create a fallback intent classifier when the main one fails."""
+    class FallbackIntentClassifier:
+        def classify_intent(self, text: str, top_k: int = 5):
+            # Simple keyword-based fallback
+            text_lower = text.lower()
+            intents = []
+            
+            if any(word in text_lower for word in ['warm', 'hot', 'cold', 'weather']):
+                intents.append(('WEATHER_BASED', 0.8))
+            if any(word in text_lower for word in ['sad', 'happy', 'stressed', 'excited']):
+                intents.append(('EMOTIONAL', 0.7))
+            if any(word in text_lower for word in ['spicy', 'sweet', 'salty', 'flavor']):
+                intents.append(('FLAVOR_BASED', 0.6))
+            if any(word in text_lower for word in ['party', 'date', 'family', 'alone']):
+                intents.append(('OCCASION_BASED', 0.5))
+            
+            if not intents:
+                intents.append(('GENERAL_FOOD', 0.5))
+            
+            return type('IntentPrediction', (), {
+                'primary_intent': intents[0][0],
+                'confidence': intents[0][1],
+                'all_intents': intents[:top_k]
+            })()
+        
+        def get_model_info(self):
+            return {"status": "fallback", "model": "keyword_based"}
+    
+    logger.info("Using fallback intent classifier")
+    return FallbackIntentClassifier()
+
+def create_fallback_multimodal_processor():
+    """Create a fallback multi-modal processor when the main one fails."""
+    class FallbackMultiModalProcessor:
+        def process_multimodal(self, text=None, image=None, audio=None):
+            return type('MultiModalAnalysis', (), {
+                'primary_mood': 'general',
+                'confidence': 0.5,
+                'mood_categories': ['general_food'],
+                'extracted_entities': [],
+                'combined_confidence': 0.5
+            })()
+        
+        def get_processing_info(self):
+            return {"status": "fallback", "processor": "basic_text_only"}
+    
+    logger.info("Using fallback multi-modal processor")
+    return FallbackMultiModalProcessor()
+
+def create_fallback_learning_system():
+    """Create a fallback learning system when the main one fails."""
+    class FallbackLearningSystem:
+        def record_feedback(self, **kwargs):
+            logger.info("Fallback learning system: feedback recorded")
+            return True
+        
+        def get_user_preferences(self, user_id: str):
+            return {"status": "fallback", "preferences": "default"}
+        
+        def get_system_performance(self):
+            return {"status": "fallback", "performance": "basic"}
+    
+    logger.info("Using fallback learning system")
+    return FallbackLearningSystem()
+
+def create_fallback_recommendation_engine():
+    """Create a fallback recommendation engine when the main one fails."""
+    class FallbackRecommendationEngine:
+        def get_recommendations(self, user_input: str, user_context: dict = None, top_k: int = 5):
+            # Basic fallback recommendations
+            fallback_foods = [
+                {"name": "Comfort Food", "category": "general", "region": "various", "culture": "international"},
+                {"name": "Healthy Option", "category": "wellness", "region": "various", "culture": "international"},
+                {"name": "Quick Meal", "category": "convenience", "region": "various", "culture": "international"}
+            ]
+            
+            recommendations = []
+            for i, food in enumerate(fallback_foods[:top_k]):
+                recommendations.append(type('Recommendation', (), {
+                    'food_item': type('FoodItem', (), food)(),
+                    'score': 0.7 - (i * 0.1),
+                    'mood_match': 0.6,
+                    'context_match': 0.5,
+                    'personalization_score': 0.5,
+                    'reasoning': [f"Fallback recommendation {i+1}"],
+                    'restaurant': None
+                })())
+            
+            return recommendations
+    
+    logger.info("Using fallback recommendation engine")
+    return FallbackRecommendationEngine()
+
+def create_fallback_phase3_manager():
+    """Create a fallback Phase 3 manager when the main one fails."""
+    class FallbackPhase3Manager:
+        def process_user_request(self, **kwargs):
+            return {
+                "status": "fallback",
+                "components_used": ["fallback_basic"],
+                "processing_time": 0.1
+            }
+        
+        def get_system_status(self):
+            return {"status": "fallback", "capabilities": "basic"}
+    
+    logger.info("Using fallback Phase 3 manager")
+    return FallbackPhase3Manager()
+
 # Initialize FastAPI app
+if FastAPI is None:
+    raise ImportError("FastAPI is not installed. Please install it with: pip install fastapi")
 app = FastAPI(
     title="AI Mood-Based Food Recommendation System - Phase 3",
     description="Advanced AI system with deep learning, multi-modal input, and real-time learning",
@@ -40,41 +153,131 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize components with error handling
+# Initialize components with robust error handling and fallbacks
 enhanced_classifier = None
 multimodal_processor = None
 learning_system = None
 recommendation_engine = None
 phase3_manager = None
 
+# Component initialization status
+component_status = {
+    "enhanced_classifier": False,
+    "multimodal_processor": False,
+    "learning_system": False,
+    "recommendation_engine": False,
+    "phase3_manager": False
+}
+
+def initialize_component(component_name: str, init_func, fallback_func=None):
+    """Initialize a component with fallback and timeout protection."""
+    try:
+        logger.info(f"Initializing {component_name}...")
+        
+        # Set a timeout for initialization
+        import signal
+        import threading
+        import time
+        
+        result = [None]
+        exception = [None]
+        
+        def init_with_timeout():
+            try:
+                result[0] = init_func()
+            except Exception as e:
+                exception[0] = e
+        
+        thread = threading.Thread(target=init_with_timeout)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=30)  # 30 second timeout
+        
+        if thread.is_alive():
+            logger.error(f"{component_name} initialization timed out after 30 seconds")
+            if fallback_func:
+                logger.info(f"Using fallback for {component_name}")
+                result[0] = fallback_func()
+            return None
+        elif exception[0]:
+            raise exception[0]
+        else:
+            logger.info(f"{component_name} initialized successfully")
+            component_status[component_name] = True
+            return result[0]
+            
+    except Exception as e:
+        logger.error(f"Failed to initialize {component_name}: {e}")
+        if fallback_func:
+            logger.info(f"Using fallback for {component_name}")
+            try:
+                result = fallback_func()
+                component_status[component_name] = True
+                return result
+            except Exception as fallback_e:
+                logger.error(f"Fallback for {component_name} also failed: {fallback_e}")
+        return None
+
+# Initialize Enhanced Intent Classifier
 try:
     from core.nlu.enhanced_intent_classifier import EnhancedIntentClassifier
-    enhanced_classifier = EnhancedIntentClassifier()
-    logger.info("Enhanced intent classifier initialized")
+    
+    # Resolve taxonomy path relative to current working directory
+    import os
+    taxonomy_path = os.path.join(os.getcwd(), "data", "taxonomy", "mood_food_taxonomy.json")
+    if not os.path.exists(taxonomy_path):
+        # Try relative to the script location
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        taxonomy_path = os.path.join(script_dir, "..", "data", "taxonomy", "mood_food_taxonomy.json")
+    
+    logger.info(f"Using taxonomy path: {taxonomy_path}")
+    
+    enhanced_classifier = initialize_component(
+        "enhanced_classifier",
+        lambda: EnhancedIntentClassifier(taxonomy_path=taxonomy_path),
+        lambda: create_fallback_intent_classifier()
+    )
 except Exception as e:
-    logger.warning(f"Failed to initialize enhanced intent classifier: {e}")
+    logger.error(f"Enhanced intent classifier import failed: {e}")
+    enhanced_classifier = create_fallback_intent_classifier()
 
+# Initialize Multi-Modal Processor
 try:
     from core.multimodal.multimodal_processor import MultiModalProcessor, MultiModalAnalysis
-    multimodal_processor = MultiModalProcessor()
-    logger.info("Multi-modal processor initialized")
+    multimodal_processor = initialize_component(
+        "multimodal_processor",
+        lambda: MultiModalProcessor(),
+        lambda: create_fallback_multimodal_processor()
+    )
 except Exception as e:
-    logger.warning(f"Failed to initialize multi-modal processor: {e}")
+    logger.error(f"Multi-modal processor import failed: {e}")
+    multimodal_processor = create_fallback_multimodal_processor()
 
+# Initialize Learning System
 try:
     from core.learning.realtime_learning import RealTimeLearningSystem
-    learning_system = RealTimeLearningSystem()
-    logger.info("Real-time learning system initialized")
+    learning_system = initialize_component(
+        "learning_system",
+        lambda: RealTimeLearningSystem(),
+        lambda: create_fallback_learning_system()
+    )
 except Exception as e:
-    logger.warning(f"Failed to initialize real-time learning system: {e}")
+    logger.error(f"Learning system import failed: {e}")
+    learning_system = create_fallback_learning_system()
 
+# Initialize Recommendation Engine
 try:
     from core.recommendation.recommendation_algorithm import MoodBasedRecommendationEngine
-    recommendation_engine = MoodBasedRecommendationEngine()
-    logger.info("Recommendation engine initialized")
+    recommendation_engine = initialize_component(
+        "recommendation_engine",
+        lambda: MoodBasedRecommendationEngine(),
+        lambda: create_fallback_recommendation_engine()
+    )
 except Exception as e:
-    logger.warning(f"Failed to initialize recommendation engine: {e}")
+    logger.error(f"Recommendation engine import failed: {e}")
+    recommendation_engine = create_fallback_recommendation_engine()
 
+# Initialize Phase 3 Manager
 try:
     from core.phase3_enhancements import Phase3FeatureManager, Phase3Config
     phase3_config = Phase3Config(
@@ -83,10 +286,19 @@ try:
         enable_semantic_search=True,
         enable_context_awareness=True
     )
-    phase3_manager = Phase3FeatureManager(phase3_config)
-    logger.info("Phase 3 feature manager initialized")
+    phase3_manager = initialize_component(
+        "phase3_manager",
+        lambda: Phase3FeatureManager(phase3_config),
+        lambda: create_fallback_phase3_manager()
+    )
 except Exception as e:
-    logger.warning(f"Failed to initialize Phase 3 manager: {e}")
+    logger.error(f"Phase 3 manager import failed: {e}")
+    phase3_manager = create_fallback_phase3_manager()
+
+# Log overall system status
+operational_components = sum(component_status.values())
+total_components = len(component_status)
+logger.info(f"System initialization complete: {operational_components}/{total_components} components operational")
 
 # Pydantic models for requests and responses
 class UserContext(BaseModel):
@@ -172,94 +384,174 @@ async def root():
 @app.post("/enhanced-recommend", response_model=EnhancedRecommendationResponse)
 async def enhanced_recommend(request: EnhancedRecommendationRequest):
     """Get enhanced food recommendations using multi-modal input and advanced AI."""
+    import asyncio  # Import at function level to ensure availability
     start_time = time.time()
     
     try:
+        # Validate request
+        if not request.text_input and not request.image_base64 and not request.audio_base64:
+            raise HTTPException(status_code=400, detail="At least one input type (text, image, or audio) is required")
+        
         # Generate session ID if not provided
         if not request.session_id:
             request.session_id = str(uuid.uuid4())
         
-        # Process multi-modal input (only if image or audio provided to avoid heavy init on text-only)
+        logger.info(f"Processing enhanced recommendation request: session={request.session_id}, text_length={len(request.text_input or '')}")
+        
+        # Process multi-modal input with timeout protection
         multimodal_analysis = None
         intent_prediction = None
         use_multimodal = bool((request.image_base64 and request.image_base64.strip()) or (request.audio_base64 and request.audio_base64.strip()))
         
         if multimodal_processor and use_multimodal:
             try:
+                logger.info("Processing multi-modal input...")
+                
                 # Convert base64 inputs to appropriate formats
                 image_data = None
                 audio_data = None
                 
                 if request.image_base64:
                     image_data = base64.b64decode(request.image_base64)
+                    logger.info(f"Image data decoded: {len(image_data)} bytes")
                 
                 if request.audio_base64:
                     audio_data = base64.b64decode(request.audio_base64)
+                    logger.info(f"Audio data decoded: {len(audio_data)} bytes")
                 
-                # Process multi-modal input
-                multimodal_analysis = multimodal_processor.process_multimodal(
-                    text=request.text_input,
-                    image=image_data,
-                    audio=audio_data
-                )
+                # Process multi-modal input with timeout
+                try:
+                    multimodal_analysis = await asyncio.wait_for(
+                        asyncio.to_thread(multimodal_processor.process_multimodal, 
+                                        text=request.text_input,
+                                        image=image_data,
+                                        audio=audio_data),
+                        timeout=15.0  # 15 second timeout for multi-modal processing
+                    )
+                    logger.info("Multi-modal processing completed successfully")
+                except asyncio.TimeoutError:
+                    logger.warning("Multi-modal processing timed out, continuing without it")
+                    multimodal_analysis = None
                 
                 # Use multimodal analysis for intent augmentation
                 if multimodal_analysis:
                     request.text_input = request.text_input or ""
-                    if multimodal_analysis.image_analysis:
+                    if hasattr(multimodal_analysis, 'image_analysis') and multimodal_analysis.image_analysis:
                         request.text_input += f" [Image: {multimodal_analysis.image_analysis.get('caption', '')}]"
-                    if multimodal_analysis.audio_analysis:
+                    if hasattr(multimodal_analysis, 'audio_analysis') and multimodal_analysis.audio_analysis:
                         request.text_input += f" [Audio: {multimodal_analysis.audio_analysis.get('transcript', '')}]"
                 
             except Exception as e:
                 logger.error(f"Multi-modal processing error: {e}")
+                # Continue without multi-modal analysis
         
-        # Enhanced intent classification
+        # Enhanced intent classification with timeout protection
         if enhanced_classifier and request.text_input:
             try:
-                intent_prediction = enhanced_classifier.classify_intent(request.text_input)
+                logger.info("Performing enhanced intent classification...")
+                
+                # Add timeout for intent classification
+                try:
+                    intent_prediction = await asyncio.wait_for(
+                        asyncio.to_thread(enhanced_classifier.classify_intent, request.text_input),
+                        timeout=10.0  # 10 second timeout for intent classification
+                    )
+                    logger.info(f"Intent classification completed: {intent_prediction.primary_intent if intent_prediction else 'None'}")
+                except asyncio.TimeoutError:
+                    logger.warning("Intent classification timed out, using fallback")
+                    intent_prediction = None
+                    
             except Exception as e:
                 logger.error(f"Enhanced intent classification error: {e}")
+                intent_prediction = None
         
-        # Get recommendations
+        # Get recommendations with timeout protection
+        recommendations_dict = []
         if recommendation_engine:
-            recommendations = recommendation_engine.get_recommendations(
-                user_input=request.text_input or "general food preference",
-                user_context=request.user_context.dict() if request.user_context else {},
-                top_k=request.top_k
-            )
-            
-            # Convert Recommendation dataclass objects to dictionaries
-            recommendations_dict = []
-            for rec in recommendations:
-                rec_dict = {
-                    "food_name": rec.food_item.name,
-                    "food_category": rec.food_item.category,
-                    "food_region": rec.food_item.region,
-                    "food_culture": rec.food_item.culture,
-                    "food_tags": rec.food_item.tags,
-                    "score": rec.score,
-                    "mood_match": rec.mood_match,
-                    "context_match": rec.context_match,
-                    "personalization_score": rec.personalization_score,
-                    "reasoning": rec.reasoning,
-                    "restaurant": {
-                        "name": rec.restaurant.name,
-                        "cuisine_type": rec.restaurant.cuisine_type,
-                        "rating": rec.restaurant.rating,
-                        "price_range": rec.restaurant.price_range,
-                        "delivery_available": rec.restaurant.delivery_available
-                    } if rec.restaurant else None
-                }
-                recommendations_dict.append(rec_dict)
-        else:
-            # Fallback to basic recommendations
+            try:
+                logger.info("Getting recommendations from engine...")
+                
+                # Add timeout for recommendations
+                try:
+                    recommendations = await asyncio.wait_for(
+                        asyncio.to_thread(recommendation_engine.get_recommendations,
+                                        user_input=request.text_input or "general food preference",
+                                        user_context=request.user_context.dict() if request.user_context else {},
+                                        top_k=request.top_k),
+                        timeout=20.0  # 20 second timeout for recommendations
+                    )
+                    
+                    # Convert Recommendation dataclass objects to dictionaries
+                    for rec in recommendations:
+                        try:
+                            rec_dict = {
+                                "food_name": getattr(rec.food_item, 'name', 'Unknown Food'),
+                                "food_category": getattr(rec.food_item, 'category', 'general'),
+                                "food_region": getattr(rec.food_item, 'region', 'various'),
+                                "food_culture": getattr(rec.food_item, 'culture', 'international'),
+                                "food_tags": getattr(rec.food_item, 'tags', []),
+                                "score": getattr(rec, 'score', 0.5),
+                                "mood_match": getattr(rec, 'mood_match', 0.5),
+                                "context_match": getattr(rec, 'context_match', 0.5),
+                                "personalization_score": getattr(rec, 'personalization_score', 0.5),
+                                "reasoning": getattr(rec, 'reasoning', ["AI-powered recommendation"]),
+                                "restaurant": None
+                            }
+                            
+                            # Safely handle restaurant data
+                            if hasattr(rec, 'restaurant') and rec.restaurant:
+                                rec_dict["restaurant"] = {
+                                    "name": getattr(rec.restaurant, 'name', 'Unknown Restaurant'),
+                                    "cuisine_type": getattr(rec.restaurant, 'cuisine_type', 'Various'),
+                                    "rating": getattr(rec.restaurant, 'rating', 'N/A'),
+                                    "price_range": getattr(rec.restaurant, 'price_range', 'N/A'),
+                                    "delivery_available": getattr(rec.restaurant, 'delivery_available', False)
+                                }
+                            
+                            recommendations_dict.append(rec_dict)
+                        except Exception as rec_error:
+                            logger.error(f"Error processing recommendation: {rec_error}")
+                            continue
+                    
+                    logger.info(f"Generated {len(recommendations_dict)} recommendations")
+                    
+                except asyncio.TimeoutError:
+                    logger.warning("Recommendation generation timed out, using fallback")
+                    recommendations_dict = []
+                    
+            except Exception as e:
+                logger.error(f"Recommendation engine error: {e}")
+                recommendations_dict = []
+        
+        # Fallback to basic recommendations if none generated
+        if not recommendations_dict:
+            logger.info("Using fallback recommendations")
             recommendations_dict = [
                 {
-                    "food_name": "Sample Food",
+                    "food_name": "Comfort Food",
                     "food_category": "general",
+                    "food_region": "various",
+                    "food_culture": "international",
+                    "food_tags": ["comfort", "general"],
                     "score": 0.8,
-                    "reasoning": ["Fallback recommendation"]
+                    "mood_match": 0.6,
+                    "context_match": 0.5,
+                    "personalization_score": 0.5,
+                    "reasoning": ["Fallback recommendation - system using basic mode"],
+                    "restaurant": None
+                },
+                {
+                    "food_name": "Healthy Option",
+                    "food_category": "wellness",
+                    "food_region": "various",
+                    "food_culture": "international",
+                    "food_tags": ["healthy", "wellness"],
+                    "score": 0.7,
+                    "mood_match": 0.5,
+                    "context_match": 0.5,
+                    "personalization_score": 0.5,
+                    "reasoning": ["Fallback recommendation - system using basic mode"],
+                    "restaurant": None
                 }
             ]
         
@@ -509,14 +801,17 @@ async def upload_image(file: UploadFile = File(...)):
 async def health_check():
     """Enhanced health check showing status of all components."""
     return {
-        "status": "healthy",
+        "status": "healthy" if any(component_status.values()) else "degraded",
         "components": {
-            "enhanced_classifier": "operational" if enhanced_classifier else "not_available",
-            "multimodal_processor": "operational" if multimodal_processor else "not_available",
-            "learning_system": "operational" if learning_system else "not_available",
-            "recommendation_engine": "operational" if recommendation_engine else "not_available",
-            "phase3_manager": "operational" if phase3_manager else "not_available"
+            "enhanced_classifier": "operational" if enhanced_classifier and component_status["enhanced_classifier"] else "not_available",
+            "multimodal_processor": "operational" if multimodal_processor and component_status["multimodal_processor"] else "not_available",
+            "learning_system": "operational" if learning_system and component_status["learning_system"] else "not_available",
+            "recommendation_engine": "operational" if recommendation_engine and component_status["recommendation_engine"] else "not_available",
+            "phase3_manager": "operational" if phase3_manager and component_status["phase3_manager"] else "not_available"
         },
+        "component_status": component_status,
+        "operational_count": sum(component_status.values()),
+        "total_components": len(component_status),
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")
     }
 

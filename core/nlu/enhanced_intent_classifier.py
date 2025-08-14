@@ -186,12 +186,18 @@ class EnhancedIntentClassifier:
             # Ensure user embedding is on correct device
             user_embedding = user_embedding.to(self.device)
             
+            # Enhanced semantic analysis
+            semantic_context = self._analyze_semantic_context(text)
+            
             similarities: List[Tuple[str, float]] = []
             for label, intent_embedding in self.intent_embeddings.items():
                 # Ensure intent embedding is on correct device
                 intent_embedding = intent_embedding.to(self.device)
                 sim = util.pytorch_cos_sim(user_embedding, intent_embedding).item()
-                similarities.append((label, sim))
+                
+                # Apply semantic context boosting
+                boosted_sim = self._apply_semantic_boosting(sim, label, semantic_context)
+                similarities.append((label, boosted_sim))
             
             similarities.sort(key=lambda x: x[1], reverse=True)
             top_intents = similarities[:top_k]
@@ -335,6 +341,104 @@ class EnhancedIntentClassifier:
         e1 = self.sentence_transformer.encode(text1, convert_to_tensor=True)
         e2 = self.sentence_transformer.encode(text2, convert_to_tensor=True)
         return util.pytorch_cos_sim(e1, e2).item()
+    
+    def _analyze_semantic_context(self, text: str) -> Dict[str, Any]:
+        """Analyze semantic context for enhanced understanding."""
+        text_lower = text.lower()
+        context = {
+            "temporal_indicators": [],
+            "emotional_indicators": [],
+            "social_indicators": [],
+            "physical_indicators": [],
+            "flavor_indicators": [],
+            "intensity_modifiers": []
+        }
+        
+        # Temporal indicators
+        temporal_words = ["morning", "afternoon", "evening", "night", "today", "tonight", "now"]
+        context["temporal_indicators"] = [word for word in temporal_words if word in text_lower]
+        
+        # Emotional indicators
+        emotional_words = {
+            "positive": ["happy", "excited", "joyful", "cheerful", "delighted"],
+            "negative": ["sad", "stressed", "tired", "angry", "frustrated"],
+            "neutral": ["calm", "relaxed", "content", "satisfied"]
+        }
+        for emotion_type, words in emotional_words.items():
+            for word in words:
+                if word in text_lower:
+                    context["emotional_indicators"].append((word, emotion_type))
+        
+        # Social indicators
+        social_words = ["alone", "couple", "family", "friends", "party", "meeting", "date"]
+        context["social_indicators"] = [word for word in social_words if word in text_lower]
+        
+        # Physical indicators
+        physical_words = ["hungry", "thirsty", "tired", "sick", "cold", "hot", "energy"]
+        context["physical_indicators"] = [word for word in physical_words if word in text_lower]
+        
+        # Flavor indicators
+        flavor_words = ["sweet", "spicy", "salty", "sour", "bitter", "umami", "fresh"]
+        context["flavor_indicators"] = [word for word in flavor_words if word in text_lower]
+        
+        # Intensity modifiers
+        intensity_words = ["very", "extremely", "really", "so", "super", "slightly", "a_bit"]
+        context["intensity_modifiers"] = [word for word in intensity_words if word in text_lower]
+        
+        return context
+    
+    def _apply_semantic_boosting(self, base_similarity: float, intent_label: str, context: Dict[str, Any]) -> float:
+        """Apply semantic context boosting to similarity scores."""
+        boosted_similarity = base_similarity
+        
+        # Temporal boosting
+        if context["temporal_indicators"]:
+            temporal_boosts = {
+                "morning": ["breakfast", "coffee", "energy", "fresh"],
+                "evening": ["dinner", "romantic", "comfort", "wine"],
+                "night": ["comfort", "light", "quick", "tea"]
+            }
+            for time_indicator in context["temporal_indicators"]:
+                if time_indicator in temporal_boosts:
+                    for boost_word in temporal_boosts[time_indicator]:
+                        if boost_word in intent_label.lower():
+                            boosted_similarity += 0.1
+                            break
+        
+        # Emotional boosting
+        for emotion_word, emotion_type in context["emotional_indicators"]:
+            if emotion_type == "positive" and any(word in intent_label.lower() for word in ["celebration", "happy", "excited"]):
+                boosted_similarity += 0.15
+            elif emotion_type == "negative" and any(word in intent_label.lower() for word in ["comfort", "stress", "sad"]):
+                boosted_similarity += 0.15
+        
+        # Social boosting
+        for social_word in context["social_indicators"]:
+            if social_word == "romantic" and "romantic" in intent_label.lower():
+                boosted_similarity += 0.2
+            elif social_word in ["party", "friends"] and "social" in intent_label.lower():
+                boosted_similarity += 0.15
+        
+        # Physical boosting
+        for physical_word in context["physical_indicators"]:
+            if physical_word in ["tired", "sick"] and "comfort" in intent_label.lower():
+                boosted_similarity += 0.1
+            elif physical_word == "energy" and "energy" in intent_label.lower():
+                boosted_similarity += 0.1
+        
+        # Flavor boosting
+        for flavor_word in context["flavor_indicators"]:
+            if flavor_word in intent_label.lower():
+                boosted_similarity += 0.1
+        
+        # Intensity boosting
+        if context["intensity_modifiers"]:
+            intensity_words = ["very", "extremely", "really", "so", "super"]
+            if any(word in context["intensity_modifiers"] for word in intensity_words):
+                boosted_similarity += 0.05
+        
+        # Cap the boosted similarity at 1.0
+        return min(boosted_similarity, 1.0)
 
     def find_similar_foods(self, food_name: str, top_k: int = 5) -> List[Tuple[str, float]]:
         self._ensure_models()

@@ -1,0 +1,1088 @@
+[
+  {
+    "text": "I want something warm and cozy",
+    "labels": [
+      "comfort"
+    ]
+  },
+  {
+    "text": "Surprise me with something exotic",
+    "labels": [
+      "emotion_adventurous",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "I need a light lunch",
+    "labels": [
+      "light"
+    ]
+  },
+  {
+    "text": "What's a good romantic dinner?",
+    "labels": [
+      "romantic"
+    ]
+  },
+  {
+    "text": "I feel sad and need some comfort food",
+    "labels": [
+      "sad",
+      "comfort"
+    ]
+  },
+  {
+    "text": "Give me something warm and soothing",
+    "labels": [
+      "comfort",
+      "soothing"
+    ]
+  },
+  {
+    "text": "Looking for a romantic dinner idea",
+    "labels": [
+      "romantic"
+    ]
+  },
+  {
+    "text": "I want something light and healthy",
+    "labels": [
+      "light",
+      "healthy"
+    ]
+  },
+  {
+    "text": "Need energy before my gym workout",
+    "labels": [
+      "need_a_boost"
+    ]
+  },
+  {
+    "text": "It's rainy and gloomy today",
+    "labels": [
+      "comfort",
+      "sad"
+    ]
+  },
+  {
+    "text": "I'm feeling adventurous and want to try something exotic",
+    "labels": [
+      "emotion_adventurous",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "I have a sore throat and need something gentle",
+    "labels": [
+      "soothing"
+    ]
+  },
+  {
+    "text": "I want a cold and refreshing smoothie",
+    "labels": [
+      "refreshing",
+      "light",
+      "smoothie"
+    ]
+  },
+  {
+    "text": "Something quick for breakfast",
+    "labels": [
+      "light"
+    ]
+  },
+  {
+    "text": "I'm home alone and want something simple",
+    "labels": [
+      "comfort"
+    ]
+  },
+  {
+    "text": "I’m hosting a dinner with friends",
+    "labels": [
+      "romantic"
+    ]
+  },
+  {
+    "text": "It’s hot outside, I want something cold and light",
+    "labels": [
+      "light",
+      "refreshing"
+    ]
+  },
+  {
+    "text": "I want something light",
+    "labels": [
+      "light",
+      "energy_level_low",
+      "digestion_gentle"
+    ]
+  },
+  {
+    "text": "I need a light meal",
+    "labels": [
+      "light",
+      "meal_snack",
+      "digestion_gentle"
+    ]
+  },
+  {
+    "text": "Something not too heavy please",
+    "labels": [
+      "light",
+      "digestion_gentle",
+      "sensory_subtle"
+    ]
+  },
+  {
+    "text": "I want something heavy and filling",
+    "labels": [
+      "goal_filling",
+      "energy_level_high",
+      "romantic"
+    ]
+  },
+  {
+    "text": "I need a substantial meal",
+    "labels": [
+      "goal_filling",
+      "romantic",
+      "sensory_rich"
+    ]
+  },
+  {
+    "text": "Something hearty and satisfying",
+    "labels": [
+      "goal_filling",
+      "goal_satisfaction",
+      "sensory_rich"
+    ]
+  },
+  {
+    "text": "I want something greasy",
+    "labels": [
+      "texture_greasy",
+      "goal_indulgence",
+      "comfort"
+    ]
+  },
+  {
+    "text": "Give me something oily and fried",
+    "labels": [
+      "texture_greasy",
+      "cooking_fried",
+      "goal_indulgence"
+    ]
+  },
+  {
+    "text": "I'm craving comfort food",
+    "labels": [
+      "comfort",
+      "goal_indulgence",
+      "texture_greasy"
+    ]
+  },
+  {
+    "text": "It's a hot day, I need something refreshing",
+    "labels": [
+      "light",
+      "sensory_cooling"
+    ]
+  },
+  {
+    "text": "I'm sweating, give me something cold",
+    "labels": [
+      "light",
+      "sensory_cooling",
+      "goal_hydration"
+    ]
+  },
+  {
+    "text": "Summer heat calls for something cool",
+    "labels": [
+      "light",
+      "season_summer",
+      "sensory_cooling"
+    ]
+  },
+  {
+    "text": "I'm freezing, I need something warm",
+    "labels": [
+      "weather_cold",
+      "sensory_warming",
+      "comfort"
+    ]
+  },
+  {
+    "text": "Winter chill, give me something hot",
+    "labels": [
+      "weather_cold",
+      "season_winter",
+      "sensory_warming"
+    ]
+  },
+  {
+    "text": "It's cold outside, I want something comforting",
+    "labels": [
+      "weather_cold",
+      "comfort",
+      "sensory_warming"
+    ]
+  },
+  {
+    "text": "I'm feeling sad, I need comfort food",
+    "labels": [
+      "emotion_comfort",
+      "goal_soothing",
+      "sensory_warm"
+    ]
+  },
+  {
+    "text": "I'm stressed, give me something nurturing",
+    "labels": [
+      "emotion_comfort",
+      "goal_soothing",
+      "occasion_home"
+    ]
+  },
+  {
+    "text": "I need something familiar and homey",
+    "labels": [
+      "emotion_comfort",
+      "occasion_home",
+      "sensory_warm"
+    ]
+  },
+  {
+    "text": "It's date night, I want something romantic",
+    "labels": [
+      "romantic",
+      "social_couple"
+    ]
+  },
+  {
+    "text": "I'm planning a romantic dinner",
+    "labels": [
+      "romantic",
+      "atmosphere_intimate"
+    ]
+  },
+  {
+    "text": "Something elegant for a special night",
+    "labels": [
+      "romantic",
+      "atmosphere_intimate",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "We're celebrating, give us something festive",
+    "labels": [
+      "occasion_celebration",
+      "emotion_joy",
+      "atmosphere_festive"
+    ]
+  },
+  {
+    "text": "It's a party, I need something exciting",
+    "labels": [
+      "occasion_celebration",
+      "romantic",
+      "sensory_exciting"
+    ]
+  },
+  {
+    "text": "Something fun for a celebration",
+    "labels": [
+      "occasion_celebration",
+      "atmosphere_festive",
+      "sensory_exciting"
+    ]
+  },
+  {
+    "text": "I want something sweet",
+    "labels": [
+      "taste_sweet",
+      "goal_indulgence",
+      "meal_dessert"
+    ]
+  },
+  {
+    "text": "I'm craving dessert",
+    "labels": [
+      "taste_sweet",
+      "meal_dessert",
+      "sensory_sweet"
+    ]
+  },
+  {
+    "text": "Give me something sugary and indulgent",
+    "labels": [
+      "taste_sweet",
+      "goal_indulgence",
+      "sensory_sweet"
+    ]
+  },
+  {
+    "text": "I want something spicy",
+    "labels": [
+      "taste_spicy",
+      "goal_excitement",
+      "sensory_intense"
+    ]
+  },
+  {
+    "text": "I need something hot and fiery",
+    "labels": [
+      "taste_spicy",
+      "sensory_intense",
+      "texture_bold"
+    ]
+  },
+  {
+    "text": "Give me something with a kick",
+    "labels": [
+      "taste_spicy",
+      "goal_excitement",
+      "flavor_profile_strong"
+    ]
+  },
+  {
+    "text": "I want something salty",
+    "labels": [
+      "taste_salty",
+      "taste_umami",
+      "goal_satisfaction"
+    ]
+  },
+  {
+    "text": "I'm craving something savory",
+    "labels": [
+      "taste_salty",
+      "taste_umami",
+      "sensory_rich"
+    ]
+  },
+  {
+    "text": "Give me something rich and satisfying",
+    "labels": [
+      "taste_salty",
+      "goal_satisfaction",
+      "sensory_rich"
+    ]
+  },
+  {
+    "text": "It's family dinner time",
+    "labels": [
+      "occasion_family",
+      "social_family",
+      "romantic"
+    ]
+  },
+  {
+    "text": "I need something for the whole family",
+    "labels": [
+      "occasion_family",
+      "social_family",
+      "goal_nurturing"
+    ]
+  },
+  {
+    "text": "Something traditional for family dinner",
+    "labels": [
+      "occasion_family",
+      "atmosphere_home",
+      "goal_nurturing"
+    ]
+  },
+  {
+    "text": "I'm on my lunch break",
+    "labels": [
+      "occasion_work",
+      "light"
+    ]
+  },
+  {
+    "text": "I need something quick for lunch",
+    "labels": [
+      "occasion_work",
+      "light",
+      "goal_efficient"
+    ]
+  },
+  {
+    "text": "Office lunch, something efficient",
+    "labels": [
+      "occasion_work",
+      "goal_efficient",
+      "time_midday"
+    ]
+  },
+  {
+    "text": "I have a hangover, I need something gentle",
+    "labels": [
+      "health_recovery",
+      "goal_gentle",
+      "goal_hydration"
+    ]
+  },
+  {
+    "text": "I'm feeling sick, give me something easy to digest",
+    "labels": [
+      "health_recovery",
+      "digestion_gentle",
+      "sensory_mild"
+    ]
+  },
+  {
+    "text": "I need something for recovery",
+    "labels": [
+      "health_recovery",
+      "goal_gentle",
+      "goal_nourishment"
+    ]
+  },
+  {
+    "text": "I'm hosting a party, need finger food",
+    "labels": [
+      "occasion_party",
+      "romantic",
+      "meal_appetizer"
+    ]
+  },
+  {
+    "text": "Something fun for a party",
+    "labels": [
+      "occasion_party",
+      "atmosphere_fun",
+      "goal_social"
+    ]
+  },
+  {
+    "text": "I need party snacks",
+    "labels": [
+      "occasion_party",
+      "meal_appetizer",
+      "goal_social"
+    ]
+  },
+  {
+    "text": "I want something healthy and clean",
+    "labels": [
+      "healthy",
+      "goal_detox",
+      "sensory_fresh"
+    ]
+  },
+  {
+    "text": "I need something for detox",
+    "labels": [
+      "goal_detox",
+      "light",
+      "texture_clean"
+    ]
+  },
+  {
+    "text": "Give me something fresh and natural",
+    "labels": [
+      "healthy",
+      "sensory_fresh",
+      "texture_clean"
+    ]
+  },
+  {
+    "text": "I'm tired, I need comfort",
+    "labels": [
+      "emotion_comfort",
+      "goal_soothing",
+      "sensory_warm"
+    ]
+  },
+  {
+    "text": "I'm anxious, give me something soothing",
+    "labels": [
+      "emotion_comfort",
+      "goal_soothing",
+      "occasion_home"
+    ]
+  },
+  {
+    "text": "I need something nurturing right now",
+    "labels": [
+      "emotion_comfort",
+      "goal_soothing",
+      "goal_nurturing"
+    ]
+  },
+  {
+    "text": "I'm feeling adventurous",
+    "labels": [
+      "emotion_adventurous",
+      "sensory_exotic",
+      "goal_excitement"
+    ]
+  },
+  {
+    "text": "I want to try something new",
+    "labels": [
+      "emotion_adventurous",
+      "sensory_exotic",
+      "goal_excitement"
+    ]
+  },
+  {
+    "text": "Give me something exotic",
+    "labels": [
+      "emotion_adventurous",
+      "sensory_exotic",
+      "sensory_exciting"
+    ]
+  },
+  {
+    "text": "I'm in a hurry",
+    "labels": [
+      "light",
+      "goal_efficient",
+      "time_urgent"
+    ]
+  },
+  {
+    "text": "I need something fast",
+    "labels": [
+      "light",
+      "goal_efficient",
+      "time_urgent"
+    ]
+  },
+  {
+    "text": "Quick meal please",
+    "labels": [
+      "light",
+      "goal_efficient",
+      "meal_snack"
+    ]
+  },
+  {
+    "text": "I'm very hungry",
+    "labels": [
+      "hunger_level_very_hungry",
+      "goal_filling",
+      "goal_satisfaction"
+    ]
+  },
+  {
+    "text": "I need something substantial",
+    "labels": [
+      "hunger_level_very_hungry",
+      "goal_filling",
+      "sensory_rich"
+    ]
+  },
+  {
+    "text": "I'm starving",
+    "labels": [
+      "hunger_level_very_hungry",
+      "goal_filling",
+      "goal_satisfaction"
+    ]
+  },
+  {
+    "text": "I want something refreshing",
+    "labels": [
+      "light",
+      "sensory_cooling",
+      "goal_hydration"
+    ]
+  },
+  {
+    "text": "I need something to wake me up",
+    "labels": [
+      "light",
+      "need_a_boost",
+      "sensory_cooling"
+    ]
+  },
+  {
+    "text": "Something invigorating please",
+    "labels": [
+      "light",
+      "need_a_boost",
+      "sensory_cooling"
+    ]
+  },
+  {
+    "text": "I'm alone tonight",
+    "labels": [
+      "comfort",
+      "romantic",
+      "atmosphere_home"
+    ]
+  },
+  {
+    "text": "Solo dining, something simple",
+    "labels": [
+      "comfort",
+      "romantic"
+    ]
+  },
+  {
+    "text": "Just me, something easy",
+    "labels": [
+      "comfort",
+      "goal_efficient"
+    ]
+  },
+  {
+    "text": "I'm with friends",
+    "labels": [
+      "social_friends",
+      "romantic",
+      "atmosphere_fun"
+    ]
+  },
+  {
+    "text": "Group dinner, something communal",
+    "labels": [
+      "social_friends",
+      "romantic",
+      "goal_social"
+    ]
+  },
+  {
+    "text": "We're a big group",
+    "labels": [
+      "social_friends",
+      "romantic",
+      "atmosphere_fun"
+    ]
+  },
+  {
+    "text": "It's morning, I need breakfast",
+    "labels": [
+      "time_morning",
+      "meal_breakfast",
+      "need_a_boost"
+    ]
+  },
+  {
+    "text": "Good morning, something light",
+    "labels": [
+      "time_morning",
+      "meal_breakfast",
+      "light"
+    ]
+  },
+  {
+    "text": "Breakfast time, give me energy",
+    "labels": [
+      "time_morning",
+      "meal_breakfast",
+      "need_a_boost"
+    ]
+  },
+  {
+    "text": "It's late, something light",
+    "labels": [
+      "time_late_night",
+      "light",
+      "digestion_gentle"
+    ]
+  },
+  {
+    "text": "Late night snack",
+    "labels": [
+      "time_late_night",
+      "meal_snack",
+      "light"
+    ]
+  },
+  {
+    "text": "Midnight craving",
+    "labels": [
+      "time_late_night",
+      "meal_snack",
+      "light"
+    ]
+  },
+  {
+    "text": "I'm at the gym",
+    "labels": [
+      "need_a_boost",
+      "healthy"
+    ]
+  },
+  {
+    "text": "Post-workout meal",
+    "labels": [
+      "need_a_boost",
+      "healthy"
+    ]
+  },
+  {
+    "text": "I need protein after exercise",
+    "labels": [
+      "need_a_boost",
+      "healthy"
+    ]
+  },
+  {
+    "text": "I'm at the office",
+    "labels": [
+      "location_office",
+      "occasion_work",
+      "goal_efficient"
+    ]
+  },
+  {
+    "text": "Work lunch, something quick",
+    "labels": [
+      "location_office",
+      "occasion_work",
+      "light"
+    ]
+  },
+  {
+    "text": "Office environment, need efficiency",
+    "labels": [
+      "location_office",
+      "occasion_work",
+      "goal_efficient"
+    ]
+  },
+  {
+    "text": "I'm at home",
+    "labels": [
+      "location_home",
+      "atmosphere_home",
+      "occasion_casual"
+    ]
+  },
+  {
+    "text": "Home cooking, something familiar",
+    "labels": [
+      "location_home",
+      "atmosphere_home",
+      "occasion_casual"
+    ]
+  },
+  {
+    "text": "Comfortable at home",
+    "labels": [
+      "location_home",
+      "atmosphere_home",
+      "occasion_casual"
+    ]
+  },
+  {
+    "text": "I'm outdoors",
+    "labels": [
+      "location_outdoor",
+      "weather_consideration",
+      "goal_portable"
+    ]
+  },
+  {
+    "text": "Picnic food needed",
+    "labels": [
+      "location_outdoor",
+      "goal_portable",
+      "occasion_casual"
+    ]
+  },
+  {
+    "text": "Outdoor dining, something portable",
+    "labels": [
+      "location_outdoor",
+      "goal_portable",
+      "occasion_casual"
+    ]
+  },
+  {
+    "text": "I'm feeling nostalgic",
+    "labels": [
+      "emotion_nostalgic",
+      "comfort",
+      "occasion_home"
+    ]
+  },
+  {
+    "text": "I want something from my childhood",
+    "labels": [
+      "emotion_nostalgic",
+      "comfort",
+      "occasion_home"
+    ]
+  },
+  {
+    "text": "Give me something traditional",
+    "labels": [
+      "emotion_nostalgic",
+      "comfort",
+      "occasion_home"
+    ]
+  },
+  {
+    "text": "I'm feeling sophisticated",
+    "labels": [
+      "emotion_sophisticated",
+      "sensory_exotic",
+      "atmosphere_elegant"
+    ]
+  },
+  {
+    "text": "I want something elegant",
+    "labels": [
+      "emotion_sophisticated",
+      "atmosphere_elegant",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "Something refined please",
+    "labels": [
+      "emotion_sophisticated",
+      "atmosphere_elegant",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "I'm feeling playful",
+    "labels": [
+      "emotion_playful",
+      "atmosphere_fun",
+      "goal_social"
+    ]
+  },
+  {
+    "text": "I want something fun",
+    "labels": [
+      "emotion_playful",
+      "atmosphere_fun",
+      "goal_social"
+    ]
+  },
+  {
+    "text": "Something entertaining please",
+    "labels": [
+      "emotion_playful",
+      "atmosphere_fun",
+      "goal_social"
+    ]
+  },
+  {
+    "text": "I need something to share",
+    "labels": [
+      "goal_social",
+      "romantic",
+      "meal_appetizer"
+    ]
+  },
+  {
+    "text": "We want to share dishes",
+    "labels": [
+      "goal_social",
+      "romantic",
+      "meal_appetizer"
+    ]
+  },
+  {
+    "text": "Communal dining experience",
+    "labels": [
+      "goal_social",
+      "romantic",
+      "meal_appetizer"
+    ]
+  },
+  {
+    "text": "I want something seasonal",
+    "labels": [
+      "season_consideration",
+      "sensory_fresh",
+      "healthy"
+    ]
+  },
+  {
+    "text": "What's in season right now?",
+    "labels": [
+      "season_consideration",
+      "sensory_fresh",
+      "healthy"
+    ]
+  },
+  {
+    "text": "Give me something seasonal",
+    "labels": [
+      "season_consideration",
+      "sensory_fresh",
+      "healthy"
+    ]
+  },
+  {
+    "text": "I'm feeling bloated",
+    "labels": [
+      "health_bloated",
+      "goal_gentle",
+      "digestion_gentle"
+    ]
+  },
+  {
+    "text": "I need something easy on my stomach",
+    "labels": [
+      "health_bloated",
+      "digestion_gentle",
+      "sensory_mild"
+    ]
+  },
+  {
+    "text": "Something gentle for my digestion",
+    "labels": [
+      "health_bloated",
+      "digestion_gentle",
+      "sensory_mild"
+    ]
+  },
+  {
+    "text": "I want something crunchy",
+    "labels": [
+      "texture_crunchy",
+      "goal_satisfaction",
+      "sensory_exciting"
+    ]
+  },
+  {
+    "text": "I need something with texture",
+    "labels": [
+      "texture_crunchy",
+      "sensory_exciting",
+      "goal_satisfaction"
+    ]
+  },
+  {
+    "text": "Give me something crispy",
+    "labels": [
+      "texture_crunchy",
+      "sensory_exciting",
+      "goal_satisfaction"
+    ]
+  },
+  {
+    "text": "I want something creamy",
+    "labels": [
+      "texture_creamy",
+      "sensory_rich",
+      "comfort"
+    ]
+  },
+  {
+    "text": "I need something smooth",
+    "labels": [
+      "texture_creamy",
+      "sensory_rich",
+      "comfort"
+    ]
+  },
+  {
+    "text": "Something velvety please",
+    "labels": [
+      "texture_creamy",
+      "sensory_rich",
+      "comfort"
+    ]
+  },
+  {
+    "text": "I'm feeling fancy",
+    "labels": [
+      "emotion_fancy",
+      "atmosphere_elegant",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "I want something luxurious",
+    "labels": [
+      "emotion_fancy",
+      "atmosphere_elegant",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "Something upscale please",
+    "labels": [
+      "emotion_fancy",
+      "atmosphere_elegant",
+      "sensory_exotic"
+    ]
+  },
+  {
+    "text": "I need something to wake me up",
+    "labels": [
+      "need_a_boost",
+      "light",
+      "goal_awakening"
+    ]
+  },
+  {
+    "text": "I'm sleepy, need energy",
+    "labels": [
+      "need_a_boost",
+      "goal_awakening",
+      "light"
+    ]
+  },
+  {
+    "text": "Give me something energizing",
+    "labels": [
+      "need_a_boost",
+      "goal_awakening",
+      "light"
+    ]
+  },
+  {
+    "text": "I want something simple",
+    "labels": [
+      "comfort",
+      "goal_efficient",
+      "sensory_subtle"
+    ]
+  },
+  {
+    "text": "I need something basic",
+    "labels": [
+      "comfort",
+      "goal_efficient",
+      "sensory_subtle"
+    ]
+  },
+  {
+    "text": "Something straightforward please",
+    "labels": [
+      "comfort",
+      "goal_efficient",
+      "sensory_subtle"
+    ]
+  },
+  {
+    "text": "I'm feeling experimental",
+    "labels": [
+      "emotion_experimental",
+      "sensory_exotic",
+      "goal_excitement"
+    ]
+  },
+  {
+    "text": "I want to try something unusual",
+    "labels": [
+      "emotion_experimental",
+      "sensory_exotic",
+      "goal_excitement"
+    ]
+  },
+  {
+    "text": "Give me something unexpected",
+    "labels": [
+      "emotion_experimental",
+      "sensory_exotic",
+      "goal_excitement"
+    ]
+  }
+]

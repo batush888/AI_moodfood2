@@ -143,18 +143,32 @@ class MultiModalProcessor:
                 if self.device == "mps":
                     device_id = -1  # MPS not fully supported by all pipelines yet
                 
-                # Pipelines handle their own processors/models internally
-                self.image_classifier = pipeline(
-                    "image-classification",
-                    model=self.image_model_name,
-                    device=device_id,
-                )
-                self.image_captioner = pipeline(
-                    "image-to-text",
-                    model="nlpconnect/vit-gpt2-image-captioning",
-                    device=device_id,
-                )
-                logger.info("Image pipelines ready")
+                # Wrap pipeline creation in try-catch to handle type conversion issues
+                try:
+                    self.image_classifier = pipeline(
+                        "image-classification",
+                        model=self.image_model_name,
+                        device=device_id,
+                    )
+                except Exception as e:
+                    logger.warning(f"Image classifier failed: {e}")
+                    self.image_classifier = None
+                
+                try:
+                    self.image_captioner = pipeline(
+                        "image-to-text",
+                        model="nlpconnect/vit-gpt2-image-captioning",
+                        device=device_id,
+                    )
+                except Exception as e:
+                    logger.warning(f"Image captioner failed: {e}")
+                    self.image_captioner = None
+                
+                if self.image_classifier or self.image_captioner:
+                    logger.info("Image pipelines ready (partial)")
+                else:
+                    logger.warning("All image pipelines failed, using fallback")
+                    
             except Exception as e:
                 logger.error(f"Error initializing image models: {e}")
                 # Fallback to basic image processing
@@ -226,11 +240,35 @@ class MultiModalProcessor:
         try:
             self._ensure_image_models()
 
-            classification_results = self.image_classifier(image)
-            caption_results = self.image_captioner(image)
-            caption = (
-                caption_results[0]["generated_text"] if caption_results else ""
-            )
+            # Handle cases where models failed to initialize
+            if self.image_classifier is None and self.image_captioner is None:
+                logger.warning("No image models available, using fallback analysis")
+                return {
+                    "caption": "Image analysis not available",
+                    "classification": [],
+                    "food_confidence": 0.5,
+                    "mood_indicators": ["general"],
+                    "processed": False,
+                }
+
+            # Process with available models
+            classification_results = []
+            caption = ""
+            
+            if self.image_classifier:
+                try:
+                    classification_results = self.image_classifier(image)
+                except Exception as e:
+                    logger.warning(f"Image classification failed: {e}")
+                    classification_results = []
+            
+            if self.image_captioner:
+                try:
+                    caption_results = self.image_captioner(image)
+                    caption = caption_results[0]["generated_text"] if caption_results else ""
+                except Exception as e:
+                    logger.warning(f"Image captioning failed: {e}")
+                    caption = ""
 
             food_confidence = self._analyze_food_content(classification_results)
             mood_indicators = self._analyze_mood_indicators(

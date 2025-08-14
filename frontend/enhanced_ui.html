@@ -647,8 +647,9 @@
 
             <div class="examples-section">
                 <h2 style="margin-bottom: 20px; color: #333;">💡 Try These Advanced Examples</h2>
+                <button onclick="loadExamples()" style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 15px;">Load Examples</button>
                 <div class="examples-grid" id="examplesGrid">
-                    <!-- Examples will be loaded here -->
+                    <div style="text-align: center; color: #666; padding: 20px;">Click "Load Examples" to see example queries</div>
                 </div>
             </div>
         </div>
@@ -875,8 +876,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         text_input: textInput,
-                        image_base64: imageBase64,
-                        audio_base64: audioBase64,
+                        image_base64: imageBase64 || null,
+                        audio_base64: audioBase64 || null,
                         user_context: context,
                         user_id: 'demo_user_' + Date.now(),
                         session_id: 'session_' + Date.now(),
@@ -936,165 +937,196 @@
         }
 
         function showAIAnalysis(data) {
-            const analysisDiv = document.getElementById('aiAnalysis');
-            
-            let analysisHtml = '<div class="ai-analysis">';
-            analysisHtml += '<div class="ai-title">🧠 Advanced AI Analysis</div>';
-            analysisHtml += '<div class="ai-details">';
-            
-            if (data.intent_prediction) {
+            try {
+                console.log('🧠 Starting showAIAnalysis...', data);
+                const analysisDiv = document.getElementById('aiAnalysis');
+                
+                let analysisHtml = '<div class="ai-analysis">';
+                analysisHtml += '<div class="ai-title">🧠 Advanced AI Analysis</div>';
+                analysisHtml += '<div class="ai-details">';
+                
+                if (data.intent_prediction && data.intent_prediction.primary_intent) {
+                    analysisHtml += `
+                        <div class="ai-item">
+                            <div class="detail-label">Primary Intent</div>
+                            <div class="detail-value">${data.intent_prediction.primary_intent.replace(/_/g, ' ')}</div>
+                        </div>
+                        <div class="ai-item">
+                            <div class="detail-label">Confidence</div>
+                            <div class="detail-value">${(data.intent_prediction.confidence * 100).toFixed(0)}%</div>
+                        </div>
+                    `;
+                }
+                
+                if (data.multimodal_analysis && data.multimodal_analysis.combined_confidence) {
+                    analysisHtml += `
+                        <div class="ai-item">
+                            <div class="detail-label">Multi-Modal Confidence</div>
+                            <div class="detail-value">${(data.multimodal_analysis.combined_confidence * 100).toFixed(0)}%</div>
+                        </div>
+                        <div class="ai-item">
+                            <div class="detail-label">Mood Categories</div>
+                            <div class="detail-value">${data.multimodal_analysis.mood_categories?.length || 0}</div>
+                        </div>
+                    `;
+                }
+                
                 analysisHtml += `
                     <div class="ai-item">
-                        <div class="detail-label">Primary Intent</div>
-                        <div class="detail-value">${data.intent_prediction.primary_intent.replace(/_/g, ' ')}</div>
+                        <div class="detail-label">Model Version</div>
+                        <div class="detail-value">${data.model_version || 'N/A'}</div>
                     </div>
                     <div class="ai-item">
-                        <div class="detail-label">Confidence</div>
-                        <div class="detail-value">${(data.intent_prediction.confidence * 100).toFixed(0)}%</div>
+                        <div class="detail-label">Processing Time</div>
+                        <div class="detail-value">${(data.processing_time * 1000).toFixed(0)}ms</div>
                     </div>
                 `;
+                
+                analysisHtml += '</div></div>';
+                
+                analysisDiv.innerHTML = analysisHtml;
+                analysisDiv.style.display = 'block';
+                console.log('✅ showAIAnalysis completed');
+            } catch (error) {
+                console.error('💥 Error in showAIAnalysis:', error);
+                // Don't fail the entire process, just log the error
             }
-            
-            if (data.multimodal_analysis) {
-                analysisHtml += `
-                    <div class="ai-item">
-                        <div class="detail-label">Multi-Modal Confidence</div>
-                        <div class="detail-value">${(data.multimodal_analysis.combined_confidence * 100).toFixed(0)}%</div>
-                    </div>
-                    <div class="ai-item">
-                        <div class="detail-label">Mood Categories</div>
-                        <div class="detail-value">${data.multimodal_analysis.mood_categories.length}</div>
-                    </div>
-                `;
-            }
-            
-            analysisHtml += `
-                <div class="ai-item">
-                    <div class="detail-label">Model Version</div>
-                    <div class="detail-value">${data.model_version}</div>
-                </div>
-                <div class="ai-item">
-                    <div class="detail-label">Processing Time</div>
-                    <div class="detail-value">${(data.processing_time * 1000).toFixed(0)}ms</div>
-                </div>
-            `;
-            
-            analysisHtml += '</div></div>';
-            
-            analysisDiv.innerHTML = analysisHtml;
-            analysisDiv.style.display = 'block';
         }
 
         function showResults(data) {
-            const resultsDiv = document.getElementById('resultsSection');
-            
-            if (data.recommendations.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="result-card">
-                        <h3>No recommendations found</h3>
-                        <p>Try adjusting your input or context.</p>
-                    </div>
-                `;
-            } else {
-                const recommendationsHtml = data.recommendations.map((rec, index) => `
-                    <div class="result-card">
-                        <div class="result-header">
-                            <div class="food-name">${rec.food_name}</div>
-                            <div class="score">${(rec.score * 100).toFixed(0)}%</div>
+            try {
+                console.log('🎯 Starting showResults...', data);
+                const resultsDiv = document.getElementById('resultsSection');
+                
+                if (!data.recommendations || data.recommendations.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="result-card">
+                            <h3>No recommendations found</h3>
+                            <p>Try adjusting your input or context.</p>
                         </div>
-                        
-                        <div class="food-details">
-                            <div class="detail-item">
-                                <div class="detail-label">Category</div>
-                                <div class="detail-value">${rec.food_category.replace(/_/g, ' ')}</div>
+                    `;
+                } else {
+                    const recommendationsHtml = data.recommendations.map((rec, index) => `
+                        <div class="result-card">
+                            <div class="result-header">
+                                <div class="food-name">${rec.food_name || 'Unknown'}</div>
+                                <div class="score">${(rec.score * 100).toFixed(0)}%</div>
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Region</div>
-                                <div class="detail-value">${rec.food_region}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Culture</div>
-                                <div class="detail-value">${rec.food_culture}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Mood Match</div>
-                                <div class="detail-value">${(rec.mood_match * 100).toFixed(0)}%</div>
-                            </div>
-                        </div>
-
-                        ${rec.restaurant_name ? `
-                            <div class="restaurant-info">
-                                <div class="restaurant-name">🏪 ${rec.restaurant_name}</div>
-                                <div class="restaurant-details">
-                                    <span>⭐ ${rec.restaurant_rating}/5</span>
-                                    <span>🍽️ ${rec.restaurant_cuisine}</span>
-                                    <span>🚚 ${rec.delivery_available ? 'Delivery Available' : 'No Delivery'}</span>
+                            
+                            <div class="food-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Category</div>
+                                    <div class="detail-value">${(rec.food_category || 'N/A').replace(/_/g, ' ')}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Region</div>
+                                    <div class="detail-value">${rec.food_region || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Culture</div>
+                                    <div class="detail-value">${rec.food_culture || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Mood Match</div>
+                                    <div class="detail-value">${(rec.mood_match * 100).toFixed(0)}%</div>
                                 </div>
                             </div>
-                        ` : ''}
 
-                        <div class="reasoning">
-                            <div class="reasoning-title">🤔 Why This Recommendation?</div>
-                            <ul class="reasoning-list">
-                                ${rec.reasoning.map(reason => `<li>• ${reason}</li>`).join('')}
-                            </ul>
+                            ${rec.restaurant ? `
+                                <div class="restaurant-info">
+                                    <div class="restaurant-name">🏪 ${rec.restaurant.name || 'Restaurant'}</div>
+                                    <div class="restaurant-details">
+                                        <span>⭐ ${rec.restaurant.rating || 'N/A'}/5</span>
+                                        <span>🍽️ ${rec.restaurant.cuisine_type || 'Various'}</span>
+                                        <span>🚚 ${rec.restaurant.delivery_available ? 'Delivery Available' : 'No Delivery'}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <div class="reasoning">
+                                <div class="reasoning-title">🤔 Why This Recommendation?</div>
+                                <ul class="reasoning-list">
+                                    ${Array.isArray(rec.reasoning) ? rec.reasoning.map(reason => `<li>• ${reason}</li>`).join('') : '<li>• AI-powered recommendation based on your mood and context</li>'}
+                                </ul>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `).join('');
+                    
+                    resultsDiv.innerHTML = `
+                        <div class="results-section">
+                            <h2 style="margin-bottom: 20px; color: #333;">
+                                🍴 Found ${data.recommendations.length} AI-Enhanced Recommendations
+                            </h2>
+                            ${recommendationsHtml}
+                        </div>
+                    `;
+                }
                 
+                resultsDiv.style.display = 'block';
+                console.log('✅ showResults completed');
+            } catch (error) {
+                console.error('💥 Error in showResults:', error);
+                // Show a fallback result
+                const resultsDiv = document.getElementById('resultsSection');
                 resultsDiv.innerHTML = `
-                    <div class="results-section">
-                        <h2 style="margin-bottom: 20px; color: #333;">
-                            🍴 Found ${data.recommendations.length} AI-Enhanced Recommendations
-                        </h2>
-                        ${recommendationsHtml}
+                    <div class="result-card">
+                        <h3>Error Displaying Results</h3>
+                        <p>There was an error processing the recommendations. Please try again.</p>
+                        <p>Error: ${error.message}</p>
                     </div>
                 `;
+                resultsDiv.style.display = 'block';
             }
-            
-            resultsDiv.style.display = 'block';
         }
 
         function showFeedbackSection(data) {
-            const feedbackDiv = document.getElementById('feedbackSection');
-            
-            const feedbackHtml = `
-                <div class="feedback-section">
-                    <div class="feedback-title">💬 Help Us Learn - Rate Your Experience</div>
-                    <p>Your feedback helps our AI system improve and provide better recommendations!</p>
-                    
-                    <div class="rating-stars" id="ratingStars">
-                        <span class="star" data-rating="1">⭐</span>
-                        <span class="star" data-rating="2">⭐</span>
-                        <span class="star" data-rating="3">⭐</span>
-                        <span class="star" data-rating="4">⭐</span>
-                        <span class="star" data-rating="5">⭐</span>
+            try {
+                console.log('💬 Starting showFeedbackSection...', data);
+                const feedbackDiv = document.getElementById('feedbackSection');
+                
+                const feedbackHtml = `
+                    <div class="feedback-section">
+                        <div class="feedback-title">💬 Help Us Learn - Rate Your Experience</div>
+                        <p>Your feedback helps our AI system improve and provide better recommendations!</p>
+                        
+                        <div class="rating-stars" id="ratingStars">
+                            <span class="star" data-rating="1">⭐</span>
+                            <span class="star" data-rating="2">⭐</span>
+                            <span class="star" data-rating="3">⭐</span>
+                            <span class="star" data-rating="4">⭐</span>
+                            <span class="star" data-rating="5">⭐</span>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="feedbackText">Additional feedback (optional):</label>
+                            <textarea id="feedbackText" placeholder="Tell us what you think about the recommendations..."></textarea>
+                        </div>
+                        
+                        <button class="submit-btn" onclick="submitFeedback()" style="width: auto; margin-top: 15px;">
+                            📤 Submit Feedback
+                        </button>
                     </div>
-                    
-                    <div class="input-group">
-                        <label for="feedbackText">Additional feedback (optional):</label>
-                        <textarea id="feedbackText" placeholder="Tell us what you think about the recommendations..."></textarea>
-                    </div>
-                    
-                    <button class="submit-btn" onclick="submitFeedback()" style="width: auto; margin-top: 15px;">
-                        📤 Submit Feedback
-                    </button>
-                </div>
-            `;
-            
-            feedbackDiv.innerHTML = feedbackHtml;
-            feedbackDiv.style.display = 'block';
-            
-            // Add star rating functionality
-            document.querySelectorAll('.star').forEach(star => {
-                star.addEventListener('click', function() {
-                    const rating = this.dataset.rating;
-                    document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
-                    for (let i = 1; i <= rating; i++) {
-                        document.querySelector(`[data-rating="${i}"]`).classList.add('active');
-                    }
+                `;
+                
+                feedbackDiv.innerHTML = feedbackHtml;
+                feedbackDiv.style.display = 'block';
+                
+                // Add star rating functionality
+                document.querySelectorAll('.star').forEach(star => {
+                    star.addEventListener('click', function() {
+                        const rating = this.dataset.rating;
+                        document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+                        for (let i = 1; i <= rating; i++) {
+                            document.querySelector(`[data-rating="${i}"]`).classList.add('active');
+                        }
+                    });
                 });
-            });
+                
+                console.log('✅ showFeedbackSection completed');
+            } catch (error) {
+                console.error('💥 Error in showFeedbackSection:', error);
+                // Don't fail the entire process, just log the error
+            }
         }
 
         async function submitFeedback() {
@@ -1176,10 +1208,21 @@
             document.getElementById('errorSection').style.display = 'block';
         }
 
-        // Load examples
+        // Load examples on demand instead of on page load
         window.onload = function() {
-            loadExamples();
+            console.log('📄 Enhanced UI loaded successfully');
         };
+        
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            console.error('💥 Global error:', event.error);
+            console.error('💥 Error location:', event.filename + ':' + event.lineno);
+        });
+        
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('💥 Unhandled promise rejection:', event.reason);
+        });
 
         async function loadExamples() {
             try {

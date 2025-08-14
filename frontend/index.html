@@ -43,6 +43,16 @@
         .header p {
             font-size: 1.2rem;
             opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .phase-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
         }
 
         .main-content {
@@ -353,6 +363,7 @@
         <div class="header">
             <h1>🍽️ AI Mood Food Recommender 🧠</h1>
             <p>Tell me how you feel, and I'll tell you what to eat!</p>
+            <div class="phase-badge">Phase 3 Enhanced API</div>
         </div>
 
         <div class="main-content">
@@ -498,27 +509,12 @@
             if (energyLevel) context.energy_level = energyLevel;
 
             try {
-                // First, analyze the mood
-                const moodResponse = await fetch(`${API_BASE}/analyze-mood`, {
+                // Get enhanced recommendations (includes mood analysis)
+                const recResponse = await fetch(`${API_BASE}/enhanced-recommend`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_input: userInput,
-                        context: context
-                    })
-                });
-
-                if (moodResponse.ok) {
-                    const moodData = await moodResponse.json();
-                    showMoodAnalysis(moodData);
-                }
-
-                // Then get recommendations
-                const recResponse = await fetch(`${API_BASE}/recommend`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_input: userInput,
+                        text_input: userInput,
                         user_context: context,
                         top_k: 10
                     })
@@ -541,36 +537,64 @@
 
         function showMoodAnalysis(data) {
             const moodDiv = document.getElementById('moodAnalysis');
-            moodDiv.innerHTML = `
-                <div class="mood-analysis">
-                    <div class="mood-title">🧠 Mood Analysis</div>
-                    <div class="mood-details">
-                        <div class="mood-item">
-                            <div class="detail-label">Primary Mood</div>
-                            <div class="detail-value">${data.primary_mood.replace(/_/g, ' ')}</div>
-                        </div>
-                        <div class="mood-item">
-                            <div class="detail-label">Confidence</div>
-                            <div class="detail-value">${(data.confidence_score * 100).toFixed(0)}%</div>
-                        </div>
-                        <div class="mood-item">
-                            <div class="detail-label">Categories</div>
-                            <div class="detail-value">${data.mood_categories.length}</div>
-                        </div>
-                        <div class="mood-item">
-                            <div class="detail-label">Entities</div>
-                            <div class="detail-value">${data.extracted_entities.join(', ') || 'None'}</div>
+            
+            // Check if we have multimodal analysis data
+            if (data.multimodal_analysis) {
+                const moodData = data.multimodal_analysis;
+                moodDiv.innerHTML = `
+                    <div class="mood-analysis">
+                        <div class="mood-title">🧠 AI Mood Analysis</div>
+                        <div class="mood-details">
+                            <div class="mood-item">
+                                <div class="detail-label">Primary Mood</div>
+                                <div class="detail-value">${moodData.primary_mood.replace(/_/g, ' ')}</div>
+                            </div>
+                            <div class="mood-item">
+                                <div class="detail-label">Confidence</div>
+                                <div class="detail-value">${(moodData.confidence * 100).toFixed(0)}%</div>
+                            </div>
+                            <div class="mood-item">
+                                <div class="detail-label">Categories</div>
+                                <div class="detail-value">${moodData.mood_categories.length}</div>
+                            </div>
+                            <div class="mood-item">
+                                <div class="detail-label">Entities</div>
+                                <div class="detail-value">${moodData.extracted_entities.join(', ') || 'None'}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else if (data.intent_prediction) {
+                // Fallback to intent prediction if no multimodal analysis
+                const intentData = data.intent_prediction;
+                moodDiv.innerHTML = `
+                    <div class="mood-analysis">
+                        <div class="mood-title">🧠 AI Intent Analysis</div>
+                        <div class="mood-details">
+                            <div class="mood-item">
+                                <div class="detail-label">Primary Intent</div>
+                                <div class="detail-value">${intentData.primary_intent.replace(/_/g, ' ')}</div>
+                            </div>
+                            <div class="mood-item">
+                                <div class="detail-label">Confidence</div>
+                                <div class="detail-value">${(intentData.confidence * 100).toFixed(0)}%</div>
+                            </div>
+                            <div class="mood-item">
+                                <div class="detail-label">Processing Time</div>
+                                <div class="detail-value">${data.processing_time.toFixed(2)}s</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
             moodDiv.style.display = 'block';
         }
 
         function showResults(data) {
             const resultsDiv = document.getElementById('resultsSection');
             
-            if (data.recommendations.length === 0) {
+            if (!data.recommendations || data.recommendations.length === 0) {
                 resultsDiv.innerHTML = `
                     <div class="result-card">
                         <h3>No recommendations found</h3>
@@ -581,22 +605,22 @@
                 const recommendationsHtml = data.recommendations.map((rec, index) => `
                     <div class="result-card">
                         <div class="result-header">
-                            <div class="food-name">${rec.food_name}</div>
+                            <div class="food-name">${rec.food_name || 'Food Item'}</div>
                             <div class="score">${(rec.score * 100).toFixed(0)}%</div>
                         </div>
                         
                         <div class="food-details">
                             <div class="detail-item">
                                 <div class="detail-label">Category</div>
-                                <div class="detail-value">${rec.food_category.replace(/_/g, ' ')}</div>
+                                <div class="detail-value">${(rec.food_category || 'General').replace(/_/g, ' ')}</div>
                             </div>
                             <div class="detail-item">
                                 <div class="detail-label">Region</div>
-                                <div class="detail-value">${rec.food_region}</div>
+                                <div class="detail-value">${rec.food_region || 'Various'}</div>
                             </div>
                             <div class="detail-item">
                                 <div class="detail-label">Culture</div>
-                                <div class="detail-value">${rec.food_culture}</div>
+                                <div class="detail-value">${rec.food_culture || 'International'}</div>
                             </div>
                             <div class="detail-item">
                                 <div class="detail-label">Mood Match</div>
@@ -604,13 +628,13 @@
                             </div>
                         </div>
 
-                        ${rec.restaurant_name ? `
+                        ${rec.restaurant ? `
                             <div class="restaurant-info">
-                                <div class="restaurant-name">🏪 ${rec.restaurant_name}</div>
+                                <div class="restaurant-name">🏪 ${rec.restaurant.name || 'Restaurant'}</div>
                                 <div class="restaurant-details">
-                                    <span>⭐ ${rec.restaurant_rating}/5</span>
-                                    <span>🍽️ ${rec.restaurant_cuisine}</span>
-                                    <span>🚚 ${rec.delivery_available ? 'Delivery Available' : 'No Delivery'}</span>
+                                    <span>⭐ ${rec.restaurant.rating || 'N/A'}/5</span>
+                                    <span>🍽️ ${rec.restaurant.cuisine_type || 'Various'}</span>
+                                    <span>🚚 ${rec.restaurant.delivery_available ? 'Delivery Available' : 'No Delivery'}</span>
                                 </div>
                             </div>
                         ` : ''}
@@ -618,7 +642,7 @@
                         <div class="reasoning">
                             <div class="reasoning-title">🤔 Why This Recommendation?</div>
                             <ul class="reasoning-list">
-                                ${rec.reasoning.map(reason => `<li>• ${reason}</li>`).join('')}
+                                ${Array.isArray(rec.reasoning) ? rec.reasoning.map(reason => `<li>• ${reason}</li>`).join('') : '<li>• AI-powered recommendation based on your mood and context</li>'}
                             </ul>
                         </div>
                     </div>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Test - Enhanced UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .result { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+        button { padding: 10px 20px; margin: 5px; }
+        .loading { color: blue; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Enhanced UI Performance Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Page Load Test</h3>
+        <div id="pageLoadResult" class="result">Testing page load time...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. API Connection Test</h3>
+        <button onclick="testAPIConnection()">Test API Connection</button>
+        <div id="apiResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Simple Request Test</h3>
+        <button onclick="testSimpleRequest()">Test Simple Request</button>
+        <div id="simpleResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Enhanced Request Test</h3>
+        <button onclick="testEnhancedRequest()">Test Enhanced Request</button>
+        <div id="enhancedResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        
+        // Test 1: Page Load Time
+        window.addEventListener('load', () => {
+            const loadTime = performance.now();
+            document.getElementById('pageLoadResult').innerHTML = 
+                `<span class="success">Page loaded in ${loadTime.toFixed(2)}ms</span>`;
+        });
+        
+        // Test 2: API Connection
+        async function testAPIConnection() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '<span class="loading">Testing API connection...</span>';
+            
+            try {
+                const startTime = performance.now();
+                const response = await fetch(`${API_BASE}/health`);
+                const endTime = performance.now();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ API Connected!</span><br>
+                        Status: ${data.status}<br>
+                        Time: ${(endTime - startTime).toFixed(2)}ms
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ API Error: ${response.status}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Connection Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Test 3: Simple Request
+        async function testSimpleRequest() {
+            const resultDiv = document.getElementById('simpleResult');
+            resultDiv.innerHTML = '<span class="loading">Testing simple request...</span>';
+            
+            try {
+                const startTime = performance.now();
+                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text_input: "test",
+                        top_k: 1
+                    })
+                });
+                const endTime = performance.now();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ Simple Request Success!</span><br>
+                        Processing Time: ${(data.processing_time * 1000).toFixed(2)}ms<br>
+                        Total Time: ${(endTime - startTime).toFixed(2)}ms<br>
+                        Recommendations: ${data.recommendations.length}
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Request Error: ${response.status}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Request Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Test 4: Enhanced Request (like the enhanced UI)
+        async function testEnhancedRequest() {
+            const resultDiv = document.getElementById('enhancedResult');
+            resultDiv.innerHTML = '<span class="loading">Testing enhanced request...</span>';
+            
+            try {
+                const startTime = performance.now();
+                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text_input: "I want something warm and comforting",
+                        user_context: {
+                            time_of_day: "evening",
+                            weather: "cold",
+                            social_context: "alone"
+                        },
+                        user_id: 'test_user_' + Date.now(),
+                        session_id: 'test_session_' + Date.now(),
+                        top_k: 5
+                    })
+                });
+                const endTime = performance.now();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ Enhanced Request Success!</span><br>
+                        Processing Time: ${(data.processing_time * 1000).toFixed(2)}ms<br>
+                        Total Time: ${(endTime - startTime).toFixed(2)}ms<br>
+                        Intent: ${data.intent_prediction?.primary_intent || 'N/A'}<br>
+                        Confidence: ${data.intent_prediction?.confidence || 'N/A'}<br>
+                        Recommendations: ${data.recommendations.length}
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Request Error: ${response.status}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Request Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

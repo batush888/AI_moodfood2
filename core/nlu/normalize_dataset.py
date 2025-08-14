@@ -108,8 +108,8 @@ def save_dataset(data: List[Dict], output_path: str):
     print(f"✅ Saved normalized dataset with {len(data)} samples to: {output_path}")
 
 if __name__ == "__main__":
-    INPUT_PATH = "data/dataset.json"
-    OUTPUT_PATH = "data/dataset_normalized.json"
+    INPUT_PATH = "data/intent_dataset.json"
+    OUTPUT_PATH = "data/intent_dataset_normalized.json"
 
     Path(OUTPUT_PATH).parent.mkdir(parents=True, exist_ok=True)
 

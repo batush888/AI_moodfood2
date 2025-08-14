@@ -6,11 +6,12 @@ from transformers import DistilBertTokenizerFast, DistilBertForSequenceClassific
 from transformers.trainer import Trainer
 from transformers.training_args import TrainingArguments
 from sklearn.metrics import f1_score, precision_score, recall_score
-from intent_dataset import IntentDataset
+from moodfood_dataset import MoodFoodDataset
 from torch.utils.data import random_split
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.normpath(os.path.join(SCRIPT_DIR, '../../..'))  # Up to AI_moodfood2
+# Use current working directory instead of relative path
+PROJECT_ROOT = os.getcwd()
 
 # -----------------------------
 # Load taxonomy labels
@@ -44,18 +45,19 @@ def compute_metrics(eval_pred):
 # -----------------------------
 def train_model():
     # Optional sanity check
-    taxonomy_path = os.path.join(PROJECT_ROOT, "data/taxonomy/mood_food_taxonomy.json")
-    dataset_path = os.path.join(PROJECT_ROOT, "data/intent_dataset.json")
+    taxonomy_path = os.path.join(PROJECT_ROOT, "data", "taxonomy", "mood_food_taxonomy.json")
+    dataset_path = os.path.join(PROJECT_ROOT, "data", "intent_dataset.json")
     
     print(f"Attempting to load dataset from absolute path: {os.path.abspath(dataset_path)}")
-    labels_from_taxonomy = extract_all_sub_labels("data/taxonomy/mood_food_taxonomy.json")
+    print(f"Attempting to load taxonomy from absolute path: {os.path.abspath(taxonomy_path)}")
+    labels_from_taxonomy = extract_all_sub_labels(taxonomy_path)
     print(f"📚 Loaded {len(labels_from_taxonomy)} taxonomy intent classes.")
     valid_labels = labels_from_taxonomy
     print(f"📚 Extracted {len(valid_labels)} sub-labels from taxonomy.")
 
     # 1. Load dataset
     tokenizer = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
-    dataset = IntentDataset(data_path=dataset_path, tokenizer=tokenizer, multi_label=True, taxonomy_path=taxonomy_path)
+    dataset = MoodFoodDataset(dataset_path)
 
     # Check if dataset has samples
     if len(dataset) == 0:
@@ -68,8 +70,12 @@ def train_model():
     val_size = full_size - train_size
 
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
-    label2idx, idx2label = dataset.get_label_encoder()
-    num_labels = len(label2idx)
+    
+    # Get labels from the MultiLabelBinarizer
+    num_labels = len(dataset.mlb.classes_)
+    print(f"🎯 Training model with {num_labels} taxonomy categories:")
+    for i, label in enumerate(dataset.mlb.classes_):
+        print(f"   {i+1:2d}. {label}")
 
     # 2. Initialize model
     model = DistilBertForSequenceClassification.from_pretrained(
@@ -110,10 +116,20 @@ def train_model():
     trainer.train()
 
     # 6. Save final model, tokenizer, and label encoder
+    os.makedirs("./models", exist_ok=True)
     model.save_pretrained("./models/intent_model")
     tokenizer.save_pretrained("./models/intent_model")
-    torch.save((label2idx, idx2label), "./models/label_encoder.pt")
-    print("✅ Model, tokenizer, and label encoder saved to ./models/")
+    
+    # Save the MultiLabelBinarizer for inference
+    import pickle
+    with open("./models/label_encoder.pkl", "wb") as f:
+        pickle.dump(dataset.mlb, f)
+    
+    print("✅ Model, tokenizer, and label encoder saved successfully!")
+    print(f"📁 Model saved to: ./models/intent_model")
+    print(f"📁 Label encoder saved to: ./models/label_encoder.pkl")
+    print(f"🎯 Total taxonomy categories: {len(dataset.mlb.classes_)}")
+    print(f"📊 Training samples: {len(dataset)}")
 
 # -----------------------------
 # Entry point
