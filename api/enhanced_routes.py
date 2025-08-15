@@ -54,6 +54,16 @@ class EnhancedRecommendationRequest(BaseModel):
     audio_base64: Optional[str] = Field(None, description="Base64 encoded audio")
     user_context: Optional[UserContext] = Field(None, description="User context information")
 
+class FeedbackRequest(BaseModel):
+    user_id: str
+    session_id: Optional[str] = None
+    input_text: Optional[str] = None
+    recommended_foods: List[str] = Field(default_factory=list)
+    selected_food: Optional[str] = None
+    rating: Optional[float] = Field(None, ge=0, le=5)
+    feedback_text: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+
 class Restaurant(BaseModel):
     name: str
     cuisine: str
@@ -131,28 +141,19 @@ learning_system = None
 recommendation_engine = None
 phase3_manager = None
 
-def initialize_component(component_name: str, init_function, fallback_function, timeout: int = 30):
-    """Initialize a component with timeout and fallback protection."""
+async def initialize_component(component_name: str, init_function, fallback_function, timeout: int = 30):
+    """Initialize a component with timeout and fallback protection (async)."""
+    logger.info(f"Initializing {component_name}...")
     try:
-        logger.info(f"Initializing {component_name}...")
-        
-        # Run initialization with timeout
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        try:
-            result = asyncio.wait_for(
-                asyncio.to_thread(init_function), 
-                timeout=timeout
-            )
-            logger.info(f"{component_name} initialized successfully")
-            return result
-        except asyncio.TimeoutError:
-            logger.warning(f"{component_name} initialization timed out after {timeout}s")
-            return fallback_function()
-        finally:
-            loop.close()
-            
+        result = await asyncio.wait_for(
+            asyncio.to_thread(init_function),
+            timeout=timeout
+        )
+        logger.info(f"{component_name} initialized successfully")
+        return result
+    except asyncio.TimeoutError:
+        logger.warning(f"{component_name} initialization timed out after {timeout}s")
+        return fallback_function()
     except Exception as e:
         logger.error(f"{component_name} initialization failed: {e}")
         return fallback_function()
@@ -194,35 +195,35 @@ async def startup_event():
     logger.info(f"Using taxonomy path: {taxonomy_path}")
     
     # Initialize components with timeouts and fallbacks
-    enhanced_classifier = initialize_component(
+    enhanced_classifier = await initialize_component(
         "enhanced_classifier",
         lambda: EnhancedIntentClassifier(taxonomy_path) if CORE_IMPORTS_AVAILABLE else None,
         create_fallback_enhanced_classifier,
         timeout=10
     )
     
-    multimodal_processor = initialize_component(
+    multimodal_processor = await initialize_component(
         "multimodal_processor",
         lambda: MultiModalProcessor() if CORE_IMPORTS_AVAILABLE else None,
         create_fallback_multimodal_processor,
         timeout=15
     )
     
-    learning_system = initialize_component(
+    learning_system = await initialize_component(
         "learning_system",
         lambda: RealTimeLearningSystem() if CORE_IMPORTS_AVAILABLE else None,
         create_fallback_learning_system,
         timeout=10
     )
     
-    recommendation_engine = initialize_component(
+    recommendation_engine = await initialize_component(
         "recommendation_engine",
         lambda: RecommendationEngine() if CORE_IMPORTS_AVAILABLE else None,
         create_fallback_recommendation_engine,
         timeout=20
     )
     
-    phase3_manager = initialize_component(
+    phase3_manager = await initialize_component(
         "phase3_manager",
         lambda: Phase3FeatureManager() if CORE_IMPORTS_AVAILABLE else None,
         create_fallback_phase3_manager,
@@ -283,19 +284,30 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
     logger.info(f"Processing enhanced recommendation request: session={session_id}, text_length={len(request.text_input)}")
     
     try:
+        # Perf tracing containers
+        phase_times_ms: Dict[str, float] = {}
+        timeouts: Dict[str, bool] = {"intent": False, "multimodal": False, "engine": False}
+        input_sizes: Dict[str, Any] = {
+            "text_len": len(request.text_input or ""),
+            "image_b64_len": len(request.image_base64) if request.image_base64 else 0,
+            "audio_b64_len": len(request.audio_base64) if request.audio_base64 else 0,
+        }
         # 1. Enhanced Intent Classification
         logger.info("Performing enhanced intent classification...")
         intent_result = None
         
         if enhanced_classifier:
             try:
+                _t0 = asyncio.get_event_loop().time()
                 intent_result = await asyncio.wait_for(
                     asyncio.to_thread(enhanced_classifier.classify_intent, request.text_input),
                     timeout=10.0
                 )
+                phase_times_ms["intent_ms"] = round((asyncio.get_event_loop().time() - _t0) * 1000.0, 2)
                 logger.info(f"Intent classification completed: {intent_result.get('primary_intent', 'unknown')}")
             except asyncio.TimeoutError:
                 logger.warning("Intent classification timed out, using fallback")
+                timeouts["intent"] = True
                 intent_result = {"primary_intent": "fallback", "confidence": 0.5, "all_intents": [["fallback", 0.5]]}
             except Exception as e:
                 logger.error(f"Intent classification failed: {e}")
@@ -308,6 +320,7 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
         multimodal_analysis = None
         if multimodal_processor and (request.image_base64 or request.audio_base64):
             try:
+                _t0 = asyncio.get_event_loop().time()
                 multimodal_analysis = await asyncio.wait_for(
                     asyncio.to_thread(
                         multimodal_processor.process_multimodal,
@@ -317,8 +330,10 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                     ),
                     timeout=15.0
                 )
+                phase_times_ms["multimodal_ms"] = round((asyncio.get_event_loop().time() - _t0) * 1000.0, 2)
             except asyncio.TimeoutError:
                 logger.warning("Multi-modal analysis timed out")
+                timeouts["multimodal"] = True
             except Exception as e:
                 logger.error(f"Multi-modal analysis failed: {e}")
         
@@ -329,6 +344,7 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
         if recommendation_engine:
             try:
                 logger.info("Calling recommendation engine...")
+                _t0 = asyncio.get_event_loop().time()
                 recommendations = await asyncio.wait_for(
                     asyncio.to_thread(
                         recommendation_engine.get_recommendations,
@@ -338,11 +354,13 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                     ),
                     timeout=20.0
                 )
+                phase_times_ms["engine_ms"] = round((asyncio.get_event_loop().time() - _t0) * 1000.0, 2)
                 
                 logger.info(f"Raw recommendations: {len(recommendations)} items")
                 
                 # Convert recommendations to proper format
                 formatted_recommendations = []
+                _fmt_t0 = asyncio.get_event_loop().time()
                 for i, rec in enumerate(recommendations):
                     try:
                         logger.info(f"Processing recommendation {i+1}: {type(rec)}")
@@ -394,10 +412,12 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                         continue
                 
                 recommendations = formatted_recommendations
+                phase_times_ms["format_ms"] = round((asyncio.get_event_loop().time() - _fmt_t0) * 1000.0, 2)
                 logger.info(f"Generated {len(recommendations)} formatted recommendations")
                 
             except asyncio.TimeoutError:
                 logger.warning("Recommendation generation timed out")
+                timeouts["engine"] = True
                 recommendations = []
             except Exception as e:
                 logger.error(f"Recommendation generation failed: {e}")
@@ -427,6 +447,18 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
         # 5. Calculate processing time
         end_time = asyncio.get_event_loop().time()
         processing_time = end_time - start_time
+
+        # Log perf summary
+        logger.info(
+            "Perf summary | total_ms=%s intent_ms=%s multimodal_ms=%s engine_ms=%s format_ms=%s timeouts=%s sizes=%s",
+            round(processing_time * 1000.0, 2),
+            phase_times_ms.get("intent_ms"),
+            phase_times_ms.get("multimodal_ms"),
+            phase_times_ms.get("engine_ms"),
+            phase_times_ms.get("format_ms"),
+            timeouts,
+            input_sizes,
+        )
         
         # 6. Create response
         response = EnhancedRecommendationResponse(
@@ -438,7 +470,11 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                 "all_intents": intent_result.get("all_intents", [["unknown", 0.5]])
             },
             user_preferences=None,
-            system_performance={},
+            system_performance={
+                "phase_times_ms": phase_times_ms,
+                "timeouts": timeouts,
+                "input_sizes": input_sizes,
+            },
             model_version="v1.0",
             processing_time=processing_time
         )
@@ -465,11 +501,11 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                 }
             ],
             multimodal_analysis=None,
-            intent_prediction=IntentPrediction(
-                primary_intent="error",
-                confidence=0.1,
-                all_intents=[["error", 0.1]]
-            ),
+            intent_prediction={
+                "primary_intent": "error",
+                "confidence": 0.1,
+                "all_intents": [["error", 0.1]]
+            },
             user_preferences=None,
             system_performance={"error": str(e)},
             model_version="v1.0",
@@ -540,6 +576,66 @@ async def serve_frontend():
 async def serve_ui():
     """Alternative route to serve the frontend."""
     return await serve_frontend()
+
+@app.get("/examples")
+async def get_examples():
+    """Get example inputs for the frontend."""
+    return {
+        "examples": {
+            "mood_based": [
+                "I'm feeling stressed and need comfort food",
+                "I want something energizing for my workout",
+                "I'm in a romantic mood, suggest something elegant",
+                "I need something healthy and light for lunch"
+            ],
+            "cuisine_preferences": [
+                "I want spicy Indian food",
+                "I'm craving Italian pasta",
+                "Show me some Japanese sushi options",
+                "I want authentic Mexican food"
+            ],
+            "dietary_restrictions": [
+                "I'm vegetarian, suggest healthy options",
+                "I need gluten-free food recommendations",
+                "I'm on a low-carb diet",
+                "I want vegan comfort food"
+            ],
+            "occasions": [
+                "I need food for a business lunch",
+                "I want something special for date night",
+                "I need quick food for a busy day",
+                "I want something festive for a celebration"
+            ]
+        }
+    }
+
+@app.post("/feedback")
+async def submit_feedback(feedback: FeedbackRequest):
+    """Submit user feedback for real-time learning."""
+    try:
+        if learning_system is None:
+            return {"status": "learning_system_unavailable"}
+
+        # Build context and record
+        session_id = feedback.session_id or "web-ui"
+        context = feedback.context or {}
+
+        await asyncio.to_thread(
+            learning_system.record_feedback,
+            feedback.user_id,
+            session_id,
+            feedback.input_text or "",
+            feedback.recommended_foods,
+            feedback.selected_food,
+            feedback.rating,
+            feedback.feedback_text,
+            context,
+        )
+
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Feedback submission failed: {e}")
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

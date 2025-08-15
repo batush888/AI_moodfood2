@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Test Results</h1>
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        async function runTests() {
+            const results = document.getElementById('results');
+            
+            // Test 1: Check if server is running
+            try {
+                const healthResponse = await fetch(`${API_BASE}/health`);
+                if (healthResponse.ok) {
+                    results.innerHTML += '<div class="test-result success">✅ Server is running</div>';
+                } else {
+                    results.innerHTML += '<div class="test-result error">❌ Server health check failed</div>';
+                }
+            } catch (error) {
+                results.innerHTML += '<div class="test-result error">❌ Cannot connect to server</div>';
+            }
+            
+            // Test 2: Check examples endpoint
+            try {
+                const examplesResponse = await fetch(`${API_BASE}/examples`);
+                if (examplesResponse.ok) {
+                    const data = await examplesResponse.json();
+                    results.innerHTML += '<div class="test-result success">✅ Examples endpoint working</div>';
+                } else {
+                    results.innerHTML += '<div class="test-result error">❌ Examples endpoint failed</div>';
+                }
+            } catch (error) {
+                results.innerHTML += '<div class="test-result error">❌ Examples endpoint error</div>';
+            }
+            
+            // Test 3: Test recommendation endpoint
+            try {
+                const recResponse = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text_input: 'test input' })
+                });
+                if (recResponse.ok) {
+                    results.innerHTML += '<div class="test-result success">✅ Recommendation endpoint working</div>';
+                } else {
+                    results.innerHTML += '<div class="test-result error">❌ Recommendation endpoint failed</div>';
+                }
+            } catch (error) {
+                results.innerHTML += '<div class="test-result error">❌ Recommendation endpoint error</div>';
+            }
+            
+            // Test 4: Check frontend accessibility
+            try {
+                const frontendResponse = await fetch(`${API_BASE}/`);
+                if (frontendResponse.ok) {
+                    const html = await frontendResponse.text();
+                    if (html.includes('AI Mood Food Recommender')) {
+                        results.innerHTML += '<div class="test-result success">✅ Frontend is accessible</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result error">❌ Frontend content not found</div>';
+                    }
+                } else {
+                    results.innerHTML += '<div class="test-result error">❌ Frontend not accessible</div>';
+                }
+            } catch (error) {
+                results.innerHTML += '<div class="test-result error">❌ Frontend access error</div>';
+            }
+        }
+        
+        // Run tests when page loads
+        window.onload = runTests;
+    </script>
+</body>
+</html>

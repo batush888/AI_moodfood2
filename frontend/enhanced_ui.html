@@ -656,7 +656,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://127.0.0.1:8000';
+        const API_BASE = window.location.origin;
         let currentTab = 'text';
         let isRecording = false;
         let mediaRecorder = null;
@@ -878,10 +878,7 @@
                         text_input: textInput,
                         image_base64: imageBase64 || null,
                         audio_base64: audioBase64 || null,
-                        user_context: context,
-                        user_id: 'demo_user_' + Date.now(),
-                        session_id: 'session_' + Date.now(),
-                        top_k: 10
+                        user_context: context
                     }),
                     signal: controller.signal
                 });
@@ -1140,7 +1137,7 @@
             
             try {
                 // Submit feedback to learning system
-                const response = await fetch(`${API_BASE}/enhanced-feedback`, {
+                const response = await fetch(`${API_BASE}/feedback`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1206,6 +1203,11 @@
                 </div>
             `;
             document.getElementById('errorSection').style.display = 'block';
+        }
+
+        function hideError() {
+            const el = document.getElementById('errorSection');
+            if (el) el.style.display = 'none';
         }
 
         // Load examples on demand instead of on page load
