@@ -479,6 +479,11 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Hidden by default; shim toggles via style.display */
+        #loadingSection[style*="display: none"], #errorSection[style*="display: none"] { 
+            display: none !important; 
+        }
     </style>
 </head>
 <body>
@@ -656,6 +661,118 @@
     </div>
 
     <script>
+        /* ---------- MoodfoodUI safety shim (no overrides) ---------- */
+        (function () {
+          const $ = (id) => document.getElementById(id);
+
+          // Cache common elements (change IDs here if yours differ)
+          const els = {
+            loader: $("loadingSection") || $("loadingSpinner") || $("mf-loader"),
+            errorBox: $("errorSection") || $("mf-error"),
+            results: $("resultsSection") || $("recommendations"),
+          };
+
+          // Safe, idempotent helpers (we only define them if missing)
+          const SafeUI = {
+            showLoader() {
+              if (els.loader) els.loader.style.display = 'block';
+            },
+            hideLoader() {
+              if (els.loader) els.loader.style.display = 'none';
+            },
+            showError(msg) {
+              console.error("UI Error:", msg);
+              if (!els.errorBox) return;
+              els.errorBox.textContent = typeof msg === "string" ? msg : (msg?.message || "Something went wrong");
+              els.errorBox.style.display = 'block';
+            },
+            hideError() {
+              if (els.errorBox) els.errorBox.style.display = 'none';
+            },
+            clearResults() {
+              if (els.results) els.results.innerHTML = "";
+            },
+          };
+
+          // Only install missing functions; do NOT overwrite existing ones.
+          window.showLoader = window.showLoader || SafeUI.showLoader;
+          window.hideLoader = window.hideLoader || SafeUI.hideLoader;
+          window.showError  = window.showError  || SafeUI.showError;
+          window.hideError  = window.hideError  || SafeUI.hideError;
+          window.clearResults = window.clearResults || SafeUI.clearResults;
+
+          // ----- Robust fetch with timeout + optional retry (no API shape changes) -----
+          async function apiFetch(url, {
+            method = "POST",
+            headers = {"Content-Type": "application/json"},
+            body,
+            timeoutMs = 15000,
+            signal = undefined
+          } = {}) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(new DOMException("Timeout", "TimeoutError")), timeoutMs);
+            // If caller passed an AbortSignal, mirror aborts
+            if (signal) {
+              if (signal.aborted) ctrl.abort(signal.reason);
+              else signal.addEventListener("abort", () => ctrl.abort(signal.reason), { once: true });
+            }
+
+            try {
+              const res = await fetch(url, { method, headers, body, signal: ctrl.signal });
+              if (!res.ok) {
+                const text = await res.text().catch(() => "");
+                const err = new Error(`HTTP ${res.status} ${res.statusText} — ${text.slice(0, 200)}`);
+                err.status = res.status;
+                throw err;
+              }
+              // Parse JSON safely
+              return await res.json();
+            } finally {
+              clearTimeout(timer);
+            }
+          }
+
+          async function withRetry(fn, { retries = 1, backoffMs = 600 } = {}) {
+            let lastErr;
+            for (let attempt = 0; attempt <= retries; attempt++) {
+              try {
+                return await fn();
+              } catch (e) {
+                lastErr = e;
+                // Do not retry client errors
+                if (e?.status && e.status >= 400 && e.status < 500) break;
+                if (attempt < retries) {
+                  await new Promise(r => setTimeout(r, backoffMs * Math.pow(2, attempt)));
+                }
+              }
+            }
+            throw lastErr;
+          }
+
+          // Response guard for /enhanced-recommend (adjust keys if your API differs)
+          function isValidRecommendResponse(json) {
+            return json
+              && Array.isArray(json.recommendations)
+              && json.recommendations.every(item =>
+                   item && typeof item === "object" && ("title" in item || "name" in item || "food_item" in item));
+          }
+
+          // Expose a namespaced helper (optional)
+          window.MoodfoodUI = Object.freeze({
+            apiFetch,
+            withRetry,
+            isValidRecommendResponse
+          });
+
+          // Global safety nets: never let the loader hang
+          window.addEventListener("error", (e) => {
+            try { window.hideLoader?.(); window.showError?.(e?.error || e?.message || "Unexpected error"); } catch {}
+          });
+          window.addEventListener("unhandledrejection", (e) => {
+            try { window.hideLoader?.(); window.showError?.(e?.reason || "Unexpected error"); } catch {}
+          });
+        })();
+
         const API_BASE = window.location.origin;
         let currentTab = 'text';
         let isRecording = false;
@@ -795,128 +912,112 @@
 
         // Enhanced recommendations
         async function getEnhancedRecommendations() {
-            // Validate input
-            let hasInput = false;
-            let textInput = '';
-            let imageBase64 = null;
-            let audioBase64 = null;
-
-            // Collect input based on current tab
-            switch (currentTab) {
-                case 'text':
-                    textInput = document.getElementById('textInput').value.trim();
-                    hasInput = !!textInput;
-                    break;
-                case 'image':
-                    hasInput = !!currentImage;
-                    if (currentImage) {
-                        imageBase64 = await fileToBase64(currentImage);
-                    }
-                    break;
-                case 'voice':
-                    hasInput = !!currentAudio;
-                    if (currentAudio) {
-                        audioBase64 = await fileToBase64(currentAudio);
-                    }
-                    break;
-                case 'multimodal':
-                    textInput = document.getElementById('multimodalText').value.trim();
-                    hasInput = !!textInput || !!currentImage || !!currentAudio;
-                    if (currentImage) {
-                        imageBase64 = await fileToBase64(currentImage);
-                    }
-                    if (currentAudio) {
-                        audioBase64 = await fileToBase64(currentAudio);
-                    }
-                    break;
-            }
-
-            if (!hasInput) {
-                alert('Please provide some input (text, image, or voice) before getting recommendations.');
-                return;
-            }
-
-            // Show loading
-            showLoading();
-            hideResults();
-            hideAIAnalysis();
-            hideError();
-
-            // Build context
-            const context = {};
-            const timeOfDay = document.getElementById('timeOfDay').value;
-            const weather = document.getElementById('weather').value;
-            const socialContext = document.getElementById('socialContext').value;
-            const energyLevel = document.getElementById('energyLevel').value;
-
-            if (timeOfDay) context.time_of_day = timeOfDay;
-            if (weather) context.weather = weather;
-            if (socialContext) context.social_context = socialContext;
-            if (energyLevel) context.energy_level = energyLevel;
-
             try {
+                hideError();            // now guaranteed to exist
+                showLoader();
+                clearResults?.();
+
+                if (!navigator.onLine) {
+                    throw new Error("You appear to be offline. Check your connection and try again.");
+                }
+
+                // Validate input
+                let hasInput = false;
+                let textInput = '';
+                let imageBase64 = null;
+                let audioBase64 = null;
+
+                // Collect input based on current tab
+                switch (currentTab) {
+                    case 'text':
+                        textInput = document.getElementById('textInput').value.trim();
+                        hasInput = !!textInput;
+                        break;
+                    case 'image':
+                        hasInput = !!currentImage;
+                        if (currentImage) {
+                            imageBase64 = await fileToBase64(currentImage);
+                        }
+                        break;
+                    case 'voice':
+                        hasInput = !!currentAudio;
+                        if (currentAudio) {
+                            audioBase64 = await fileToBase64(currentAudio);
+                        }
+                        break;
+                    case 'multimodal':
+                        textInput = document.getElementById('multimodalText').value.trim();
+                        hasInput = !!textInput || !!currentImage || !!currentAudio;
+                        if (currentImage) {
+                            imageBase64 = await fileToBase64(currentImage);
+                        }
+                        if (currentAudio) {
+                            audioBase64 = await fileToBase64(currentAudio);
+                        }
+                        break;
+                }
+
+                if (!hasInput) {
+                    throw new Error('Please provide some input (text, image, or voice) before getting recommendations.');
+                }
+
+                // Build context
+                const context = {};
+                const timeOfDay = document.getElementById('timeOfDay').value;
+                const weather = document.getElementById('weather').value;
+                const socialContext = document.getElementById('socialContext').value;
+                const energyLevel = document.getElementById('energyLevel').value;
+
+                if (timeOfDay) context.time_of_day = timeOfDay;
+                if (weather) context.weather = weather;
+                if (socialContext) context.social_context = socialContext;
+                if (energyLevel) context.energy_level = energyLevel;
+
                 console.log('🚀 Starting API request...');
                 console.log('API URL:', `${API_BASE}/enhanced-recommend`);
                 console.log('Request payload:', {
                     text_input: textInput,
                     image_base64: imageBase64 ? 'present' : 'none',
                     audio_base64: audioBase64 ? 'present' : 'none',
-                    user_context: context,
-                    user_id: 'demo_user_' + Date.now(),
-                    session_id: 'session_' + Date.now(),
-                    top_k: 10
+                    user_context: context
                 });
-                
-                // Get enhanced recommendations with timeout
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-                
-                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text_input: textInput,
-                        image_base64: imageBase64 || null,
-                        audio_base64: audioBase64 || null,
-                        user_context: context
+
+                // Call your existing endpoint (method/body unchanged)
+                const data = await MoodfoodUI.withRetry(
+                    () => MoodfoodUI.apiFetch(`${API_BASE}/enhanced-recommend`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            text_input: textInput,
+                            image_base64: imageBase64 || null,
+                            audio_base64: audioBase64 || null,
+                            user_context: context
+                        }),
+                        timeoutMs: 20000
                     }),
-                    signal: controller.signal
+                    { retries: 1, backoffMs: 800 }
+                );
+
+                // Validate before rendering
+                if (!MoodfoodUI.isValidRecommendResponse(data)) {
+                    console.warn("Unexpected API shape:", data);
+                    throw new Error("Unexpected server response. Please try again.");
+                }
+
+                console.log('📊 Data received:', {
+                    recommendations: data.recommendations?.length || 0,
+                    processing_time: data.processing_time,
+                    intent: data.intent_prediction?.primary_intent
                 });
-                
-                clearTimeout(timeoutId);
-                
-                console.log('📡 Response received:', response.status, response.statusText);
 
-                if (response.ok) {
-                    console.log('✅ Response is OK, parsing JSON...');
-                    const data = await response.json();
-                    console.log('📊 Data received:', {
-                        recommendations: data.recommendations?.length || 0,
-                        processing_time: data.processing_time,
-                        intent: data.intent_prediction?.primary_intent
-                    });
-                    showAIAnalysis(data);
-                    showResults(data);
-                    showFeedbackSection(data);
-                } else {
-                    console.error('❌ Response not OK:', response.status, response.statusText);
-                    throw new Error(`Recommendations failed: ${response.status}`);
-                }
+                // Render results (use your existing renderer)
+                showAIAnalysis(data);
+                renderRecommendations(data.recommendations);
+                showFeedbackSection(data);
 
-            } catch (error) {
-                console.error('💥 Error caught:', error);
-                console.error('Error name:', error.name);
-                console.error('Error message:', error.message);
-                console.error('Error stack:', error.stack);
-                
-                if (error.name === 'AbortError') {
-                    showError('Request timed out after 30 seconds. Please try again.');
-                } else {
-                    showError(error.message);
-                }
+            } catch (err) {
+                showError(err);
             } finally {
-                console.log('🏁 Finally block - hiding loading');
-                hideLoading();
+                hideLoader();
             }
         }
 
@@ -931,6 +1032,40 @@
                 };
                 reader.onerror = error => reject(error);
             });
+        }
+
+        // Simple HTML escape to prevent layout breaks (XSS-safe rendering)
+        function escapeHtml(s) {
+            return String(s)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        // Defensive rendering function (no schema assumptions)
+        function renderRecommendations(items = []) {
+            const container = document.getElementById("resultsSection");
+            if (!container) return;
+
+            if (!Array.isArray(items) || items.length === 0) {
+                container.innerHTML = "<p>No recommendations found.</p>";
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const title = item.title || item.name || item.food_item || "Untitled";
+                const desc  = item.description || item.reason || "";
+                const meta  = item.meta || {};
+                return `
+                    <div class="result-card">
+                        <h3>${escapeHtml(title)}</h3>
+                        ${desc ? `<p>${escapeHtml(desc)}</p>` : ""}
+                        ${meta.cuisine || meta.category ? `<small>${escapeHtml(meta.cuisine || meta.category)}</small>` : ""}
+                    </div>
+                `;
+            }).join("");
         }
 
         function showAIAnalysis(data) {
@@ -1006,22 +1141,22 @@
                     const recommendationsHtml = data.recommendations.map((rec, index) => `
                         <div class="result-card">
                             <div class="result-header">
-                                <div class="food-name">${rec.food_name || 'Unknown'}</div>
+                                <div class="food-name">${escapeHtml(rec.food_name || 'Unknown')}</div>
                                 <div class="score">${(rec.score * 100).toFixed(0)}%</div>
                             </div>
                             
                             <div class="food-details">
                                 <div class="detail-item">
                                     <div class="detail-label">Category</div>
-                                    <div class="detail-value">${(rec.food_category || 'N/A').replace(/_/g, ' ')}</div>
+                                    <div class="detail-value">${escapeHtml((rec.food_category || 'N/A').replace(/_/g, ' '))}</div>
                                 </div>
                                 <div class="detail-item">
                                     <div class="detail-label">Region</div>
-                                    <div class="detail-value">${rec.food_region || 'N/A'}</div>
+                                    <div class="detail-value">${escapeHtml(rec.food_region || 'N/A')}</div>
                                 </div>
                                 <div class="detail-item">
                                     <div class="detail-label">Culture</div>
-                                    <div class="detail-value">${rec.food_culture || 'N/A'}</div>
+                                    <div class="detail-value">${escapeHtml(rec.food_culture || 'N/A')}</div>
                                 </div>
                                 <div class="detail-item">
                                     <div class="detail-label">Mood Match</div>
@@ -1031,10 +1166,10 @@
 
                             ${rec.restaurant ? `
                                 <div class="restaurant-info">
-                                    <div class="restaurant-name">🏪 ${rec.restaurant.name || 'Restaurant'}</div>
+                                    <div class="restaurant-name">🏪 ${escapeHtml(rec.restaurant.name || 'Restaurant')}</div>
                                     <div class="restaurant-details">
-                                        <span>⭐ ${rec.restaurant.rating || 'N/A'}/5</span>
-                                        <span>🍽️ ${rec.restaurant.cuisine_type || 'Various'}</span>
+                                        <span>⭐ ${escapeHtml(rec.restaurant.rating || 'N/A')}/5</span>
+                                        <span>🍽️ ${escapeHtml(rec.restaurant.cuisine_type || 'Various')}</span>
                                         <span>🚚 ${rec.restaurant.delivery_available ? 'Delivery Available' : 'No Delivery'}</span>
                                     </div>
                                 </div>
@@ -1043,7 +1178,7 @@
                             <div class="reasoning">
                                 <div class="reasoning-title">🤔 Why This Recommendation?</div>
                                 <ul class="reasoning-list">
-                                    ${Array.isArray(rec.reasoning) ? rec.reasoning.map(reason => `<li>• ${reason}</li>`).join('') : '<li>• AI-powered recommendation based on your mood and context</li>'}
+                                    ${Array.isArray(rec.reasoning) ? rec.reasoning.map(reason => `<li>• ${escapeHtml(reason)}</li>`).join('') : '<li>• AI-powered recommendation based on your mood and context</li>'}
                                 </ul>
                             </div>
                         </div>
