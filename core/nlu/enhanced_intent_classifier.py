@@ -198,7 +198,7 @@ class EnhancedIntentClassifier:
         self.fallback_keywords = {
             "comfort": ["comfort", "warm", "cozy", "soothing", "nurturing"],
             "energy": ["energy", "vitality", "energetic", "powerful"],
-            "health": ["healthy", "fresh", "light", "clean", "natural"],
+            "health": ["healthy", "fresh", "light", "clean", "natural", "ill", "sick", "recovery", "nauseous", "weak", "feeling ill"],
             "indulgence": ["indulge", "treat", "sweet", "rich", "decadent"],
             "quick": ["quick", "fast", "efficient", "simple"],
             "romantic": ["romantic", "elegant", "sophisticated", "intimate"]

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Mood Food Recommender 🍽️🧠</title>
+    <title>AI Mood Food Recommender - Unified Interface</title>
     <style>
         * {
             margin: 0;
@@ -28,35 +28,87 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 2.5em;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .header p {
-            font-size: 1.2rem;
+            font-size: 1.2em;
             opacity: 0.9;
-            margin-bottom: 15px;
         }
 
-        .phase-badge {
+        .debug-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             background: rgba(255,255,255,0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .debug-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .debug-toggle.active {
+            background: rgba(255,255,255,0.4);
+            border-color: rgba(255,255,255,0.6);
+        }
+        
+        .ai-analysis {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .ai-title {
             font-weight: 600;
-            display: inline-block;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .ai-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .ai-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #333;
         }
 
         .main-content {
-            padding: 40px;
+            padding: 30px;
         }
 
         .input-section {
@@ -77,47 +129,70 @@
             color: #333;
         }
 
-        .input-group input, .input-group select, .input-group textarea {
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
             border-radius: 8px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s ease;
         }
 
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .input-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .context-grid {
+        .multimodal-inputs {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .file-input-group {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-group:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-input-group input[type="file"] {
+            display: none;
+        }
+
+        .file-input-group label {
+            cursor: pointer;
+            color: #667eea;
+            font-weight: 600;
         }
 
         .submit-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
+            padding: 15px 40px;
             font-size: 18px;
-            font-weight: 600;
+            border-radius: 25px;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
             width: 100%;
         }
 
         .submit-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
         .submit-btn:disabled {
@@ -126,127 +201,21 @@
             transform: none;
         }
 
-        .results-section {
-            margin-top: 30px;
-        }
-
-        .result-card {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .result-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .food-name {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .score {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .food-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .detail-item {
-            background: #f8f9fa;
-            padding: 10px 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .detail-label {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .detail-value {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .restaurant-info {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
-
-        .restaurant-name {
-            font-weight: 600;
-            color: #1976d2;
-            margin-bottom: 8px;
-        }
-
-        .restaurant-details {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .reasoning {
-            background: #f3e5f5;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
-
-        .reasoning-title {
-            font-weight: 600;
-            color: #7b1fa2;
-            margin-bottom: 10px;
-        }
-
-        .reasoning-list {
-            list-style: none;
-        }
-
-        .reasoning-list li {
-            padding: 5px 0;
-            border-bottom: 1px solid #e1bee7;
-        }
-
-        .reasoning-list li:last-child {
-            border-bottom: none;
-        }
-
-        .loading {
+        .loading-section {
+            display: none;
             text-align: center;
             padding: 40px;
-            color: #666;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin: 20px 0;
         }
 
-        .spinner {
+        .loading-spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
@@ -256,104 +225,161 @@
             100% { transform: rotate(360deg); }
         }
 
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
+        .error-section {
+            display: none;
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 20px;
             border-radius: 8px;
-            margin-top: 20px;
-            border-left: 4px solid #c62828;
+            margin: 20px 0;
         }
 
-        .examples-section {
+        .results-section {
             background: #f8f9fa;
             padding: 30px;
             border-radius: 15px;
-            margin-top: 30px;
-        }
-
-        .examples-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
             margin-top: 20px;
         }
 
-        .example-category {
+        .recommendation-card {
             background: white;
             padding: 20px;
             border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             border-left: 4px solid #667eea;
         }
 
-        .example-category h3 {
-            color: #333;
+        .recommendation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
-            font-size: 1.2rem;
         }
 
-        .example-list {
-            list-style: none;
-        }
-
-        .example-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .example-list li:hover {
-            color: #667eea;
-        }
-
-        .example-list li:last-child {
-            border-bottom: none;
-        }
-
-        .mood-analysis {
-            background: #e8f5e8;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid #4caf50;
-        }
-
-        .mood-title {
+        .food-name {
+            font-size: 1.3em;
             font-weight: 600;
-            color: #2e7d32;
-            margin-bottom: 15px;
+            color: #333;
         }
 
-        .mood-details {
+        .food-score {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .food-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
+            margin-bottom: 15px;
         }
 
-        .mood-item {
-            background: white;
-            padding: 10px 15px;
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #333;
+        }
+
+        .reasoning {
+            background: #e3f2fd;
+            padding: 15px;
             border-radius: 8px;
-            text-align: center;
+            margin-top: 15px;
+        }
+
+        .reasoning h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .reasoning ul {
+            margin-left: 20px;
+        }
+
+        .feedback-section {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #4caf50;
+        }
+
+        .feedback-form {
+            display: grid;
+            gap: 15px;
+        }
+
+        .feedback-rating {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .star {
+            font-size: 24px;
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.2s ease;
+        }
+
+        .star.active {
+            color: #ffd700;
+        }
+
+        .debug-panel {
+            display: none;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .debug-panel h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+
+        .debug-info {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .debug-toggle.active + .main-content .debug-panel {
+            display: block;
         }
 
         @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 15px;
+            .multimodal-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
             }
             
             .main-content {
                 padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .context-grid {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -361,342 +387,457 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🍽️ AI Mood Food Recommender 🧠</h1>
-            <p>Tell me how you feel, and I'll tell you what to eat!</p>
-            <div class="phase-badge">Phase 3 Enhanced API</div>
+            <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug Mode</button>
+            <h1>🍽️ AI Mood Food Recommender</h1>
+            <p>Get personalized food recommendations based on your mood, context, and preferences</p>
         </div>
 
         <div class="main-content">
             <div class="input-section">
-                <h2 style="margin-bottom: 20px; color: #333;">What's your food mood today?</h2>
+                <h2>🎯 What are you looking for?</h2>
                 
                 <div class="input-group">
-                    <label for="userInput">Describe what you're looking for:</label>
-                    <textarea 
-                        id="userInput" 
-                        placeholder="Examples: 'I want something warm and comforting', 'I'm feeling hot and need something refreshing', 'It's date night, I want something romantic'"
-                    ></textarea>
+                    <label for="textInput">Describe your mood or craving:</label>
+                    <textarea id="textInput" rows="3" placeholder="e.g., I'm feeling stressed and want something comforting, or I'm excited and want to celebrate with something special..."></textarea>
                 </div>
 
-                <div class="input-group">
-                    <label>Add some context (optional):</label>
-                    <div class="context-grid">
-                        <div>
-                            <label for="timeOfDay">Time of Day:</label>
-                            <select id="timeOfDay">
-                                <option value="">Select time</option>
-                                <option value="morning">Morning</option>
-                                <option value="afternoon">Afternoon</option>
-                                <option value="evening">Evening</option>
-                                <option value="late_night">Late Night</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="weather">Weather:</label>
-                            <select id="weather">
-                                <option value="">Select weather</option>
-                                <option value="hot">Hot</option>
-                                <option value="cold">Cold</option>
-                                <option value="sunny">Sunny</option>
-                                <option value="rainy">Rainy</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="socialContext">Social Context:</label>
-                            <select id="socialContext">
-                                <option value="">Select context</option>
-                                <option value="alone">Alone</option>
-                                <option value="couple">Couple</option>
-                                <option value="family">Family</option>
-                                <option value="friends">Friends</option>
-                                <option value="party">Party</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="energyLevel">Energy Level:</label>
-                            <select id="energyLevel">
-                                <option value="">Select energy</option>
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
+                <div class="multimodal-inputs">
+                    <div class="file-input-group">
+                        <label for="imageInput">
+                            📷 Upload an image of food you're craving
+                        </label>
+                        <input type="file" id="imageInput" accept="image/*">
+                    </div>
+
+                    <div class="file-input-group">
+                        <label for="audioInput">
+                            🎤 Record your voice request
+                        </label>
+                        <input type="file" id="audioInput" accept="audio/*">
                     </div>
                 </div>
 
-                <button class="submit-btn" onclick="getRecommendations()" id="submitBtn">
-                    🍽️ Get Food Recommendations
+                <div class="input-group">
+                    <label for="timeOfDay">Time of day:</label>
+                    <select id="timeOfDay">
+                        <option value="morning">🌅 Morning</option>
+                        <option value="afternoon">☀️ Afternoon</option>
+                        <option value="evening">🌆 Evening</option>
+                        <option value="night">🌙 Night</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="weather">Weather:</label>
+                    <select id="weather">
+                        <option value="sunny">☀️ Sunny</option>
+                        <option value="rainy">🌧️ Rainy</option>
+                        <option value="cold">❄️ Cold</option>
+                        <option value="warm">🌡️ Warm</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="socialContext">Social context:</label>
+                    <select id="socialContext">
+                        <option value="alone">👤 Alone</option>
+                        <option value="family">👨‍👩‍👧‍👦 Family</option>
+                        <option value="friends">👥 Friends</option>
+                        <option value="date">💕 Date</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="energyLevel">Energy level:</label>
+                    <select id="energyLevel">
+                        <option value="low">😴 Low</option>
+                        <option value="medium">😐 Medium</option>
+                        <option value="high">😃 High</option>
+                    </select>
+                </div>
+
+                <button class="submit-btn" onclick="getRecommendations()">
+                    🚀 Get Recommendations
                 </button>
             </div>
 
-            <div id="moodAnalysis" style="display: none;"></div>
-            <div id="resultsSection" style="display: none;"></div>
-            <div id="loadingSection" style="display: none;"></div>
-            <div id="errorSection" style="display: none;"></div>
+            <div id="loadingSection" class="loading-section">
+                <div class="loading-spinner"></div>
+                <h3>🤖 AI is analyzing your input...</h3>
+                <p>This may take a few moments as we process your request</p>
+            </div>
 
-            <div class="examples-section">
-                <h2 style="margin-bottom: 20px; color: #333;">💡 Try These Example Queries</h2>
-                <div class="examples-grid" id="examplesGrid">
-                    <!-- Examples will be loaded here -->
+            <div id="errorSection" class="error-section">
+                <h3>❌ Error</h3>
+                <p id="errorMessage"></p>
+            </div>
+
+            <div id="aiAnalysis" class="ai-analysis" style="display: none;">
+                <div class="ai-title">🧠 AI Intent Analysis</div>
+                <div class="ai-details">
+                    <div class="ai-item">
+                        <div class="detail-label">Primary Intent</div>
+                        <div class="detail-value" id="primaryIntent">-</div>
+                    </div>
+                    <div class="ai-item">
+                        <div class="detail-label">Confidence</div>
+                        <div class="detail-value" id="intentConfidence">-</div>
+                    </div>
+                    <div class="ai-item">
+                        <div class="detail-label">Processing Time</div>
+                        <div class="detail-value" id="processingTime">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="resultsSection" class="results-section" style="display: none;">
+                <h2>🍽️ Your Personalized Recommendations</h2>
+                <div id="recommendationsList"></div>
+            </div>
+
+            <div id="feedbackSection" class="feedback-section" style="display: none;">
+                <h3>💬 How was your experience?</h3>
+                <div class="feedback-form">
+                    <div class="feedback-rating">
+                        <span>Rating:</span>
+                        <span class="star" data-rating="1">⭐</span>
+                        <span class="star" data-rating="2">⭐</span>
+                        <span class="star" data-rating="3">⭐</span>
+                        <span class="star" data-rating="4">⭐</span>
+                        <span class="star" data-rating="5">⭐</span>
+                    </div>
+                    <textarea id="feedbackText" placeholder="Tell us what you think about these recommendations..." rows="3"></textarea>
+                    <button onclick="submitFeedback()" style="background: #4caf50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                        Submit Feedback
+                    </button>
+                </div>
+            </div>
+
+            <div class="debug-panel">
+                <h3>🔍 Debug Information</h3>
+                <div class="debug-info">
+                    <strong>API Base:</strong> <span id="debugApiBase"></span>
+                </div>
+                <div class="debug-info">
+                    <strong>Request Payload:</strong> <pre id="debugRequest"></pre>
+                </div>
+                <div class="debug-info">
+                    <strong>Response:</strong> <pre id="debugResponse"></pre>
+                </div>
+                <div class="debug-info">
+                    <strong>Performance:</strong> <span id="debugPerformance"></span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = window.location.origin;
+        // Configuration
+        const API_BASE = 'http://localhost:8000';
+        let currentRating = 0;
+        let currentRecommendations = null;
 
-        // Load examples when page loads
-        window.onload = function() {
-            loadExamples();
-        };
+        // Debug mode toggle
+        function toggleDebug() {
+            const toggle = document.querySelector('.debug-toggle');
+            toggle.classList.toggle('active');
+            
+            // Update debug info
+            document.getElementById('debugApiBase').textContent = API_BASE;
+        }
 
-        async function loadExamples() {
-            try {
-                const response = await fetch(`${API_BASE}/examples`);
-                const data = await response.json();
+        // Star rating functionality
+        document.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.dataset.rating);
+                currentRating = rating;
                 
-                const examplesGrid = document.getElementById('examplesGrid');
-                examplesGrid.innerHTML = '';
-                
-                Object.entries(data.examples).forEach(([category, examples]) => {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'example-category';
-                    
-                    const title = category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    categoryDiv.innerHTML = `
-                        <h3>${title}</h3>
-                        <ul class="example-list">
-                            ${examples.map(example => `<li onclick="useExample('${example}')">${example}</li>`).join('')}
-                        </ul>
-                    `;
-                    
-                    examplesGrid.appendChild(categoryDiv);
+                // Update star display
+                document.querySelectorAll('.star').forEach((s, index) => {
+                    if (index < rating) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
                 });
-            } catch (error) {
-                console.error('Error loading examples:', error);
-            }
-        }
+            });
+        });
 
-        function useExample(example) {
-            document.getElementById('userInput').value = example;
-            document.getElementById('userInput').focus();
-        }
-
+        // Main recommendation function
         async function getRecommendations() {
-            const userInput = document.getElementById('userInput').value.trim();
-            if (!userInput) {
-                alert('Please describe what you\'re looking for!');
-                return;
-            }
-
-            // Show loading
-            showLoading();
-            hideResults();
-            hideMoodAnalysis();
-            hideError();
-
-            // Build context
-            const context = {};
-            const timeOfDay = document.getElementById('timeOfDay').value;
-            const weather = document.getElementById('weather').value;
-            const socialContext = document.getElementById('socialContext').value;
-            const energyLevel = document.getElementById('energyLevel').value;
-
-            if (timeOfDay) context.time_of_day = timeOfDay;
-            if (weather) context.weather = weather;
-            if (socialContext) context.social_context = socialContext;
-            if (energyLevel) context.energy_level = energyLevel;
-
             try {
-                // Get enhanced recommendations (includes mood analysis)
-                const recResponse = await fetch(`${API_BASE}/enhanced-recommend`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text_input: userInput,
-                        user_context: context,
-                        top_k: 10
-                    })
-                });
+                hideError();
+                showLoader();
+                clearResults();
 
-                if (recResponse.ok) {
-                    const recData = await recResponse.json();
-                    showResults(recData);
-                } else {
-                    throw new Error(`Recommendations failed: ${recResponse.status}`);
+                // Collect input data
+                const textInput = document.getElementById('textInput').value.trim();
+                const imageFile = document.getElementById('imageInput').files[0];
+                const audioFile = document.getElementById('audioInput').files[0];
+                const timeOfDay = document.getElementById('timeOfDay').value;
+                const weather = document.getElementById('weather').value;
+                const socialContext = document.getElementById('socialContext').value;
+                const energyLevel = document.getElementById('energyLevel').value;
+
+                if (!textInput && !imageFile && !audioFile) {
+                    throw new Error('Please provide at least text input, image, or audio');
                 }
 
+                // Prepare request payload
+                const requestData = {
+                    text_input: textInput,
+                    image_base64: null,
+                    audio_base64: null,
+                    user_context: {
+                        time_of_day: timeOfDay,
+                        weather: weather,
+                        social_context: socialContext,
+                        energy_level: energyLevel
+                    }
+                };
+
+                // Convert files to base64 if provided
+                if (imageFile) {
+                    requestData.image_base64 = await fileToBase64(imageFile);
+                }
+                if (audioFile) {
+                    requestData.audio_base64 = await fileToBase64(audioFile);
+                }
+
+                // Debug info
+                if (document.querySelector('.debug-toggle').classList.contains('active')) {
+                    document.getElementById('debugRequest').textContent = JSON.stringify(requestData, null, 2);
+                }
+
+                // Make API call
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const endTime = Date.now();
+
+                // Debug info
+                if (document.querySelector('.debug-toggle').classList.contains('active')) {
+                    document.getElementById('debugResponse').textContent = JSON.stringify(data, null, 2);
+                    document.getElementById('debugPerformance').textContent = `Response time: ${endTime - startTime}ms`;
+                }
+
+                // Display results
+                currentRecommendations = data;
+                showResults(data);
+                showFeedbackSection(data);
+
             } catch (error) {
-                console.error('Error:', error);
-                showError(error.message);
+                showError(error);
             } finally {
-                hideLoading();
+                hideLoader();
             }
         }
 
-        function showMoodAnalysis(data) {
-            const moodDiv = document.getElementById('moodAnalysis');
-            
-            // Check if we have multimodal analysis data
-            if (data.multimodal_analysis) {
-                const moodData = data.multimodal_analysis;
-                moodDiv.innerHTML = `
-                    <div class="mood-analysis">
-                        <div class="mood-title">🧠 AI Mood Analysis</div>
-                        <div class="mood-details">
-                            <div class="mood-item">
-                                <div class="detail-label">Primary Mood</div>
-                                <div class="detail-value">${moodData.primary_mood.replace(/_/g, ' ')}</div>
-                            </div>
-                            <div class="mood-item">
-                                <div class="detail-label">Confidence</div>
-                                <div class="detail-value">${(moodData.confidence * 100).toFixed(0)}%</div>
-                            </div>
-                            <div class="mood-item">
-                                <div class="detail-label">Categories</div>
-                                <div class="detail-value">${moodData.mood_categories.length}</div>
-                            </div>
-                            <div class="mood-item">
-                                <div class="detail-label">Entities</div>
-                                <div class="detail-value">${moodData.extracted_entities.join(', ') || 'None'}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (data.intent_prediction) {
-                // Fallback to intent prediction if no multimodal analysis
-                const intentData = data.intent_prediction;
-                moodDiv.innerHTML = `
-                    <div class="mood-analysis">
-                        <div class="mood-title">🧠 AI Intent Analysis</div>
-                        <div class="mood-details">
-                            <div class="mood-item">
-                                <div class="detail-label">Primary Intent</div>
-                                <div class="detail-value">${intentData.primary_intent.replace(/_/g, ' ')}</div>
-                            </div>
-                            <div class="mood-item">
-                                <div class="detail-label">Confidence</div>
-                                <div class="detail-value">${(intentData.confidence * 100).toFixed(0)}%</div>
-                            </div>
-                            <div class="mood-item">
-                                <div class="detail-label">Processing Time</div>
-                                <div class="detail-value">${data.processing_time.toFixed(2)}s</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            moodDiv.style.display = 'block';
+        // File to base64 conversion
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
         }
 
-        function showResults(data) {
-            const resultsDiv = document.getElementById('resultsSection');
-            
-            if (!data.recommendations || data.recommendations.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="result-card">
-                        <h3>No recommendations found</h3>
-                        <p>Try adjusting your query or context.</p>
-                    </div>
-                `;
-            } else {
-                const recommendationsHtml = data.recommendations.map((rec, index) => `
-                    <div class="result-card">
-                        <div class="result-header">
-                            <div class="food-name">${rec.food_name || 'Food Item'}</div>
-                            <div class="score">${(rec.score * 100).toFixed(0)}%</div>
-                        </div>
-                        
-                        <div class="food-details">
-                            <div class="detail-item">
-                                <div class="detail-label">Category</div>
-                                <div class="detail-value">${(rec.food_category || 'General').replace(/_/g, ' ')}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Region</div>
-                                <div class="detail-value">${rec.food_region || 'Various'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Culture</div>
-                                <div class="detail-value">${rec.food_culture || 'International'}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Mood Match</div>
-                                <div class="detail-value">${(rec.mood_match * 100).toFixed(0)}%</div>
-                            </div>
-                        </div>
-
-                        ${rec.restaurant ? `
-                            <div class="restaurant-info">
-                                <div class="restaurant-name">🏪 ${rec.restaurant.name || 'Restaurant'}</div>
-                                <div class="restaurant-details">
-                                    <span>⭐ ${rec.restaurant.rating || 'N/A'}/5</span>
-                                    <span>🍽️ ${rec.restaurant.cuisine_type || 'Various'}</span>
-                                    <span>🚚 ${rec.restaurant.delivery_available ? 'Delivery Available' : 'No Delivery'}</span>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <div class="reasoning">
-                            <div class="reasoning-title">🤔 Why This Recommendation?</div>
-                            <ul class="reasoning-list">
-                                ${Array.isArray(rec.reasoning) ? rec.reasoning.map(reason => `<li>• ${reason}</li>`).join('') : '<li>• AI-powered recommendation based on your mood and context</li>'}
-                            </ul>
-                        </div>
-                    </div>
-                `).join('');
-                
-                resultsDiv.innerHTML = `
-                    <div class="results-section">
-                        <h2 style="margin-bottom: 20px; color: #333;">
-                            🍴 Found ${data.recommendations.length} Recommendations
-                        </h2>
-                        ${recommendationsHtml}
-                    </div>
-                `;
-            }
-            
-            resultsDiv.style.display = 'block';
-        }
-
-        function showLoading() {
-            document.getElementById('loadingSection').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <div>Analyzing your mood and finding the perfect food recommendations...</div>
-                </div>
-            `;
+        // UI helper functions
+        function showLoader() {
             document.getElementById('loadingSection').style.display = 'block';
-            document.getElementById('submitBtn').disabled = true;
         }
 
-        function hideLoading() {
+        function hideLoader() {
             document.getElementById('loadingSection').style.display = 'none';
-            document.getElementById('submitBtn').disabled = false;
         }
 
-        function hideResults() {
-            document.getElementById('resultsSection').style.display = 'none';
-        }
-
-        function hideMoodAnalysis() {
-            document.getElementById('moodAnalysis').style.display = 'none';
-        }
-
-        function showError(message) {
-            document.getElementById('errorSection').innerHTML = `
-                <div class="error">
-                    <strong>Error:</strong> ${message}
-                </div>
-            `;
-            document.getElementById('errorSection').style.display = 'block';
+        function showError(error) {
+            const errorSection = document.getElementById('errorSection');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = error.message || 'An unexpected error occurred';
+            errorSection.style.display = 'block';
         }
 
         function hideError() {
             document.getElementById('errorSection').style.display = 'none';
         }
+
+        function clearResults() {
+            document.getElementById('aiAnalysis').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('recommendationsList').innerHTML = '';
+            document.getElementById('feedbackSection').style.display = 'none';
+        }
+
+        function showResults(data) {
+            // Show AI analysis first
+            showAIAnalysis(data);
+            
+            const resultsSection = document.getElementById('resultsSection');
+            const recommendationsList = document.getElementById('recommendationsList');
+            
+            if (!data.recommendations || data.recommendations.length === 0) {
+                recommendationsList.innerHTML = '<p>No recommendations found. Please try a different input.</p>';
+                resultsSection.style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            data.recommendations.forEach((rec, index) => {
+                html += `
+                    <div class="recommendation-card">
+                        <div class="recommendation-header">
+                            <div class="food-name">${escapeHtml(rec.food_name || rec.title || rec.name || 'Unknown')}</div>
+                            <div class="food-score">${rec.score ? rec.score.toFixed(2) : 'N/A'}</div>
+                        </div>
+                        
+                        <div class="food-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Category</div>
+                                <div class="detail-value">${escapeHtml(rec.food_category || rec.category || 'N/A')}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Region</div>
+                                <div class="detail-value">${escapeHtml(rec.food_region || rec.region || 'N/A')}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Culture</div>
+                                <div class="detail-value">${escapeHtml(rec.food_culture || rec.culture || 'N/A')}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Mood Match</div>
+                                <div class="detail-value">${rec.mood_match ? rec.mood_match.toFixed(2) : 'N/A'}</div>
+                            </div>
+                        </div>
+                        
+                        ${rec.restaurant ? `
+                            <div class="detail-item">
+                                <div class="detail-label">Restaurant</div>
+                                <div class="detail-value">
+                                    <strong>${escapeHtml(rec.restaurant.name)}</strong><br>
+                                    Rating: ${rec.restaurant.rating}/5 | ${escapeHtml(rec.restaurant.cuisine_type)}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${rec.reasoning && rec.reasoning.length > 0 ? `
+                            <div class="reasoning">
+                                <h4>🤔 Why this recommendation?</h4>
+                                <ul>
+                                    ${rec.reasoning.map(reason => `<li>${escapeHtml(reason)}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            recommendationsList.innerHTML = html;
+            resultsSection.style.display = 'block';
+        }
+
+        function showAIAnalysis(data) {
+            try {
+                const analysisDiv = document.getElementById('aiAnalysis');
+                
+                if (data.intent_prediction && data.intent_prediction.primary_intent) {
+                    document.getElementById('primaryIntent').textContent = 
+                        data.intent_prediction.primary_intent.replace(/_/g, ' ');
+                    
+                    const confidence = data.intent_prediction.confidence;
+                    document.getElementById('intentConfidence').textContent = 
+                        confidence > 0 ? `${(confidence * 100).toFixed(0)}%` : 'N/A';
+                }
+                
+                if (data.processing_time) {
+                    document.getElementById('processingTime').textContent = 
+                        `${(data.processing_time * 1000).toFixed(0)}ms`;
+                }
+                
+                analysisDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Error showing AI analysis:', error);
+            }
+        }
+        
+        function showFeedbackSection(data) {
+            if (data.recommendations && data.recommendations.length > 0) {
+                document.getElementById('feedbackSection').style.display = 'block';
+            }
+        }
+
+        async function submitFeedback() {
+            if (!currentRecommendations) return;
+
+            try {
+                const feedbackData = {
+                    user_id: 'anonymous',
+                    session_id: Date.now().toString(),
+                    input_text: document.getElementById('textInput').value,
+                    recommended_foods: currentRecommendations.recommendations.map(r => r.food_name),
+                    selected_food: null,
+                    rating: currentRating,
+                    feedback_text: document.getElementById('feedbackText').value,
+                    context: {
+                        time_of_day: document.getElementById('timeOfDay').value,
+                        weather: document.getElementById('weather').value,
+                        social_context: document.getElementById('socialContext').value,
+                        energy_level: document.getElementById('energyLevel').value
+                    },
+                    model_version: currentRecommendations.model_version || '1.0.0'
+                };
+
+                const response = await fetch(`${API_BASE}/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(feedbackData)
+                });
+
+                if (response.ok) {
+                    alert('Thank you for your feedback! It will help improve our recommendations.');
+                    // Reset feedback form
+                    currentRating = 0;
+                    document.querySelectorAll('.star').forEach(star => star.classList.remove('active'));
+                    document.getElementById('feedbackText').value = '';
+                } else {
+                    throw new Error('Failed to submit feedback');
+                }
+
+            } catch (error) {
+                alert('Failed to submit feedback: ' + error.message);
+            }
+        }
+
+        // Utility function for XSS prevention
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return text;
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Initialize debug info
+        document.getElementById('debugApiBase').textContent = API_BASE;
     </script>
 </body>
 </html> 

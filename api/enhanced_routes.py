@@ -345,11 +345,20 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
             try:
                 logger.info("Calling recommendation engine...")
                 _t0 = asyncio.get_event_loop().time()
+                
+                # Pass enhanced intent results to recommendation engine
+                enhanced_context = request.user_context.dict() if request.user_context else {}
+                enhanced_context['text_input'] = request.text_input  # Add text input for filtering
+                if intent_result and intent_result.get('primary_intent'):
+                    enhanced_context['enhanced_intent'] = intent_result.get('primary_intent')
+                    enhanced_context['all_intents'] = intent_result.get('all_intents', [])
+                    enhanced_context['intent_confidence'] = intent_result.get('confidence', 0.5)
+                
                 recommendations = await asyncio.wait_for(
                     asyncio.to_thread(
                         recommendation_engine.get_recommendations,
                         request.text_input,
-                        request.user_context.dict() if request.user_context else {},
+                        enhanced_context,
                         top_k=5
                     ),
                     timeout=20.0

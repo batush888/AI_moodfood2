@@ -759,10 +759,10 @@
                 "tags": ["recovery", "gentle", "simple"]
             },
             {
-                "name": "applesauce",
+                "name": "oatmeal",
                 "region": "Global",
                 "culture": "Universal",
-                "tags": ["recovery", "gentle", "easy"]
+                "tags": ["recovery", "gentle", "nourishing"]
             },
             {
                 "name": "herbal tea",
@@ -771,10 +771,40 @@
                 "tags": ["recovery", "soothing", "gentle"]
             },
             {
-                "name": "oatmeal",
+                "name": "bone broth",
                 "region": "Global",
                 "culture": "Universal",
-                "tags": ["recovery", "gentle", "nourishing"]
+                "tags": ["recovery", "warming", "nourishing"]
+            },
+            {
+                "name": "congee",
+                "region": "East Asia",
+                "culture": "Chinese",
+                "tags": ["recovery", "gentle", "warming"]
+            },
+            {
+                "name": "miso soup",
+                "region": "East Asia",
+                "culture": "Japanese",
+                "tags": ["recovery", "gentle", "warming"]
+            },
+            {
+                "name": "plain toast",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "simple"]
+            },
+            {
+                "name": "steamed vegetables",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "nutritious"]
+            },
+            {
+                "name": "banana",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["recovery", "gentle", "easy"]
             }
         ]
     },
@@ -824,6 +854,151 @@
                 "region": "Global",
                 "culture": "Modern",
                 "tags": ["detox", "healthy", "nutritious"]
+            }
+        ]
+    },
+    "GOAL_COMFORT": {
+        "descriptors": [
+            "comforting",
+            "soothing",
+            "nurturing",
+            "familiar",
+            "homey",
+            "warm"
+        ],
+        "labels": [
+            "goal_comfort",
+            "goal_soothing",
+            "sensory_warm",
+            "occasion_home",
+            "meal_dinner"
+        ],
+        "foods": [
+            {
+                "name": "mac and cheese",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["comforting", "cheesy", "warm"]
+            },
+            {
+                "name": "chicken soup",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["comforting", "warming", "nurturing"]
+            },
+            {
+                "name": "mashed potatoes",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["comforting", "soft", "warm"]
+            },
+            {
+                "name": "grilled cheese",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["comforting", "familiar", "warm"]
+            },
+            {
+                "name": "pudding",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["comforting", "sweet", "smooth"]
+            }
+        ]
+    },
+    "SENSORY_WARMING": {
+        "descriptors": [
+            "warming",
+            "hot",
+            "comforting",
+            "soothing",
+            "hearty"
+        ],
+        "labels": [
+            "sensory_warming",
+            "sensory_warm",
+            "goal_comfort",
+            "temperature_warm",
+            "texture_creamy"
+        ],
+        "foods": [
+            {
+                "name": "hot chocolate",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["warming", "sweet", "comforting"]
+            },
+            {
+                "name": "tea",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["warming", "soothing", "gentle"]
+            },
+            {
+                "name": "soup",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["warming", "nourishing", "comforting"]
+            },
+            {
+                "name": "hot porridge",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["warming", "nourishing", "comforting"]
+            },
+            {
+                "name": "mulled wine",
+                "region": "Europe",
+                "culture": "Universal",
+                "tags": ["warming", "spiced", "festive"]
+            }
+        ]
+    },
+    "SEASON_WINTER": {
+        "descriptors": [
+            "winter",
+            "cold weather",
+            "snowy",
+            "frosty",
+            "chilly"
+        ],
+        "labels": [
+            "season_winter",
+            "weather_cold",
+            "temperature_cold",
+            "goal_comfort",
+            "sensory_warming"
+        ],
+        "foods": [
+            {
+                "name": "hot pot",
+                "region": "East Asia",
+                "culture": "Chinese",
+                "tags": ["warming", "communal", "hearty"]
+            },
+            {
+                "name": "beef stew",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["warming", "hearty", "comforting"]
+            },
+            {
+                "name": "roasted vegetables",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["warming", "nutritious", "comforting"]
+            },
+            {
+                "name": "hot apple cider",
+                "region": "North America",
+                "culture": "American",
+                "tags": ["warming", "sweet", "seasonal"]
+            },
+            {
+                "name": "winter squash soup",
+                "region": "Global",
+                "culture": "Universal",
+                "tags": ["warming", "seasonal", "nourishing"]
             }
         ]
     }

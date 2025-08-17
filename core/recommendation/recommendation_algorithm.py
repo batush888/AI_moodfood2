@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from enum import Enum
 import json
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RecommendationType(Enum):
     MOOD_BASED = "mood_based"
@@ -191,8 +194,13 @@ class MoodBasedRecommendationEngine:
     ) -> List[Recommendation]:
         """Get personalized food recommendations based on mood and context."""
         
-        # 1. Analyze user intent and extract mood categories
-        mood_categories = self._analyze_user_intent(user_input)
+        # 1. Use enhanced intent classification if available, otherwise fall back to basic analysis
+        if user_context.get('enhanced_intent'):
+            logger.info(f"Using enhanced intent: {user_context['enhanced_intent']}")
+            mood_categories = self._analyze_enhanced_intent(user_context)
+        else:
+            logger.info("Using basic intent analysis")
+            mood_categories = self._analyze_user_intent(user_input)
         
         # 2. Get contextual factors
         context_factors = self._extract_context_factors(user_context)
@@ -227,6 +235,89 @@ class MoodBasedRecommendationEngine:
             matched_categories = self._semantic_intent_matching(user_input)
         
         return matched_categories
+    
+    def _analyze_enhanced_intent(self, user_context: Dict[str, Any]) -> List[str]:
+        """Analyze enhanced intent classification results to determine mood categories."""
+        enhanced_intent = user_context.get('enhanced_intent', '').lower()
+        all_intents = user_context.get('all_intents', [])
+        confidence = user_context.get('intent_confidence', 0.5)
+        
+        # Map enhanced intent to mood categories
+        intent_to_mood_mapping = {
+            'comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
+            'health_illness': ['HEALTH_ILLNESS', 'health_recovery', 'sensory_gentle', 'goal_soothing'],
+            'goal_comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
+            'goal_soothing': ['goal_soothing', 'sensory_gentle', 'HEALTH_ILLNESS'],
+            'sensory_warming': ['sensory_warming', 'WEATHER_COLD', 'goal_comfort'],
+            'sensory_soothing': ['sensory_soothing', 'goal_soothing', 'HEALTH_ILLNESS'],
+            'temperature_warm': ['temperature_warm', 'sensory_warming', 'goal_comfort'],
+            'texture_creamy': ['texture_creamy', 'sensory_comforting'],
+            'occasion_home': ['occasion_home', 'EMOTIONAL_COMFORT'],
+            'weather_cold': ['WEATHER_COLD', 'sensory_warming', 'goal_comfort'],
+            'season_winter': ['season_winter', 'WEATHER_COLD', 'sensory_warming'],
+            'goal_light': ['goal_light', 'sensory_light', 'HEALTH_DETOX'],
+            'goal_hydration': ['goal_hydration', 'sensory_refreshing'],
+            'activity_gym': ['activity_gym', 'goal_energy', 'goal_healthy'],
+            'goal_energy': ['goal_energy', 'goal_healthy'],
+            'goal_healthy': ['goal_healthy', 'HEALTH_DETOX'],
+            'sensory_refreshing': ['sensory_refreshing', 'goal_hydration'],
+            'sensory_cooling': ['sensory_cooling', 'goal_hydration'],
+            'goal_quick': ['goal_quick', 'OCCASION_LUNCH_BREAK'],
+            'social_group': ['social_group', 'occasion_family_dinner'],
+            'social_alone': ['social_alone', 'EMOTIONAL_COMFORT'],
+            'occasion_romantic': ['occasion_romantic', 'EMOTIONAL_ROMANTIC'],
+            'goal_simple': ['goal_simple', 'sensory_simple'],
+            'goal_indulgence': ['goal_indulgence', 'sensory_rich', 'EMOTIONAL_COMFORT'],
+            'sensory_rich': ['sensory_rich', 'goal_indulgence'],
+            'texture_crispy': ['texture_crispy', 'sensory_crunchy'],
+            'texture_light': ['texture_light', 'goal_light'],
+            'texture_greasy': ['texture_greasy', 'goal_indulgence'],
+            'emotion_nostalgic': ['emotion_nostalgic', 'goal_comfort'],
+            'emotion_sad': ['emotion_sad', 'goal_comfort'],
+            'emotion_adventurous': ['emotion_adventurous', 'goal_exploration'],
+            'emotion_stressed': ['emotion_stressed', 'goal_comfort'],
+            'emotion_anxious': ['emotion_anxious', 'goal_comfort'],
+            'time_breakfast': ['time_breakfast', 'OCCASION_BREAKFAST'],
+            'meal_dinner': ['meal_dinner', 'OCCASION_DINNER'],
+            'meal_lunch': ['meal_lunch', 'OCCASION_LUNCH_BREAK'],
+            'food_smoothie': ['food_smoothie', 'goal_hydration', 'goal_healthy']
+        }
+        
+        # Get primary mood categories from enhanced intent
+        primary_mood_categories = intent_to_mood_mapping.get(enhanced_intent, [])
+        
+        # Add additional categories from all_intents if confidence is high
+        additional_categories = []
+        if confidence > 0.7 and all_intents:
+            for intent in all_intents:
+                if isinstance(intent, list) and len(intent) > 0:
+                    intent_name = intent[0].lower()
+                    additional_categories.extend(intent_to_mood_mapping.get(intent_name, []))
+        
+        # Combine and remove duplicates
+        all_categories = list(set(primary_mood_categories + additional_categories))
+        
+        # Filter out sweet foods if user explicitly doesn't want sweet
+        text_input = user_context.get('text_input', '').lower()
+        if ('sweet' in text_input and ('not' in text_input or "don't" in text_input or "do not" in text_input)) or \
+           ('sweet' in text_input and any(word in text_input for word in ['avoid', 'hate', 'dislike', 'no'])):
+            all_categories = [cat for cat in all_categories if 'sweet' not in cat.lower()]
+            logger.info("Filtered out sweet categories due to user preference")
+        
+        # Special handling for illness + no-sweet combination
+        if enhanced_intent == 'goal_indulgence' and 'ill' in text_input and 'sweet' in text_input:
+            # Override indulgence with health-focused categories
+            all_categories = ['HEALTH_ILLNESS', 'health_recovery', 'sensory_gentle', 'goal_soothing', 'goal_light']
+            logger.info("Overriding indulgence with health-focused categories for ill user")
+        
+        # Additional special case: if text contains "ill" and "sweet" but intent is wrong
+        if 'ill' in text_input and ('sweet' in text_input or 'don\'t want' in text_input or 'do not want' in text_input):
+            if enhanced_intent not in ['health', 'comfort']:
+                all_categories = ['HEALTH_ILLNESS', 'health_recovery', 'sensory_gentle', 'goal_soothing', 'goal_light']
+                logger.info("Forcing health-focused categories for ill user who doesn't want sweet")
+        
+        logger.info(f"Enhanced intent analysis: {enhanced_intent} -> {all_categories}")
+        return all_categories
     
     def _semantic_intent_matching(self, user_input: str) -> List[str]:
         """Use semantic similarity to match user intent to mood categories."""
