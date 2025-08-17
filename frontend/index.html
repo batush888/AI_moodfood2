@@ -106,6 +106,210 @@
             font-weight: 600;
             color: #333;
         }
+        
+        .time-display {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .current-time {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        .time-category {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .time-status {
+            font-size: 0.8rem;
+            color: #28a745;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .time-status.show {
+            opacity: 1;
+        }
+        
+        .weather-display {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .weather-display:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+        
+        .weather-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        
+        .weather-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            flex-grow: 1;
+        }
+        
+        .refresh-weather-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .refresh-weather-btn:hover {
+            background: #5a6fd8;
+            transform: scale(1.1);
+        }
+        
+        .refresh-weather-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .weather-status {
+            font-size: 0.8rem;
+            color: #28a745;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .weather-status.show {
+            opacity: 1;
+        }
+        
+        .time-format-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .time-format-btn:hover {
+            background: #138496;
+            transform: scale(1.1);
+        }
+        
+        .time-format-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .refresh-time-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .refresh-time-btn:hover {
+            background: #5a6268;
+            transform: scale(1.1);
+        }
+        
+        .refresh-time-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Responsive time display */
+        @media (max-width: 768px) {
+            .time-display {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .current-time {
+                font-size: 1rem;
+            }
+            
+            .time-category {
+                font-size: 0.8rem;
+            }
+            
+            .weather-display {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .weather-text {
+                font-size: 0.9rem;
+            }
+            
+            .refresh-weather-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Time display animations */
+        .time-display {
+            transition: all 0.3s ease;
+        }
+        
+        .time-display:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+        }
+        
+        .current-time {
+            transition: color 0.3s ease;
+        }
+        
+        .time-category {
+            transition: all 0.3s ease;
+        }
 
         .main-content {
             padding: 30px;
@@ -419,22 +623,39 @@
 
                 <div class="input-group">
                     <label for="timeOfDay">Time of day:</label>
-                    <select id="timeOfDay">
-                        <option value="morning">🌅 Morning</option>
-                        <option value="afternoon">☀️ Afternoon</option>
-                        <option value="evening">🌆 Evening</option>
-                        <option value="night">🌙 Night</option>
-                    </select>
+                    <div class="time-display">
+                        <span id="currentTime" class="current-time"></span>
+                        <span id="timeCategory" class="time-category"></span>
+                        <button type="button" id="timeFormatToggle" class="time-format-btn" title="Toggle 12/24 hour format">
+                            <span>🕐</span>
+                        </button>
+                        <button type="button" id="refreshTime" class="refresh-time-btn" title="Refresh time">
+                            <span>🔄</span>
+                        </button>
+                        <span id="timeStatus" class="time-status"></span>
+                    </div>
+                    <input type="hidden" id="timeOfDay" value="">
+                    <div class="time-debug" style="margin-top: 10px; font-size: 0.8rem; color: #666;">
+                        <button type="button" onclick="testTimeButtons()" style="background: #ffc107; color: #000; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+                            🧪 Test Time Buttons
+                        </button>
+                        <button type="button" onclick="testWeatherSystem()" style="background: #17a2b8; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; margin-left: 10px;">
+                            🌤️ Test Weather
+                        </button>
+                    </div>
                 </div>
 
                 <div class="input-group">
                     <label for="weather">Weather:</label>
-                    <select id="weather">
-                        <option value="sunny">☀️ Sunny</option>
-                        <option value="rainy">🌧️ Rainy</option>
-                        <option value="cold">❄️ Cold</option>
-                        <option value="warm">🌡️ Warm</option>
-                    </select>
+                    <div class="weather-display">
+                        <span id="weatherIcon" class="weather-icon">🌤️</span>
+                        <span id="weatherText" class="weather-text">Detecting...</span>
+                        <button type="button" id="refreshWeather" class="refresh-weather-btn" title="Refresh weather">
+                            <span>🔄</span>
+                        </button>
+                        <span id="weatherStatus" class="weather-status"></span>
+                    </div>
+                    <input type="hidden" id="weather" value="unknown">
                 </div>
 
                 <div class="input-group">
@@ -536,6 +757,563 @@
         const API_BASE = 'http://localhost:8000';
         let currentRating = 0;
         let currentRecommendations = null;
+        
+        // Time of day detection and management
+        let timeUpdateInterval;
+        let use24HourFormat = false;
+        
+        // Initialize automatic time detection
+        function initializeTimeSystem() {
+            console.log('Initializing time system...');
+            try {
+                // Load user preferences
+                loadUserPreferences();
+                initializeTimeDetection();
+                setupTimeRefresh();
+                console.log('Time system initialized successfully!');
+            } catch (error) {
+                console.error('Error initializing time system:', error);
+            }
+        }
+        
+        function initializeWeatherSystem() {
+            console.log('Initializing weather system...');
+            try {
+                setupWeatherRefresh();
+                // Get initial weather
+                getCurrentWeather();
+                console.log('Weather system initialized successfully!');
+            } catch (error) {
+                console.error('Error initializing weather system:', error);
+            }
+        }
+        
+        // Try multiple initialization methods
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOMContentLoaded fired');
+                setTimeout(() => {
+                    initializeTimeSystem();
+                    initializeWeatherSystem();
+                }, 100);
+            });
+        } else {
+            console.log('DOM already loaded, initializing immediately');
+            setTimeout(() => {
+                initializeTimeSystem();
+                initializeWeatherSystem();
+            }, 100);
+        }
+        
+        // Fallback initialization
+        window.addEventListener('load', function() {
+            console.log('Window load event fired');
+            if (!timeUpdateInterval) {
+                console.log('Fallback initialization...');
+                setTimeout(() => {
+                    initializeTimeSystem();
+                    initializeWeatherSystem();
+                }, 200);
+            }
+        });
+        
+        function initializeTimeDetection() {
+            console.log('Initializing time detection...');
+            updateTimeDisplay();
+            // Update time every minute
+            timeUpdateInterval = setInterval(updateTimeDisplay, 60000);
+            console.log('Time detection initialized!');
+        }
+        
+        function updateTimeDisplay() {
+            console.log('Updating time display...');
+            const now = new Date();
+            const currentTimeElement = document.getElementById('currentTime');
+            const timeCategoryElement = document.getElementById('timeCategory');
+            const timeOfDayInput = document.getElementById('timeOfDay');
+            
+            // Debug logging
+            console.log('Time elements found:', {
+                currentTime: currentTimeElement,
+                timeCategory: timeCategoryElement,
+                timeOfDayInput: timeOfDayInput
+            });
+            
+            if (!currentTimeElement || !timeCategoryElement || !timeOfDayInput) {
+                console.error('Time display elements not found!');
+                return;
+            }
+            
+            // Format current time based on user preference
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: !use24HourFormat
+            });
+            currentTimeElement.textContent = `🕐 ${timeString}`;
+            
+            // Determine time category
+            const hour = now.getHours();
+            let timeCategory, timeValue;
+            
+            if (hour >= 5 && hour < 12) {
+                timeCategory = '🌅 Morning';
+                timeValue = 'morning';
+            } else if (hour >= 12 && hour < 17) {
+                timeCategory = '☀️ Afternoon';
+                timeValue = 'afternoon';
+            } else if (hour >= 17 && hour < 21) {
+                timeCategory = '🌆 Evening';
+                timeValue = 'evening';
+            } else {
+                timeCategory = '🌙 Night';
+                timeValue = 'night';
+            }
+            
+            timeCategoryElement.textContent = timeCategory;
+            timeOfDayInput.value = timeValue;
+            
+            // Add enhanced timezone info with major city times
+            const tzInfo = getTimezoneInfo();
+            const timezoneDisplay = `${tzInfo.name} (UTC${tzInfo.offset})`;
+            if (tzInfo.isDST) {
+                timezoneDisplay += ' (DST)';
+            }
+            
+            // Add major city times for reference
+            const majorCities = [
+                { name: 'New York', tz: 'America/New_York' },
+                { name: 'London', tz: 'Europe/London' },
+                { name: 'Tokyo', tz: 'Asia/Tokyo' },
+                { name: 'Sydney', tz: 'Australia/Sydney' }
+            ];
+            
+            let tooltipText = `Local time in ${timezoneDisplay}\n\nMajor cities:\n`;
+            majorCities.forEach(city => {
+                const cityTime = getTimeInCity(city.name, city.tz);
+                tooltipText += `${city.name}: ${cityTime}\n`;
+            });
+            
+            // Add format info
+            tooltipText += `\nFormat: ${use24HourFormat ? '24-hour' : '12-hour'}`;
+            
+            currentTimeElement.title = tooltipText;
+        }
+        
+        function setupTimeRefresh() {
+            const refreshBtn = document.getElementById('refreshTime');
+            const formatBtn = document.getElementById('timeFormatToggle');
+            
+            // Debug logging
+            console.log('Setting up time buttons...');
+            console.log('Refresh button:', refreshBtn);
+            console.log('Format button:', formatBtn);
+            
+            if (!refreshBtn || !formatBtn) {
+                console.error('Time buttons not found!');
+                return;
+            }
+            
+            // Add simple onclick handlers as backup
+            refreshBtn.onclick = function() {
+                console.log('Refresh button clicked (onclick)!');
+                updateTimeDisplay();
+                
+                // Show status feedback
+                const statusElement = document.getElementById('timeStatus');
+                if (statusElement) {
+                    statusElement.textContent = '✓ Refreshed';
+                    statusElement.classList.add('show');
+                    setTimeout(() => {
+                        statusElement.classList.remove('show');
+                    }, 2000);
+                }
+                
+                // Add a brief visual feedback
+                this.style.transform = 'rotate(180deg)';
+                setTimeout(() => {
+                    this.style.transform = 'rotate(0deg)';
+                }, 300);
+            };
+            
+            formatBtn.onclick = function() {
+                console.log('Format button clicked (onclick)!');
+                use24HourFormat = !use24HourFormat;
+                updateTimeDisplay();
+                saveUserPreferences();
+                
+                // Update button icon
+                this.querySelector('span').textContent = use24HourFormat ? '🕙' : '🕐';
+                
+                // Show status feedback
+                const statusElement = document.getElementById('timeStatus');
+                if (statusElement) {
+                    const formatText = use24HourFormat ? '24-hour' : '12-hour';
+                    statusElement.textContent = `✓ ${formatText} format`;
+                    statusElement.classList.add('show');
+                    setTimeout(() => {
+                        statusElement.classList.remove('show');
+                    }, 2000);
+                }
+                
+                // Add visual feedback
+                this.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 200);
+            };
+            
+            // Also add event listeners as primary method
+            refreshBtn.addEventListener('click', refreshBtn.onclick);
+            formatBtn.addEventListener('click', formatBtn.onclick);
+            
+            console.log('Time buttons setup complete!');
+        }
+        
+        // Cleanup interval when page is unloaded
+        window.addEventListener('beforeunload', function() {
+            if (timeUpdateInterval) {
+                clearInterval(timeUpdateInterval);
+            }
+        });
+        
+        // User preferences management
+        function loadUserPreferences() {
+            const savedFormat = localStorage.getItem('timeFormat24Hour');
+            if (savedFormat !== null) {
+                use24HourFormat = savedFormat === 'true';
+            }
+        }
+        
+        function saveUserPreferences() {
+            localStorage.setItem('timeFormat24Hour', use24HourFormat.toString());
+        }
+        
+        // Enhanced timezone detection and display
+        function getTimezoneInfo() {
+            const now = new Date();
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const offset = now.getTimezoneOffset();
+            const offsetHours = Math.abs(Math.floor(offset / 60));
+            const offsetMinutes = Math.abs(offset % 60);
+            const offsetSign = offset <= 0 ? '+' : '-';
+            
+            return {
+                name: timezone,
+                offset: `${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`,
+                isDST: isDaylightSavingTime(now)
+            };
+        }
+        
+        function isDaylightSavingTime(date) {
+            const jan = new Date(date.getFullYear(), 0, 1);
+            const jul = new Date(date.getFullYear(), 6, 1);
+            return Math.min(jan.getTimezoneOffset(), jul.getTimezoneOffset()) === date.getTimezoneOffset();
+        }
+        
+        // Get time in major cities for reference
+        function getTimeInCity(city, timezone) {
+            try {
+                const cityTime = new Date().toLocaleTimeString('en-US', {
+                    timeZone: timezone,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: !use24HourFormat
+                });
+                return cityTime;
+            } catch (error) {
+                return 'N/A';
+            }
+        }
+        
+        // Test function for debugging
+        function testTimeButtons() {
+            console.log('Testing time buttons...');
+            console.log('Current format:', use24HourFormat ? '24-hour' : '12-hour');
+            console.log('Time update interval:', timeUpdateInterval);
+            
+            const refreshBtn = document.getElementById('refreshTime');
+            const formatBtn = document.getElementById('timeFormatToggle');
+            const statusElement = document.getElementById('timeStatus');
+            
+            console.log('Elements found:', { refreshBtn, formatBtn, statusElement });
+            
+            if (refreshBtn && formatBtn) {
+                console.log('✅ Buttons found, testing functionality...');
+                
+                // Test refresh button
+                refreshBtn.click();
+                
+                // Test format toggle
+                setTimeout(() => {
+                    formatBtn.click();
+                }, 1000);
+                
+            } else {
+                console.error('❌ Buttons not found!');
+            }
+        }
+        
+        // Weather API integration
+        const WEATHER_API_KEY = 'f2f2807dd694c0e3e46d99bc30e9139f';
+        let currentWeather = 'unknown';
+        let userLocation = null;
+        
+        // Get current weather using Gaode API
+        async function getCurrentWeather() {
+            try {
+                console.log('Fetching current weather...');
+                
+                // Get user location
+                if (!userLocation) {
+                    userLocation = await getUserLocation();
+                }
+                
+                if (!userLocation) {
+                    throw new Error('Unable to get user location');
+                }
+                
+                // Make API call to Gaode weather API
+                const weatherData = await fetchWeatherFromAPI(userLocation.latitude, userLocation.longitude);
+                
+                // Process weather data and determine weather category
+                const weatherCategory = categorizeWeather(weatherData);
+                
+                // Update UI
+                updateWeatherDisplay(weatherData, weatherCategory);
+                
+                // Update hidden input
+                document.getElementById('weather').value = weatherCategory;
+                currentWeather = weatherCategory;
+                
+                console.log('Weather updated:', weatherCategory);
+                return weatherCategory;
+                
+            } catch (error) {
+                console.error('Weather fetch failed:', error);
+                showWeatherError();
+                return 'unknown';
+            }
+        }
+        
+        // Get user location with fallback
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    console.log('Geolocation not supported, using default location');
+                    resolve({ latitude: 37.7749, longitude: -122.4194 }); // San Francisco fallback
+                    return;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const location = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+                        console.log('User location obtained:', location);
+                        resolve(location);
+                    },
+                    (error) => {
+                        console.log('Geolocation permission denied, using default location');
+                        resolve({ latitude: 37.7749, longitude: -122.4194 }); // San Francisco fallback
+                    },
+                    { timeout: 10000, enableHighAccuracy: false }
+                );
+            });
+        }
+        
+        // Fetch weather from Gaode API
+        async function fetchWeatherFromAPI(lat, lng) {
+            try {
+                // Convert coordinates to city code (simplified approach)
+                // In a real implementation, you might want to use reverse geocoding first
+                const cityCode = await getCityCodeFromCoordinates(lat, lng);
+                
+                const url = 'https://restapi.amap.com/v3/weather/weatherInfo';
+                const params = new URLSearchParams({
+                    key: WEATHER_API_KEY,
+                    city: cityCode,
+                    extensions: 'base',
+                    output: 'json'
+                });
+                
+                console.log('Fetching weather for city code:', cityCode);
+                
+                const response = await fetch(`${url}?${params}`);
+                if (!response.ok) {
+                    throw new Error(`Weather API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Weather API response:', data);
+                
+                if (data.status === '1' && data.lives && data.lives.length > 0) {
+                    return data.lives[0];
+                } else {
+                    throw new Error(`Weather API error: ${data.info || 'Unknown error'}`);
+                }
+                
+            } catch (error) {
+                console.error('Weather API fetch failed:', error);
+                throw error;
+            }
+        }
+        
+        // Get city code from coordinates (simplified - using major cities)
+        async function getCityCodeFromCoordinates(lat, lng) {
+            // Major city coordinates and their Gaode city codes
+            const majorCities = [
+                { name: 'Shanghai', code: '310000', lat: 31.2304, lng: 121.4737 },
+                { name: 'Beijing', code: '110000', lat: 39.9042, lng: 116.4074 },
+                { name: 'Guangzhou', code: '440100', lat: 23.1291, lng: 113.2644 },
+                { name: 'Shenzhen', code: '440300', lat: 22.3193, lng: 114.1694 },
+                { name: 'Hangzhou', code: '330100', lat: 30.2741, lng: 120.1551 },
+                { name: 'Nanjing', code: '320100', lat: 32.0603, lng: 118.7969 },
+                { name: 'Wuhan', code: '420100', lat: 30.5928, lng: 114.3055 },
+                { name: 'Chengdu', code: '510100', lat: 30.5728, lng: 104.0668 },
+                { name: 'Xi\'an', code: '610100', lat: 34.3416, lng: 108.9398 },
+                { name: 'Tianjin', code: '120000', lat: 39.0842, lng: 117.2009 }
+            ];
+            
+            // Find the closest major city
+            let closestCity = majorCities[0];
+            let minDistance = Number.MAX_VALUE;
+            
+            for (const city of majorCities) {
+                const distance = Math.sqrt(
+                    Math.pow(lat - city.lat, 2) + Math.pow(lng - city.lng, 2)
+                );
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCity = city;
+                }
+            }
+            
+            console.log(`Using weather data for closest major city: ${closestCity.name} (${closestCity.code})`);
+            return closestCity.code;
+        }
+        
+        // Categorize weather based on temperature and conditions
+        function categorizeWeather(weatherData) {
+            const temperature = parseFloat(weatherData.temperature);
+            const weatherCondition = weatherData.weather.toLowerCase();
+            
+            console.log('Categorizing weather:', { temperature, weatherCondition });
+            
+            // Temperature-based categorization
+            if (temperature > 25) {
+                return 'hot';
+            } else if (temperature < 10) {
+                return 'cold';
+            } else if (temperature >= 10 && temperature <= 25) {
+                return 'warm';
+            }
+            
+            // Weather condition-based categorization
+            if (weatherCondition.includes('rain') || weatherCondition.includes('drizzle')) {
+                return 'rainy';
+            } else if (weatherCondition.includes('snow') || weatherCondition.includes('blizzard')) {
+                return 'cold';
+            } else if (weatherCondition.includes('cloud') || weatherCondition.includes('overcast')) {
+                return 'cloudy';
+            } else if (weatherCondition.includes('clear') || weatherCondition.includes('sunny')) {
+                return 'sunny';
+            }
+            
+            // Default fallback
+            return 'moderate';
+        }
+        
+        // Update weather display
+        function updateWeatherDisplay(weatherData, weatherCategory) {
+            const weatherIcon = document.getElementById('weatherIcon');
+            const weatherText = document.getElementById('weatherText');
+            const weatherStatus = document.getElementById('weatherStatus');
+            
+            // Set weather icon based on category
+            const iconMap = {
+                'hot': '🔥',
+                'cold': '❄️',
+                'warm': '🌡️',
+                'rainy': '🌧️',
+                'cloudy': '☁️',
+                'sunny': '☀️',
+                'moderate': '🌤️'
+            };
+            
+            weatherIcon.textContent = iconMap[weatherCategory] || '🌤️';
+            
+            // Set weather text
+            const temp = weatherData.temperature;
+            const condition = weatherData.weather;
+            weatherText.textContent = `${condition} ${temp}°C`;
+            
+            // Show success status
+            weatherStatus.textContent = '✓ Updated';
+            weatherStatus.classList.add('show');
+            setTimeout(() => {
+                weatherStatus.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Show weather error
+        function showWeatherError() {
+            const weatherIcon = document.getElementById('weatherIcon');
+            const weatherText = document.getElementById('weatherText');
+            const weatherStatus = document.getElementById('weatherStatus');
+            
+            weatherIcon.textContent = '❌';
+            weatherText.textContent = 'Weather unavailable';
+            weatherStatus.textContent = '⚠️ Error';
+            weatherStatus.style.color = '#dc3545';
+            weatherStatus.classList.add('show');
+            setTimeout(() => {
+                weatherStatus.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Setup weather refresh button
+        function setupWeatherRefresh() {
+            const refreshBtn = document.getElementById('refreshWeather');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    console.log('Weather refresh button clicked');
+                    getCurrentWeather();
+                    
+                    // Add visual feedback
+                    this.style.transform = 'rotate(180deg)';
+                    setTimeout(() => {
+                        this.style.transform = 'rotate(0deg)';
+                    }, 300);
+                });
+                
+                console.log('Weather refresh button setup complete');
+            }
+        }
+        
+        // Test function for weather system
+        function testWeatherSystem() {
+            console.log('Testing weather system...');
+            console.log('Current weather:', currentWeather);
+            console.log('User location:', userLocation);
+            
+            const weatherIcon = document.getElementById('weatherIcon');
+            const weatherText = document.getElementById('weatherText');
+            const refreshBtn = document.getElementById('refreshWeather');
+            
+            console.log('Weather elements found:', { weatherIcon, weatherText, refreshBtn });
+            
+            if (weatherIcon && weatherText && refreshBtn) {
+                console.log('✅ Weather elements found, testing functionality...');
+                
+                // Test weather refresh
+                refreshBtn.click();
+                
+            } else {
+                console.error('❌ Weather elements not found!');
+            }
+        }
 
         // Debug mode toggle
         function toggleDebug() {
@@ -575,7 +1353,7 @@
                 const imageFile = document.getElementById('imageInput').files[0];
                 const audioFile = document.getElementById('audioInput').files[0];
                 const timeOfDay = document.getElementById('timeOfDay').value;
-                const weather = document.getElementById('weather').value;
+                const weather = currentWeather; // Use automatic weather instead of manual input
                 const socialContext = document.getElementById('socialContext').value;
                 const energyLevel = document.getElementById('energyLevel').value;
 
@@ -795,7 +1573,7 @@
                     feedback_text: document.getElementById('feedbackText').value,
                     context: {
                         time_of_day: document.getElementById('timeOfDay').value,
-                        weather: document.getElementById('weather').value,
+                        weather: currentWeather,
                         social_context: document.getElementById('socialContext').value,
                         energy_level: document.getElementById('energyLevel').value
                     },
