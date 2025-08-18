@@ -43,11 +43,32 @@ except ImportError:
     logger.warning("Sentence Transformers not available, using fallback methods")
 
 try:
-    from transformers import DistilBertTokenizerFast, DistilBertForSequenceClassification
+    from transformers import DistilBertTokenizerFast, DistilBertModel
+    import torch.nn as nn
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
     logger.warning("Transformers not available, using fallback methods")
+
+# Custom model class to match the trained architecture
+class DistilBertDualHead(nn.Module):
+    def __init__(self, model_name_or_path, taxonomy_classes: int, mlb_classes: int, dropout: float = 0.2):
+        super().__init__()
+        self.encoder = DistilBertModel.from_pretrained(model_name_or_path)
+        hidden_size = self.encoder.config.hidden_size
+        self.dropout = nn.Dropout(dropout)
+        self.taxonomy_head = nn.Linear(hidden_size, taxonomy_classes)
+        self.mlb_head = nn.Linear(hidden_size, mlb_classes)
+
+    def forward(self, input_ids=None, attention_mask=None, labels=None, mlb_labels=None):
+        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+        pooled = outputs.last_hidden_state[:, 0]
+        pooled = self.dropout(pooled)
+
+        taxonomy_logits = self.taxonomy_head(pooled)
+        mlb_logits = self.mlb_head(pooled)
+
+        return {"logits": taxonomy_logits, "mlb_logits": mlb_logits}
 
 class EnhancedIntentClassifier:
     """
@@ -174,7 +195,39 @@ class EnhancedIntentClassifier:
             if self.model_dir.exists():
                 logger.info(f"Loading transformer model from: {self.model_dir}")
                 self.tokenizer = DistilBertTokenizerFast.from_pretrained(str(self.model_dir))
-                self.model = DistilBertForSequenceClassification.from_pretrained(str(self.model_dir))
+                
+                # Load the trained model with the correct architecture
+                # First try to load the saved model weights
+                model_path = str(self.model_dir)
+                
+                # Load the base DistilBERT model
+                base_model = DistilBertModel.from_pretrained("distilbert-base-uncased")
+                
+                # Create our custom dual-head model
+                # We need to determine the number of classes from the saved model
+                config_path = os.path.join(model_path, "config.json")
+                if os.path.exists(config_path):
+                    with open(config_path, 'r') as f:
+                        config = json.load(f)
+                    num_labels = config.get('num_labels', 25)  # Default fallback
+                else:
+                    num_labels = 25  # Default fallback
+                
+                self.model = DistilBertDualHead(
+                    model_name_or_path="distilbert-base-uncased",
+                    taxonomy_classes=num_labels,
+                    mlb_classes=num_labels,  # Same as taxonomy for now
+                    dropout=0.2
+                )
+                
+                # Load the trained weights
+                model_weights_path = os.path.join(model_path, "model.safetensors")
+                if os.path.exists(model_weights_path):
+                    from safetensors.torch import load_file
+                    state_dict = load_file(model_weights_path)
+                    self.model.load_state_dict(state_dict, strict=False)
+                    logger.info("Loaded trained model weights successfully")
+                
                 self.model.to(self.device)
                 logger.info("Transformer model loaded successfully")
             else:
@@ -182,6 +235,8 @@ class EnhancedIntentClassifier:
                 
         except Exception as e:
             logger.warning(f"Failed to load transformer model: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _has_working_models(self) -> bool:
         """Check if we have any working models."""
@@ -235,10 +290,15 @@ class EnhancedIntentClassifier:
     def _transformer_classification(self, text: str, context: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """Attempt transformer-based classification."""
         try:
+            # Prioritize DistilBERT model over sentence transformer
+            if self.tokenizer and self.model:
+                result = self._distilbert_classification(text, context)
+                if result:
+                    return result
+            
+            # Fallback to sentence transformer
             if self.sentence_transformer:
                 return self._sentence_transformer_classification(text, context)
-            elif self.tokenizer and self.model:
-                return self._distilbert_classification(text, context)
         except Exception as e:
             logger.warning(f"Transformer classification failed: {e}")
         return None
@@ -299,7 +359,7 @@ class EnhancedIntentClassifier:
             # Get predictions
             with torch.no_grad():
                 outputs = self.model(**inputs)
-                logits = outputs.logits
+                logits = outputs["logits"]  # Get taxonomy logits from our custom model
                 probs = torch.sigmoid(logits)  # Use sigmoid for multi-label classification
             
             # Get top predictions (multi-label)

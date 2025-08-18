@@ -1,0 +1,70 @@
+{
+    "name": "Restaurant",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Restaurant name"
+        },
+        "cuisine_type": {
+            "type": "string",
+            "description": "Type of cuisine"
+        },
+        "description": {
+            "type": "string",
+            "description": "Restaurant description"
+        },
+        "rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5,
+            "description": "Average rating out of 5"
+        },
+        "price_range": {
+            "type": "string",
+            "enum": [
+                "$",
+                "$$",
+                "$$$",
+                "$$$$"
+            ],
+            "description": "Price range indicator"
+        },
+        "address": {
+            "type": "string",
+            "description": "Restaurant address"
+        },
+        "phone": {
+            "type": "string",
+            "description": "Contact phone number"
+        },
+        "image_url": {
+            "type": "string",
+            "description": "Restaurant or food image URL"
+        },
+        "popular_dishes": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "List of popular dishes"
+        },
+        "mood_tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Mood categories this restaurant matches"
+        },
+        "distance_km": {
+            "type": "number",
+            "description": "Distance from the user in kilometers"
+        }
+    },
+    "required": [
+        "name",
+        "cuisine_type",
+        "rating",
+        "price_range"
+    ]
+}

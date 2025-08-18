@@ -1,0 +1,72 @@
+{
+    "name": "Conversation",
+    "type": "object",
+    "properties": {
+        "user_email": {
+            "type": "string",
+            "description": "User's email for conversation history"
+        },
+        "session_id": {
+            "type": "string",
+            "description": "Unique session identifier"
+        },
+        "messages": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "assistant"
+                        ]
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "recommendations": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "current_context": {
+            "type": "object",
+            "properties": {
+                "mood": {
+                    "type": "string"
+                },
+                "preferences": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "restrictions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "location": {
+                    "type": "string"
+                },
+                "budget": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "required": [
+        "session_id",
+        "messages"
+    ]
+}

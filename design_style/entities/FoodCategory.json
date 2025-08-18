@@ -1,0 +1,51 @@
+{
+    "name": "FoodCategory",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Category name (e.g., 'Comfort Food', 'Light & Fresh')"
+        },
+        "description": {
+            "type": "string",
+            "description": "Detailed description of the mood/situation"
+        },
+        "keywords": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Keywords and phrases that match this category"
+        },
+        "food_types": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Food types that match this mood"
+        },
+        "category_type": {
+            "type": "string",
+            "enum": [
+                "weather",
+                "energy",
+                "emotional",
+                "flavor",
+                "occasion",
+                "health"
+            ],
+            "description": "Type of category"
+        },
+        "color": {
+            "type": "string",
+            "description": "Hex color for UI representation"
+        }
+    },
+    "required": [
+        "name",
+        "description",
+        "keywords",
+        "food_types",
+        "category_type"
+    ]
+}

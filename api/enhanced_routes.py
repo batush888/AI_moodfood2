@@ -309,6 +309,7 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                 )
                 phase_times_ms["intent_ms"] = round((asyncio.get_event_loop().time() - _t0) * 1000.0, 2)
                 logger.info(f"Intent classification completed: {intent_result.get('primary_intent', 'unknown')}")
+                logger.info(f"Full intent result: {intent_result}")
             except asyncio.TimeoutError:
                 logger.warning("Intent classification timed out, using fallback")
                 timeouts["intent"] = True

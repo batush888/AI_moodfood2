@@ -252,12 +252,12 @@ class MoodBasedRecommendationEngine:
             'goal_healthy': ['goal_healthy', 'HEALTH_DETOX', 'goal_light'],
             
             # Comfort and soothing
-            'comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
-            'goal_comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
+            'comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting', 'SEASON_WINTER', 'SENSORY_WARMING'],
+            'goal_comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting', 'SEASON_WINTER', 'SENSORY_WARMING'],
             'goal_soothing': ['goal_soothing', 'sensory_gentle', 'HEALTH_ILLNESS'],
             'sensory_soothing': ['sensory_soothing', 'goal_soothing', 'HEALTH_ILLNESS'],
-            'sensory_warming': ['sensory_warming', 'WEATHER_COLD', 'goal_comfort'],
-            'temperature_warm': ['temperature_warm', 'sensory_warming', 'goal_comfort'],
+            'sensory_warming': ['sensory_warming', 'WEATHER_COLD', 'goal_comfort', 'SEASON_WINTER', 'SENSORY_WARMING'],
+            'temperature_warm': ['temperature_warm', 'sensory_warming', 'goal_comfort', 'SEASON_WINTER', 'SENSORY_WARMING'],
             
             # Hydration and refreshment
             'goal_hydration': ['goal_hydration', 'sensory_refreshing'],
@@ -268,6 +268,8 @@ class MoodBasedRecommendationEngine:
             # Light and healthy
             'goal_light': ['goal_light', 'sensory_light', 'HEALTH_DETOX'],
             'sensory_light': ['sensory_light', 'goal_light'],
+            'nutritious': ['goal_healthy', 'HEALTH_DETOX', 'goal_light', 'SEASON_WINTER'],
+            'warming': ['SENSORY_WARMING', 'SEASON_WINTER', 'WEATHER_COLD', 'goal_comfort'],
             
             # Energy and activity
             'goal_energy': ['goal_energy', 'goal_healthy'],
@@ -316,6 +318,8 @@ class MoodBasedRecommendationEngine:
         
         # Get primary mood categories from enhanced intent
         primary_mood_categories = intent_to_mood_mapping.get(enhanced_intent, [])
+        logger.info(f"Enhanced intent: {enhanced_intent}")
+        logger.info(f"Primary mood categories: {primary_mood_categories}")
         
         # Add additional categories from all_intents if confidence is high
         additional_categories = []
@@ -327,6 +331,7 @@ class MoodBasedRecommendationEngine:
         
         # Combine and remove duplicates
         all_categories = list(set(primary_mood_categories + additional_categories))
+        logger.info(f"All mood categories: {all_categories}")
         
         # Filter out sweet foods if user explicitly doesn't want sweet
         text_input = user_context.get('text_input', '').lower()
@@ -460,6 +465,8 @@ class MoodBasedRecommendationEngine:
     ) -> List[Tuple[FoodItem, float]]:
         """Find food items that match the mood categories."""
         food_matches = []
+        logger.info(f"Looking for foods matching categories: {mood_categories}")
+        logger.info(f"Total food items to check: {len(self.food_items)}")
         
         for food_item in self.food_items:
             match_score = 0.0
@@ -467,16 +474,19 @@ class MoodBasedRecommendationEngine:
             # Direct category match
             if food_item.category in mood_categories:
                 match_score += 0.4
+                logger.info(f"Direct category match for {food_item.name}: {food_item.category}")
             
             # Label matching
             for label in food_item.labels:
                 if label in mood_categories:
                     match_score += 0.2
+                    logger.info(f"Label match for {food_item.name}: {label}")
             
             # Tag matching
             for tag in food_item.tags:
                 if tag in mood_categories:
                     match_score += 0.1
+                    logger.info(f"Tag match for {food_item.name}: {tag}")
             
             # Context matching
             context_score = self._calculate_context_match_score(food_item, context_factors)
@@ -484,9 +494,11 @@ class MoodBasedRecommendationEngine:
             
             if match_score > 0.1:  # Threshold for relevance
                 food_matches.append((food_item, match_score))
+                logger.info(f"Added {food_item.name} with score {match_score}")
         
         # Sort by match score
         food_matches.sort(key=lambda x: x[1], reverse=True)
+        logger.info(f"Found {len(food_matches)} food matches")
         return food_matches
     
     def _find_mood_restaurant_matches(

@@ -1,0 +1,53 @@
+{
+    "name": "UserPreference",
+    "type": "object",
+    "properties": {
+        "user_email": {
+            "type": "string",
+            "description": "User's email"
+        },
+        "preferred_moods": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "User's frequently searched mood categories"
+        },
+        "favorite_cuisines": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "User's favorite cuisine types"
+        },
+        "dietary_restrictions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Dietary restrictions or preferences"
+        },
+        "search_history": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "selected_restaurant": {
+                        "type": "string"
+                    }
+                }
+            },
+            "description": "Search history for personalization"
+        }
+    },
+    "required": [
+        "user_email"
+    ]
+}
