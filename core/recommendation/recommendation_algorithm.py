@@ -244,42 +244,73 @@ class MoodBasedRecommendationEngine:
         
         # Map enhanced intent to mood categories
         intent_to_mood_mapping = {
-            'comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
+            # Health and wellness
             'health_illness': ['HEALTH_ILLNESS', 'health_recovery', 'sensory_gentle', 'goal_soothing'],
+            'health_recovery': ['health_recovery', 'HEALTH_ILLNESS', 'sensory_gentle'],
+            'health_detox': ['HEALTH_DETOX', 'goal_light', 'sensory_refreshing'],
+            'goal_health': ['goal_healthy', 'HEALTH_DETOX', 'goal_light'],
+            'goal_healthy': ['goal_healthy', 'HEALTH_DETOX', 'goal_light'],
+            
+            # Comfort and soothing
+            'comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
             'goal_comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
             'goal_soothing': ['goal_soothing', 'sensory_gentle', 'HEALTH_ILLNESS'],
-            'sensory_warming': ['sensory_warming', 'WEATHER_COLD', 'goal_comfort'],
             'sensory_soothing': ['sensory_soothing', 'goal_soothing', 'HEALTH_ILLNESS'],
+            'sensory_warming': ['sensory_warming', 'WEATHER_COLD', 'goal_comfort'],
             'temperature_warm': ['temperature_warm', 'sensory_warming', 'goal_comfort'],
-            'texture_creamy': ['texture_creamy', 'sensory_comforting'],
-            'occasion_home': ['occasion_home', 'EMOTIONAL_COMFORT'],
-            'weather_cold': ['WEATHER_COLD', 'sensory_warming', 'goal_comfort'],
-            'season_winter': ['season_winter', 'WEATHER_COLD', 'sensory_warming'],
-            'goal_light': ['goal_light', 'sensory_light', 'HEALTH_DETOX'],
+            
+            # Hydration and refreshment
             'goal_hydration': ['goal_hydration', 'sensory_refreshing'],
-            'activity_gym': ['activity_gym', 'goal_energy', 'goal_healthy'],
-            'goal_energy': ['goal_energy', 'goal_healthy'],
-            'goal_healthy': ['goal_healthy', 'HEALTH_DETOX'],
             'sensory_refreshing': ['sensory_refreshing', 'goal_hydration'],
             'sensory_cooling': ['sensory_cooling', 'goal_hydration'],
+            'temperature_cold': ['temperature_cold', 'sensory_refreshing'],
+            
+            # Light and healthy
+            'goal_light': ['goal_light', 'sensory_light', 'HEALTH_DETOX'],
+            'sensory_light': ['sensory_light', 'goal_light'],
+            
+            # Energy and activity
+            'goal_energy': ['goal_energy', 'goal_healthy'],
+            'activity_gym': ['activity_gym', 'goal_energy', 'goal_healthy'],
+            
+            # Quick and simple
             'goal_quick': ['goal_quick', 'OCCASION_LUNCH_BREAK'],
+            'goal_simple': ['goal_simple', 'sensory_simple'],
+            
+            # Social contexts
             'social_group': ['social_group', 'occasion_family_dinner'],
             'social_alone': ['social_alone', 'EMOTIONAL_COMFORT'],
             'occasion_romantic': ['occasion_romantic', 'EMOTIONAL_ROMANTIC'],
-            'goal_simple': ['goal_simple', 'sensory_simple'],
+            'occasion_home': ['occasion_home', 'EMOTIONAL_COMFORT'],
+            
+            # Weather and seasons
+            'weather_cold': ['WEATHER_COLD', 'sensory_warming', 'goal_comfort'],
+            'season_winter': ['season_winter', 'WEATHER_COLD', 'sensory_warming'],
+            'season_summer': ['season_summer', 'sensory_refreshing', 'goal_hydration'],
+            
+            # Indulgence and rich foods
             'goal_indulgence': ['goal_indulgence', 'sensory_rich', 'EMOTIONAL_COMFORT'],
             'sensory_rich': ['sensory_rich', 'goal_indulgence'],
+            
+            # Textures
+            'texture_creamy': ['texture_creamy', 'sensory_comforting'],
             'texture_crispy': ['texture_crispy', 'sensory_crunchy'],
-            'texture_light': ['texture_light', 'goal_light'],
             'texture_greasy': ['texture_greasy', 'goal_indulgence'],
+            
+            # Emotions
             'emotion_nostalgic': ['emotion_nostalgic', 'goal_comfort'],
             'emotion_sad': ['emotion_sad', 'goal_comfort'],
-            'emotion_adventurous': ['emotion_adventurous', 'goal_exploration'],
             'emotion_stressed': ['emotion_stressed', 'goal_comfort'],
             'emotion_anxious': ['emotion_anxious', 'goal_comfort'],
-            'time_breakfast': ['time_breakfast', 'OCCASION_BREAKFAST'],
+            'emotion_adventurous': ['emotion_adventurous', 'goal_exploration'],
+            
+            # Meals
             'meal_dinner': ['meal_dinner', 'OCCASION_DINNER'],
             'meal_lunch': ['meal_lunch', 'OCCASION_LUNCH_BREAK'],
+            'meal_breakfast': ['meal_breakfast', 'OCCASION_BREAKFAST'],
+            'meal_snack': ['meal_snack', 'occasion_party_snacks'],
+            
+            # Specific foods
             'food_smoothie': ['food_smoothie', 'goal_hydration', 'goal_healthy']
         }
         

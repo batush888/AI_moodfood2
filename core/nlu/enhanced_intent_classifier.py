@@ -60,7 +60,7 @@ class EnhancedIntentClassifier:
     - Robust error handling for production use
     """
 
-    def __init__(self, taxonomy_path: str, model_dir: str = "models/enhanced_intent_classifier"):
+    def __init__(self, taxonomy_path: str, model_dir: str = "models/intent_classifier"):
         self.taxonomy_path = taxonomy_path
         self.model_dir = Path(model_dir)
         self.device = self._setup_device()
@@ -170,15 +170,15 @@ class EnhancedIntentClassifier:
             return
         
         try:
-            # Try local model first
-            local_model_path = self.model_dir / "model"
-            if local_model_path.exists():
-                logger.info("Loading transformer model from local path")
-                self.tokenizer = DistilBertTokenizerFast.from_pretrained(str(local_model_path))
-                self.model = DistilBertForSequenceClassification.from_pretrained(str(local_model_path))
+            # Try local model first - our trained model is directly in the model_dir
+            if self.model_dir.exists():
+                logger.info(f"Loading transformer model from: {self.model_dir}")
+                self.tokenizer = DistilBertTokenizerFast.from_pretrained(str(self.model_dir))
+                self.model = DistilBertForSequenceClassification.from_pretrained(str(self.model_dir))
                 self.model.to(self.device)
+                logger.info("Transformer model loaded successfully")
             else:
-                logger.info("No local transformer model found, skipping")
+                logger.info(f"No local transformer model found at: {self.model_dir}")
                 
         except Exception as e:
             logger.warning(f"Failed to load transformer model: {e}")
@@ -272,6 +272,17 @@ class EnhancedIntentClassifier:
     def _distilbert_classification(self, text: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Classify using DistilBERT model."""
         try:
+            # Load label mappings
+            label_mappings_path = self.model_dir / "unified_label_mappings.json"
+            if not label_mappings_path.exists():
+                logger.warning("Label mappings not found, using fallback")
+                return None
+            
+            with open(label_mappings_path, 'r') as f:
+                label_mappings = json.load(f)
+            
+            id_to_label = {int(k): v for k, v in label_mappings.get("id_to_label", {}).items()}
+            
             # Tokenize input
             inputs = self.tokenizer(
                 text, 
@@ -289,22 +300,38 @@ class EnhancedIntentClassifier:
             with torch.no_grad():
                 outputs = self.model(**inputs)
                 logits = outputs.logits
-                probs = torch.softmax(logits, dim=-1)
+                probs = torch.sigmoid(logits)  # Use sigmoid for multi-label classification
             
-            # Get top prediction
-            top_prob, top_idx = torch.max(probs, dim=1)
+            # Get top predictions (multi-label)
+            probs_np = probs.cpu().numpy()[0]
+            top_indices = np.argsort(probs_np)[-3:]  # Get top 3 predictions
+            
+            # Convert to intent labels
+            all_intents = []
+            for idx in top_indices:
+                if idx in id_to_label:
+                    label = id_to_label[idx]
+                    confidence = float(probs_np[idx])
+                    all_intents.append([label, confidence])
+            
+            # Sort by confidence
+            all_intents.sort(key=lambda x: x[1], reverse=True)
+            
+            # Get primary intent
+            primary_intent = all_intents[0][0] if all_intents else "unknown"
+            primary_confidence = all_intents[0][1] if all_intents else 0.0
             
             return {
-                "primary_intent": f"intent_{top_idx.item()}",
-                "confidence": float(top_prob.item()),
-                "all_intents": [(f"intent_{i}", float(prob)) for i, prob in enumerate(probs[0])],
+                "primary_intent": primary_intent,
+                "confidence": primary_confidence,
+                "all_intents": all_intents,
                 "method": "distilbert",
                 "logits_shape": list(logits.shape)
             }
             
         except Exception as e:
             logger.warning(f"DistilBERT classification failed: {e}")
-            raise
+            return None
 
     def _calculate_intent_similarities(self, embedding, text: str) -> Dict[str, float]:
         """Calculate similarities between text and intent categories."""

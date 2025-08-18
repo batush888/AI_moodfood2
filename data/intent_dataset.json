@@ -751,5 +751,805 @@
     {
         "text": "Soup and toast would be nice",
         "labels": ["goal_comfort", "temperature_warm", "sensory_warming", "texture_creamy"]
+    },
+    {
+        "text": "I'm feeling down, I need something warm and soothing.",
+        "labels": ["emotion_sad", "goal_comfort", "sensory_soothing", "temperature_warm", "meal_dinner"]
+    },
+    {
+        "text": "After a long day, give me greasy fried chicken.",
+        "labels": ["emotion_stressed", "goal_indulgence", "texture_greasy", "meal_dinner"]
+    },
+    {
+        "text": "It's so hot, I just want an ice-cold smoothie.",
+        "labels": ["season_summer", "temperature_cold", "sensory_refreshing", "goal_hydration"]
+    },
+    {
+        "text": "I need a protein-rich meal after my workout.",
+        "labels": ["goal_health", "meal_dinner", "texture_hearty"]
+    },
+    {
+        "text": "Quick snack please, I'm running late.",
+        "labels": ["goal_quick", "meal_snack"]
+    },
+    {
+        "text": "Nostalgic for grandma's soup.",
+        "labels": ["emotion_nostalgic", "goal_comfort", "sensory_warming", "meal_dinner"]
+    },
+    {
+        "text": "It's freezing outside, I want a hearty stew.",
+        "labels": ["weather_cold", "temperature_warm", "texture_hearty", "goal_comfort"]
+    },
+    {
+        "text": "I feel anxious, maybe light food will help.",
+        "labels": ["emotion_anxious", "goal_light", "meal_lunch"]
+    },
+    {
+        "text": "Romantic dinner, I want something elegant but filling.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "My throat hurts, soup would help.",
+        "labels": ["health_illness", "goal_comfort", "sensory_soothing", "temperature_warm"]
+    },
+    {
+        "text": "Crispy fries sound perfect right now.",
+        "labels": ["texture_crispy", "goal_indulgence", "meal_snack"]
+    },
+    {
+        "text": "I'm not hungry, just give me water.",
+        "labels": ["goal_hydration"]
+    },
+    {
+        "text": "Breakfast should be light and refreshing.",
+        "labels": ["meal_breakfast", "goal_light", "sensory_refreshing"]
+    },
+    {
+        "text": "I want indulgent dessert with friends.",
+        "labels": ["goal_indulgence", "meal_dessert", "social_group"]
+    },
+    {
+        "text": "Give me a light salad for lunch.",
+        "labels": ["goal_light", "meal_lunch", "goal_health"]
+    },
+    {
+        "text": "Let's share something rich and creamy.",
+        "labels": ["social_group", "sensory_rich", "texture_creamy"]
+    },
+    {
+        "text": "I'm too tired to eat, maybe tomorrow.",
+        "labels": []
+    },
+    {
+        "text": "It's winter, hot cocoa please.",
+        "labels": ["season_winter", "temperature_warm", "goal_comfort"]
+    },
+    {
+        "text": "Need something indulgent but also healthy.",
+        "labels": ["goal_indulgence", "goal_health", "meal_dinner"]
+    },
+    {
+        "text": "Chilled fruit salad sounds refreshing.",
+        "labels": ["temperature_cold", "goal_light", "sensory_refreshing", "meal_snack"]
+    },
+    {
+        "text": "Comfort food like mac and cheese would be great.",
+        "labels": ["goal_comfort", "texture_creamy", "meal_dinner"]
+    },
+    {
+        "text": "I'm stressed, give me chocolate.",
+        "labels": ["emotion_stressed", "goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "It's raining, I'd love warm soup.",
+        "labels": ["weather_cold", "temperature_warm", "goal_comfort", "sensory_soothing"]
+    },
+    {
+        "text": "After the gym, I want grilled chicken.",
+        "labels": ["goal_health", "meal_dinner", "texture_hearty"]
+    },
+    {
+        "text": "I want something quick for breakfast.",
+        "labels": ["goal_quick", "meal_breakfast"]
+    },
+    {
+        "text": "Sharing pizza with friends tonight.",
+        "labels": ["social_group", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "I feel nostalgic, craving mom's cookies.",
+        "labels": ["emotion_nostalgic", "goal_comfort", "meal_dessert"]
+    },
+    {
+        "text": "It's hot, I need ice cream to cool down.",
+        "labels": ["season_summer", "temperature_cold", "sensory_refreshing", "goal_indulgence"]
+    },
+    {
+        "text": "I want something elegant for date night.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "I'm sick, broth would help me heal.",
+        "labels": ["health_illness", "goal_comfort", "temperature_warm", "sensory_soothing"]
+    },
+    {
+        "text": "Give me something crispy and indulgent.",
+        "labels": ["goal_indulgence", "texture_crispy", "meal_snack"]
+    },
+    {
+        "text": "No food right now, just tea.",
+        "labels": ["goal_hydration"]
+    },
+    {
+        "text": "I need a refreshing smoothie after a run.",
+        "labels": ["goal_health", "goal_hydration", "sensory_refreshing", "temperature_cold"]
+    },
+    {
+        "text": "I'm anxious, maybe light soup will calm me.",
+        "labels": ["emotion_anxious", "goal_light", "sensory_soothing", "meal_dinner"]
+    },
+    {
+        "text": "Summer evening, cold beer with friends.",
+        "labels": ["season_summer", "social_group", "temperature_cold", "goal_indulgence"]
+    },
+    {
+        "text": "I'd love a rich creamy pasta dish.",
+        "labels": ["sensory_rich", "texture_creamy", "meal_dinner"]
+    },
+    {
+        "text": "Snack time, maybe a quick sandwich.",
+        "labels": ["goal_quick", "meal_snack"]
+    },
+    {
+        "text": "I want something indulgent and greasy tonight.",
+        "labels": ["goal_indulgence", "texture_greasy", "meal_dinner"]
+    },
+    {
+        "text": "I'm bored, not really hungry.",
+        "labels": []
+    },
+    {
+        "text": "Winter night, hot stew feels right.",
+        "labels": ["season_winter", "temperature_warm", "goal_comfort", "texture_hearty"]
+    },
+    {
+        "text": "Need a light salad, I'm watching calories.",
+        "labels": ["goal_light", "goal_health", "meal_lunch"]
+    },
+    {
+        "text": "I feel stressed, need comfort food.",
+        "labels": ["emotion_stressed", "goal_comfort", "meal_dinner"]
+    },
+    {
+        "text": "I want a rich chocolate cake.",
+        "labels": ["goal_indulgence", "sensory_rich", "meal_dessert"]
+    },
+    {
+        "text": "Lunch should be quick, maybe sushi.",
+        "labels": ["goal_quick", "meal_lunch"]
+    },
+    {
+        "text": "Friends are over, let's order pizza.",
+        "labels": ["social_group", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "A cold refreshing drink would be nice.",
+        "labels": ["temperature_cold", "goal_hydration", "sensory_refreshing"]
+    },
+    {
+        "text": "I'm sick and want gentle food.",
+        "labels": ["health_illness", "goal_comfort", "sensory_soothing", "meal_dinner"]
+    },
+    {
+        "text": "Breakfast smoothie with fruits sounds perfect.",
+        "labels": ["meal_breakfast", "goal_health", "sensory_refreshing"]
+    },
+    {
+        "text": "It's a romantic night, wine and pasta please.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "Crispy snack while watching TV.",
+        "labels": ["meal_snack", "texture_crispy", "goal_indulgence"]
+    },
+    {
+        "text": "It's so hot, a cold soda will refresh me.",
+        "labels": ["season_summer", "temperature_cold", "goal_hydration", "sensory_refreshing"]
+    },
+    {
+        "text": "Feeling nostalgic, I want apple pie.",
+        "labels": ["emotion_nostalgic", "goal_comfort", "meal_dessert"]
+    },
+    {
+        "text": "Give me a quick protein bar before class.",
+        "labels": ["goal_quick", "meal_snack", "goal_health"]
+    },
+    {
+        "text": "I need comfort food like ramen.",
+        "labels": ["goal_comfort", "meal_dinner", "sensory_warming"]
+    },
+    {
+        "text": "Watching calories, I need a light soup.",
+        "labels": ["goal_light", "goal_health", "meal_dinner"]
+    },
+    {
+        "text": "Romantic evening, champagne and oysters.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "Stressed, I crave something greasy and salty.",
+        "labels": ["emotion_stressed", "goal_indulgence", "texture_greasy"]
+    },
+    {
+        "text": "Rainy night, warm noodles sound nice.",
+        "labels": ["weather_cold", "goal_comfort", "temperature_warm", "meal_dinner"]
+    },
+    {
+        "text": "Breakfast bagel with cream cheese please.",
+        "labels": ["meal_breakfast", "texture_creamy", "goal_comfort"]
+    },
+    {
+        "text": "Friends gathering, let's share nachos.",
+        "labels": ["social_group", "meal_snack", "goal_indulgence"]
+    },
+    {
+        "text": "I'm feeling sick, broth would help.",
+        "labels": ["health_illness", "goal_comfort", "temperature_warm"]
+    },
+    {
+        "text": "Need a quick lunch, maybe a sandwich.",
+        "labels": ["goal_quick", "meal_lunch"]
+    },
+    {
+        "text": "I want indulgent chocolate ice cream.",
+        "labels": ["goal_indulgence", "meal_dessert", "temperature_cold"]
+    },
+    {
+        "text": "Hot summer, refreshing watermelon is perfect.",
+        "labels": ["season_summer", "goal_light", "temperature_cold", "sensory_refreshing"]
+    },
+    {
+        "text": "Romantic date, let's have sushi and wine.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "I need healthy food after workout.",
+        "labels": ["goal_health", "meal_dinner", "texture_hearty"]
+    },
+    {
+        "text": "Comfort food like mashed potatoes please.",
+        "labels": ["goal_comfort", "texture_creamy", "meal_dinner"]
+    },
+    {
+        "text": "Give me a crispy snack to munch on.",
+        "labels": ["meal_snack", "texture_crispy", "goal_indulgence"]
+    },
+    {
+        "text": "I feel anxious, maybe tea will calm me.",
+        "labels": ["emotion_anxious", "goal_hydration", "sensory_soothing"]
+    },
+    {
+        "text": "Cold winter, stew will keep me warm.",
+        "labels": ["season_winter", "temperature_warm", "goal_comfort", "texture_hearty"]
+    },
+    {
+        "text": "Quick dinner, maybe fried rice.",
+        "labels": ["goal_quick", "meal_dinner", "texture_greasy"]
+    },
+    {
+        "text": "Sharing cake with family tonight.",
+        "labels": ["social_group", "meal_dessert", "goal_indulgence"]
+    },
+    {
+        "text": "I'm stressed and need comfort food fast.",
+        "labels": ["emotion_stressed", "goal_comfort", "goal_quick"]
+    },
+    {
+        "text": "I want a rich creamy soup for lunch.",
+        "labels": ["sensory_rich", "texture_creamy", "meal_lunch"]
+    },
+    {
+        "text": "I don't feel like eating, just juice.",
+        "labels": ["goal_hydration", "goal_light"]
+    },
+    {
+        "text": "Hot day, chilled iced tea sounds perfect.",
+        "labels": ["season_summer", "temperature_cold", "goal_hydration", "sensory_refreshing"]
+    },
+    {
+        "text": "Romantic night, steak and red wine.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "I want indulgent pizza tonight.",
+        "labels": ["goal_indulgence", "meal_dinner", "texture_greasy"]
+    },
+    {
+        "text": "I'm unwell, porridge would be nice.",
+        "labels": ["health_illness", "goal_comfort", "meal_dinner"]
+    },
+    {
+        "text": "Snack time, popcorn for movie night.",
+        "labels": ["meal_snack", "goal_indulgence", "social_group"]
+    },
+    {
+        "text": "I'm bored, let's try new food.",
+        "labels": []
+    },
+    {
+        "text": "Winter breakfast, oatmeal sounds good.",
+        "labels": ["season_winter", "meal_breakfast", "goal_health"]
+    },
+    {
+        "text": "Give me something crispy like fried fish.",
+        "labels": ["texture_crispy", "goal_indulgence", "meal_dinner"]
+    },
+    {
+        "text": "I need refreshing fruit juice after a run.",
+        "labels": ["goal_health", "goal_hydration", "sensory_refreshing", "temperature_cold"]
+    },
+    {
+        "text": "Feeling nostalgic, I want homemade soup.",
+        "labels": ["emotion_nostalgic", "goal_comfort", "meal_dinner"]
+    },
+    {
+        "text": "Quick snack bar, I'm in a rush.",
+        "labels": ["goal_quick", "meal_snack"]
+    },
+    {
+        "text": "Stressed, I want indulgent cake.",
+        "labels": ["emotion_stressed", "goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "Rainy weather, I crave warm ramen.",
+        "labels": ["weather_cold", "temperature_warm", "goal_comfort"]
+    },
+    {
+        "text": "Romantic picnic, wine and cheese.",
+        "labels": ["occasion_romantic", "social_group", "meal_snack", "goal_indulgence"]
+    },
+    {
+        "text": "Sick day, soft soup will help.",
+        "labels": ["health_illness", "goal_comfort", "sensory_soothing"]
+    },
+    {
+        "text": "Cold smoothie for breakfast please.",
+        "labels": ["meal_breakfast", "temperature_cold", "sensory_refreshing"]
+    },
+    {
+        "text": "Quick noodles before class.",
+        "labels": ["goal_quick", "meal_dinner"]
+    },
+    {
+        "text": "I feel anxious, chocolate will help.",
+        "labels": ["emotion_anxious", "goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "I want rich lasagna for dinner.",
+        "labels": ["sensory_rich", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "It's summer, fresh salad please.",
+        "labels": ["season_summer", "goal_light", "meal_lunch"]
+    },
+    {
+        "text": "I'm tired, need comfort food like soup.",
+        "labels": ["goal_comfort", "meal_dinner", "sensory_soothing"]
+    },
+    {
+        "text": "Movie night with friends, nachos and soda.",
+        "labels": ["social_group", "meal_snack", "goal_indulgence"]
+    },
+    {
+        "text": "Breakfast smoothie to start the day.",
+        "labels": ["meal_breakfast", "goal_health", "sensory_refreshing"]
+    },
+    {
+        "text": "Cold day, hot cocoa would be perfect.",
+        "labels": ["weather_cold", "temperature_warm", "goal_comfort"]
+    },
+    {
+        "text": "Romantic night, elegant pasta dish.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "I want creamy pasta for comfort.",
+        "labels": ["texture_creamy", "goal_comfort", "meal_dinner"]
+    },
+    {
+        "text": "It's too hot, give me ice cream.",
+        "labels": ["season_summer", "temperature_cold", "goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "Healthy morning, oatmeal and fruit.",
+        "labels": ["meal_breakfast", "goal_health"]
+    },
+    {
+        "text": "Feeling sad, chocolate cake helps.",
+        "labels": ["emotion_sad", "goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "Quick bite, a wrap sandwich works.",
+        "labels": ["goal_quick", "meal_lunch"]
+    },
+    {
+        "text": "Romantic night, wine and fondue.",
+        "labels": ["occasion_romantic", "goal_indulgence", "meal_dinner"]
+    },
+    {
+        "text": "I feel stressed, fries please.",
+        "labels": ["emotion_stressed", "texture_greasy", "meal_snack", "goal_indulgence"]
+    },
+    {
+        "text": "Cold winter, soup warms me up.",
+        "labels": ["season_winter", "temperature_warm", "goal_comfort"]
+    },
+    {
+        "text": "I need light food, maybe salad.",
+        "labels": ["goal_light", "meal_lunch"]
+    },
+    {
+        "text": "Movie night, let's have popcorn.",
+        "labels": ["social_group", "meal_snack", "goal_indulgence"]
+    },
+    {
+        "text": "I want indulgent donuts.",
+        "labels": ["goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "Feeling unwell, porridge please.",
+        "labels": ["health_illness", "goal_comfort"]
+    },
+    {
+        "text": "Romantic dinner, seafood platter.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "Hot day, refreshing lemonade.",
+        "labels": ["season_summer", "temperature_cold", "goal_hydration", "sensory_refreshing"]
+    },
+    {
+        "text": "Need a quick burger.",
+        "labels": ["goal_quick", "meal_dinner", "texture_greasy"]
+    },
+    {
+        "text": "I feel nostalgic, want mom's stew.",
+        "labels": ["emotion_nostalgic", "goal_comfort", "meal_dinner"]
+    },
+    {
+        "text": "Healthy snack, mixed nuts.",
+        "labels": ["goal_health", "meal_snack"]
+    },
+    {
+        "text": "Cold evening, hot tea.",
+        "labels": ["weather_cold", "temperature_warm", "goal_hydration", "sensory_soothing"]
+    },
+    {
+        "text": "I'm anxious, want calming soup.",
+        "labels": ["emotion_anxious", "goal_comfort", "sensory_soothing"]
+    },
+    {
+        "text": "Weekend breakfast, pancakes with syrup.",
+        "labels": ["meal_breakfast", "goal_indulgence"]
+    },
+    {
+        "text": "Summer lunch, fresh sushi rolls.",
+        "labels": ["season_summer", "meal_lunch", "goal_light"]
+    },
+    {
+        "text": "Rainy day, fried chicken sounds great.",
+        "labels": ["weather_cold", "texture_greasy", "goal_indulgence"]
+    },
+    {
+        "text": "Need a quick smoothie after gym.",
+        "labels": ["goal_quick", "meal_snack", "goal_health", "sensory_refreshing"]
+    },
+    {
+        "text": "Romantic night, strawberries and wine.",
+        "labels": ["occasion_romantic", "meal_dessert", "goal_indulgence"]
+    },
+    {
+        "text": "Comfort food like mac and cheese.",
+        "labels": ["goal_comfort", "texture_creamy", "meal_dinner"]
+    },
+    {
+        "text": "I feel tired, give me coffee.",
+        "labels": ["goal_hydration", "goal_quick"]
+    },
+    {
+        "text": "Friends gathering, pizza party.",
+        "labels": ["social_group", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "I'm stressed, I need greasy burgers.",
+        "labels": ["emotion_stressed", "texture_greasy", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "Cold winter morning, hot porridge.",
+        "labels": ["season_winter", "meal_breakfast", "temperature_warm", "goal_comfort"]
+    },
+    {
+        "text": "I want something refreshing like fruit salad.",
+        "labels": ["goal_light", "sensory_refreshing", "meal_lunch"]
+    },
+    {
+        "text": "Romantic dinner with pasta and wine.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "Quick snack, protein shake.",
+        "labels": ["goal_quick", "meal_snack", "goal_health"]
+    },
+    {
+        "text": "Feeling sad, ice cream comforts me.",
+        "labels": ["emotion_sad", "goal_comfort", "meal_dessert", "temperature_cold"]
+    },
+    {
+        "text": "I'm nostalgic for childhood cookies.",
+        "labels": ["emotion_nostalgic", "goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "Rainy day, soup feels right.",
+        "labels": ["weather_cold", "goal_comfort", "temperature_warm"]
+    },
+    {
+        "text": "Healthy salad with quinoa.",
+        "labels": ["goal_health", "meal_lunch", "goal_light"]
+    },
+    {
+        "text": "Weekend brunch, avocado toast.",
+        "labels": ["meal_breakfast", "goal_health"]
+    },
+    {
+        "text": "Quick ramen before study.",
+        "labels": ["goal_quick", "meal_dinner"]
+    },
+    {
+        "text": "Romantic night, champagne and cake.",
+        "labels": ["occasion_romantic", "meal_dessert", "goal_indulgence"]
+    },
+    {
+        "text": "I want something creamy like custard.",
+        "labels": ["texture_creamy", "meal_dessert", "goal_indulgence"]
+    },
+    {
+        "text": "It's hot, cold milkshake please.",
+        "labels": ["season_summer", "temperature_cold", "sensory_refreshing", "meal_dessert"]
+    },
+    {
+        "text": "Feeling unwell, ginger tea will help.",
+        "labels": ["health_illness", "goal_comfort", "sensory_soothing"]
+    },
+    {
+        "text": "I feel anxious, I need calming tea.",
+        "labels": ["emotion_anxious", "goal_hydration", "sensory_soothing"]
+    },
+    {
+        "text": "Cold evening, stew sounds good.",
+        "labels": ["season_winter", "meal_dinner", "goal_comfort"]
+    },
+    {
+        "text": "Friends gathering, chips and dip.",
+        "labels": ["social_group", "meal_snack", "goal_indulgence"]
+    },
+    {
+        "text": "Hot summer day, chilled fruit juice.",
+        "labels": ["season_summer", "temperature_cold", "goal_hydration", "sensory_refreshing"]
+    },
+    {
+        "text": "Weekend breakfast, waffles and coffee.",
+        "labels": ["meal_breakfast", "goal_indulgence"]
+    },
+    {
+        "text": "Romantic dinner, risotto with wine.",
+        "labels": ["occasion_romantic", "meal_dinner", "goal_indulgence"]
+    },
+    {
+        "text": "I want indulgent brownies.",
+        "labels": ["goal_indulgence", "meal_dessert"]
+    },
+    {
+        "text": "I'm sad, I need comforting hot soup.",
+        "labels": ["emotion_sad", "goal_comfort", "meal_dinner", "temperature_warm"]
+    },
+    {
+        "text": "I want something refreshing and fruity, but not just plain water.",
+        "labels": ["goal_hydration", "sensory_refreshing", "temperature_cold"]
+    },
+    {
+        "text": "It's too hot, I'd like an iced tea or lemonade.",
+        "labels": ["goal_hydration", "temperature_cold", "sensory_cooling", "season_summer"]
+    },
+    {
+        "text": "Give me a healthy drink that hydrates me.",
+        "labels": ["goal_hydration", "health_illness", "sensory_refreshing"]
+    },
+    {
+        "text": "I need something hydrating after running, not soda.",
+        "labels": ["goal_hydration", "health_illness", "sensory_refreshing", "temperature_cold"]
+    },
+    {
+        "text": "I want a smoothie that feels light and energizing.",
+        "labels": ["goal_hydration", "goal_light", "sensory_refreshing", "texture_creamy"]
+    },
+    {
+        "text": "I'm sick, give me soup to soothe my throat.",
+        "labels": ["health_illness", "goal_comfort", "sensory_soothing", "temperature_warm"]
+    },
+    {
+        "text": "I have a fever, I need something gentle and hydrating.",
+        "labels": ["health_illness", "goal_hydration", "goal_light", "temperature_cold"]
+    },
+    {
+        "text": "I'm coughing, I want warm tea with honey.",
+        "labels": ["health_illness", "goal_comfort", "temperature_warm", "sensory_soothing"]
+    },
+    {
+        "text": "I'm recovering from a cold, give me nourishing porridge.",
+        "labels": ["health_illness", "goal_comfort", "texture_creamy", "temperature_warm"]
+    },
+    {
+        "text": "My stomach hurts, I want light broth.",
+        "labels": ["health_illness", "goal_light", "sensory_soothing", "temperature_warm"]
+    },
+    {
+        "text": "I want greasy comfort food like burgers or fries.",
+        "labels": ["goal_indulgence", "goal_comfort", "texture_greasy", "meal_dinner"]
+    },
+    {
+        "text": "Give me something crispy and fried to snack on.",
+        "labels": ["goal_indulgence", "texture_crispy", "meal_snack"]
+    },
+    {
+        "text": "I'm craving a rich chocolate dessert.",
+        "labels": ["goal_indulgence", "sensory_rich", "meal_dessert"]
+    },
+    {
+        "text": "Tonight I want pizza dripping with cheese.",
+        "labels": ["goal_indulgence", "texture_cheesy", "texture_greasy", "meal_dinner"]
+    },
+    {
+        "text": "I want to spoil myself with something decadent and sweet.",
+        "labels": ["goal_indulgence", "sensory_rich", "meal_dessert"]
+    },
+    {
+        "text": "I'm hosting friends, need shareable snacks.",
+        "labels": ["social_group", "meal_snack", "goal_indulgence"]
+    },
+    {
+        "text": "It's a family dinner, give me hearty dishes.",
+        "labels": ["social_group", "meal_dinner", "sensory_rich"]
+    },
+    {
+        "text": "It's date night, I want something elegant and light.",
+        "labels": ["social_romantic", "goal_light", "meal_dinner"]
+    },
+    {
+        "text": "I need a festive meal for a celebration.",
+        "labels": ["social_group", "occasion_party", "meal_dinner", "sensory_rich"]
+    },
+    {
+        "text": "Picnic food please, something easy to carry.",
+        "labels": ["social_group", "occasion_outdoor", "goal_simple", "meal_snack"]
+    },
+    {
+        "text": "It's raining, I want something hot and comforting.",
+        "labels": ["weather_rain", "goal_comfort", "temperature_warm", "sensory_soothing"]
+    },
+    {
+        "text": "It's snowing outside, give me stew.",
+        "labels": ["season_winter", "temperature_warm", "sensory_rich", "goal_comfort"]
+    },
+    {
+        "text": "The summer heat makes me want a cold smoothie.",
+        "labels": ["season_summer", "goal_hydration", "temperature_cold", "sensory_refreshing"]
+    },
+    {
+        "text": "Autumn vibes call for pumpkin soup.",
+        "labels": ["season_autumn", "temperature_warm", "sensory_soothing", "meal_dinner"]
+    },
+    {
+        "text": "Springtime feels like fresh salads and light meals.",
+        "labels": ["season_spring", "goal_light", "meal_lunch", "sensory_refreshing"]
+    },
+    {
+        "text": "I only have 5 minutes, quick snack please.",
+        "labels": ["goal_simple", "meal_snack", "occasion_work"]
+    },
+    {
+        "text": "Fast breakfast option before work.",
+        "labels": ["goal_simple", "meal_breakfast", "occasion_work"]
+    },
+    {
+        "text": "Late-night munchies, something indulgent.",
+        "labels": ["meal_snack", "goal_indulgence", "occasion_late_night"]
+    },
+    {
+        "text": "I need lunch I can eat on the go.",
+        "labels": ["goal_simple", "meal_lunch", "occasion_work"]
+    },
+    {
+        "text": "Dinner that's quick but filling.",
+        "labels": ["goal_simple", "meal_dinner", "sensory_rich"]
+    },
+    {
+        "text": "High-protein meal after gym.",
+        "labels": ["goal_health", "goal_energy", "meal_dinner"]
+    },
+    {
+        "text": "Low-carb dinner for weight control.",
+        "labels": ["goal_health", "goal_light", "meal_dinner"]
+    },
+    {
+        "text": "I want a vegan meal that feels hearty.",
+        "labels": ["goal_health", "goal_comfort", "meal_dinner"]
+    },
+    {
+        "text": "Something low-sugar but still a dessert.",
+        "labels": ["goal_health", "meal_dessert", "goal_indulgence"]
+    },
+    {
+        "text": "Gluten-free option for sensitive stomach.",
+        "labels": ["goal_health", "health_illness", "meal_dinner"]
+    },
+    {
+        "text": "I want Japanese ramen, hot and savory.",
+        "labels": ["cuisine_asian", "temperature_warm", "goal_comfort", "sensory_rich"]
+    },
+    {
+        "text": "Give me Mediterranean salad, fresh and light.",
+        "labels": ["cuisine_mediterranean", "goal_light", "sensory_refreshing"]
+    },
+    {
+        "text": "Mexican tacos for a fun meal.",
+        "labels": ["cuisine_mexican", "goal_indulgence", "meal_dinner", "social_group"]
+    },
+    {
+        "text": "Indian curry, spicy and warming.",
+        "labels": ["cuisine_indian", "sensory_spicy", "temperature_warm", "goal_comfort"]
+    },
+    {
+        "text": "Middle Eastern hummus and pita, light but filling.",
+        "labels": ["cuisine_middle_eastern", "goal_light", "texture_creamy"]
+    },
+    {
+        "text": "I want something both sweet and salty.",
+        "labels": ["goal_indulgence", "sensory_complex", "meal_snack"]
+    },
+    {
+        "text": "Give me a crunchy but healthy snack.",
+        "labels": ["texture_crispy", "goal_health", "meal_snack"]
+    },
+    {
+        "text": "I need energizing food without being too heavy.",
+        "labels": ["goal_energy", "goal_light", "meal_lunch"]
+    },
+    {
+        "text": "I want food that reminds me of childhood.",
+        "labels": ["emotion_nostalgic", "goal_comfort", "meal_dinner"]
+    },
+    {
+        "text": "I need something calming after a stressful day.",
+        "labels": ["emotion_stressed", "goal_comfort", "sensory_soothing"]
+    },
+    {
+        "text": "Food that cheers me up when I'm sad.",
+        "labels": ["emotion_sad", "goal_comfort", "goal_indulgence"]
+    },
+    {
+        "text": "I want adventurous food, something spicy.",
+        "labels": ["goal_exploration", "sensory_spicy", "meal_dinner"]
+    },
+    {
+        "text": "I feel anxious, need calming tea.",
+        "labels": ["emotion_anxious", "goal_comfort", "sensory_soothing", "temperature_warm"]
+    },
+    {
+        "text": "I'm celebrating, bring out something fancy.",
+        "labels": ["social_group", "occasion_party", "sensory_rich"]
+    },
+    {
+        "text": "I want food that feels luxurious, fine-dining style.",
+        "labels": ["goal_indulgence", "social_romantic", "sensory_rich"]
     }
 ]

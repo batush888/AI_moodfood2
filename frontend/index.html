@@ -642,11 +642,14 @@
                         <button type="button" onclick="testWeatherSystem()" style="background: #17a2b8; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; margin-left: 10px;">
                             🌤️ Test Weather
                         </button>
+                        <button type="button" onclick="testShanghaiWeather()" style="background: #28a745; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; margin-left: 10px;">
+                            🏙️ Test Shanghai
+                        </button>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label for="weather">Weather:</label>
+                    <label for="weather">Weather (optional, auto-detected):</label>
                     <div class="weather-display">
                         <span id="weatherIcon" class="weather-icon">🌤️</span>
                         <span id="weatherText" class="weather-text">Detecting...</span>
@@ -655,7 +658,8 @@
                         </button>
                         <span id="weatherStatus" class="weather-status"></span>
                     </div>
-                    <input type="hidden" id="weather" value="unknown">
+                    <input type="text" id="weather" placeholder="Enter weather (optional, e.g., hot, cold)" style="margin-top: 10px;">
+                    <small style="color: #666; font-size: 0.8rem;">Leave empty for automatic detection, or enter manually to override</small>
                 </div>
 
                 <div class="input-group">
@@ -759,8 +763,8 @@
         let currentRecommendations = null;
         
         // Time of day detection and management
-        let timeUpdateInterval;
-        let use24HourFormat = false;
+        let _timeInterval = null;
+        let _use24Hour = false;
         
         // Initialize automatic time detection
         function initializeTimeSystem() {
@@ -788,45 +792,54 @@
             }
         }
         
-        // Try multiple initialization methods
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOMContentLoaded fired');
-                setTimeout(() => {
-                    initializeTimeSystem();
-                    initializeWeatherSystem();
-                }, 100);
-            });
-        } else {
-            console.log('DOM already loaded, initializing immediately');
+        // Simplified initialization - only use DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded fired - initializing systems');
+            // Wait for DOM to be fully ready
             setTimeout(() => {
-                initializeTimeSystem();
-                initializeWeatherSystem();
-            }, 100);
-        }
-        
-        // Fallback initialization
-        window.addEventListener('load', function() {
-            console.log('Window load event fired');
-            if (!timeUpdateInterval) {
-                console.log('Fallback initialization...');
-                setTimeout(() => {
+                if (document.readyState === 'complete') {
                     initializeTimeSystem();
                     initializeWeatherSystem();
-                }, 200);
-            }
+                } else {
+                    // Wait a bit more if DOM isn't complete
+                    setTimeout(() => {
+                        initializeTimeSystem();
+                        initializeWeatherSystem();
+                    }, 200);
+                }
+            }, 100);
         });
         
         function initializeTimeDetection() {
             console.log('Initializing time detection...');
+            
+            // Safety check - ensure DOM is ready
+            if (document.readyState !== 'complete') {
+                console.log('DOM not ready, delaying time detection initialization');
+                setTimeout(initializeTimeDetection, 100);
+                return;
+            }
+            
             updateTimeDisplay();
-            // Update time every minute
-            timeUpdateInterval = setInterval(updateTimeDisplay, 60000);
-            console.log('Time detection initialized!');
+            // Clear any existing interval first
+            if (_timeInterval !== null) {
+                clearInterval(_timeInterval);
+                _timeInterval = null;
+            }
+            // Set new interval
+            _timeInterval = setInterval(updateTimeDisplay, 60000);
+            console.log('Time detection initialized with interval:', _timeInterval);
         }
         
         function updateTimeDisplay() {
             console.log('Updating time display...');
+            
+            // Safety check - ensure DOM is ready
+            if (document.readyState !== 'complete') {
+                console.log('DOM not ready, skipping time update');
+                return;
+            }
+            
             const now = new Date();
             const currentTimeElement = document.getElementById('currentTime');
             const timeCategoryElement = document.getElementById('timeCategory');
@@ -848,7 +861,7 @@
             const timeString = now.toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: !use24HourFormat
+                hour12: !_use24Hour
             });
             currentTimeElement.textContent = `🕐 ${timeString}`;
             
@@ -888,14 +901,12 @@
                 { name: 'Sydney', tz: 'Australia/Sydney' }
             ];
             
-            let tooltipText = `Local time in ${timezoneDisplay}\n\nMajor cities:\n`;
-            majorCities.forEach(city => {
-                const cityTime = getTimeInCity(city.name, city.tz);
-                tooltipText += `${city.name}: ${cityTime}\n`;
-            });
-            
-            // Add format info
-            tooltipText += `\nFormat: ${use24HourFormat ? '24-hour' : '12-hour'}`;
+            const tooltipText = `Local time in ${timezoneDisplay}\n\nMajor cities:\n` + 
+                majorCities.map(city => {
+                    const cityTime = getTimeInCity(city.name, city.tz);
+                    return `${city.name}: ${cityTime}`;
+                }).join('\n') + 
+                `\nFormat: ${_use24Hour ? '24-hour' : '12-hour'}`;
             
             currentTimeElement.title = tooltipText;
         }
@@ -938,17 +949,17 @@
             
             formatBtn.onclick = function() {
                 console.log('Format button clicked (onclick)!');
-                use24HourFormat = !use24HourFormat;
+                _use24Hour = !_use24Hour;
                 updateTimeDisplay();
                 saveUserPreferences();
                 
                 // Update button icon
-                this.querySelector('span').textContent = use24HourFormat ? '🕙' : '🕐';
+                this.querySelector('span').textContent = _use24Hour ? '🕙' : '🕐';
                 
                 // Show status feedback
                 const statusElement = document.getElementById('timeStatus');
                 if (statusElement) {
-                    const formatText = use24HourFormat ? '24-hour' : '12-hour';
+                    const formatText = _use24Hour ? '24-hour' : '12-hour';
                     statusElement.textContent = `✓ ${formatText} format`;
                     statusElement.classList.add('show');
                     setTimeout(() => {
@@ -972,8 +983,9 @@
         
         // Cleanup interval when page is unloaded
         window.addEventListener('beforeunload', function() {
-            if (timeUpdateInterval) {
-                clearInterval(timeUpdateInterval);
+            if (_timeInterval !== null) {
+                clearInterval(_timeInterval);
+                _timeInterval = null;
             }
         });
         
@@ -981,12 +993,12 @@
         function loadUserPreferences() {
             const savedFormat = localStorage.getItem('timeFormat24Hour');
             if (savedFormat !== null) {
-                use24HourFormat = savedFormat === 'true';
+                _use24Hour = savedFormat === 'true';
             }
         }
         
         function saveUserPreferences() {
-            localStorage.setItem('timeFormat24Hour', use24HourFormat.toString());
+            localStorage.setItem('timeFormat24Hour', _use24Hour.toString());
         }
         
         // Enhanced timezone detection and display
@@ -1018,7 +1030,7 @@
                     timeZone: timezone,
                     hour: '2-digit',
                     minute: '2-digit',
-                    hour12: !use24HourFormat
+                    hour12: !_use24Hour
                 });
                 return cityTime;
             } catch (error) {
@@ -1029,8 +1041,8 @@
         // Test function for debugging
         function testTimeButtons() {
             console.log('Testing time buttons...');
-            console.log('Current format:', use24HourFormat ? '24-hour' : '12-hour');
-            console.log('Time update interval:', timeUpdateInterval);
+            console.log('Current format:', _use24Hour ? '24-hour' : '12-hour');
+            console.log('Time update interval:', _timeInterval);
             
             const refreshBtn = document.getElementById('refreshTime');
             const formatBtn = document.getElementById('timeFormatToggle');
@@ -1054,15 +1066,24 @@
             }
         }
         
-        // Weather API integration
-        const WEATHER_API_KEY = 'f2f2807dd694c0e3e46d99bc30e9139f';
+        // Weather API integration with smart fallbacks
+        const GAODE_API_KEY = 'f2f2807dd694c0e3e46d99bc30e9139f';
         let currentWeather = 'unknown';
         let userLocation = null;
         
-        // Get current weather using Gaode API
+        // Get current weather with comprehensive fallback system
         async function getCurrentWeather() {
             try {
                 console.log('Fetching current weather...');
+                
+                // Check for manual weather override first
+                const manualWeather = document.getElementById("weather")?.value?.trim();
+                if (manualWeather) {
+                    console.log('Using manual weather override:', manualWeather);
+                    currentWeather = manualWeather;
+                    updateWeatherDisplayManual(manualWeather);
+                    return manualWeather;
+                }
                 
                 // Get user location
                 if (!userLocation) {
@@ -1073,26 +1094,66 @@
                     throw new Error('Unable to get user location');
                 }
                 
-                // Make API call to Gaode weather API
-                const weatherData = await fetchWeatherFromAPI(userLocation.latitude, userLocation.longitude);
+                console.log('Using location:', userLocation);
                 
-                // Process weather data and determine weather category
-                const weatherCategory = categorizeWeather(weatherData);
-                
-                // Update UI
-                updateWeatherDisplay(weatherData, weatherCategory);
-                
-                // Update hidden input
-                document.getElementById('weather').value = weatherCategory;
-                currentWeather = weatherCategory;
-                
-                console.log('Weather updated:', weatherCategory);
-                return weatherCategory;
+                // Try Gaode API with reverse geocoding first
+                try {
+                    const weatherData = await fetchGaodeWeatherWithGeocoding(userLocation.latitude, userLocation.longitude);
+                    
+                    if (!weatherData) {
+                        throw new Error('No weather data received from Gaode API');
+                    }
+                    
+                    console.log('Weather data received:', weatherData);
+                    
+                    // Process weather data and determine weather category
+                    const weatherCategory = categorizeGaodeWeather(weatherData);
+                    
+                    // Update UI
+                    updateWeatherDisplay(weatherData, weatherCategory);
+                    
+                    // Update input field
+                    document.getElementById('weather').value = weatherCategory;
+                    currentWeather = weatherCategory;
+                    
+                    console.log('Weather updated successfully:', weatherCategory);
+                    return weatherCategory;
+                    
+                } catch (apiError) {
+                    console.log('Gaode API failed, trying feedback fallback...');
+                    
+                    // Try feedback-based weather
+                    try {
+                        const timeOfDay = getTimeOfDay();
+                        const feedbackWeather = await fetchRecentFeedbackWeather(timeOfDay);
+                        
+                        if (feedbackWeather && feedbackWeather !== 'unknown') {
+                            console.log('Using feedback weather:', feedbackWeather);
+                            currentWeather = feedbackWeather;
+                            updateWeatherDisplayManual(feedbackWeather);
+                            document.getElementById('weather').value = feedbackWeather;
+                            return feedbackWeather;
+                        }
+                    } catch (feedbackError) {
+                        console.log('Feedback fallback failed:', feedbackError);
+                    }
+                    
+                    // Use seasonal default
+                    const seasonalWeather = getSeasonalDefaultWeather();
+                    console.log('Using seasonal default weather:', seasonalWeather);
+                    currentWeather = seasonalWeather;
+                    updateWeatherDisplayManual(seasonalWeather);
+                    document.getElementById('weather').value = seasonalWeather;
+                    return seasonalWeather;
+                }
                 
             } catch (error) {
-                console.error('Weather fetch failed:', error);
-                showWeatherError();
-                return 'unknown';
+                console.error('All weather methods failed:', error);
+                const fallbackWeather = getSeasonalDefaultWeather();
+                currentWeather = fallbackWeather;
+                updateWeatherDisplayManual(fallbackWeather);
+                document.getElementById('weather').value = fallbackWeather;
+                return fallbackWeather;
             }
         }
         
@@ -1115,115 +1176,214 @@
                         resolve(location);
                     },
                     (error) => {
-                        console.log('Geolocation permission denied, using default location');
+                        console.log('Geolocation permission denied, using default location (San Francisco)');
                         resolve({ latitude: 37.7749, longitude: -122.4194 }); // San Francisco fallback
                     },
-                    { timeout: 10000, enableHighAccuracy: false }
+                    { timeout: 5000, enableHighAccuracy: false }
                 );
             });
         }
         
-        // Fetch weather from Gaode API
-        async function fetchWeatherFromAPI(lat, lng) {
+        // Get time of day for feedback fallback
+        function getTimeOfDay() {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) return 'morning';
+            if (hour >= 12 && hour < 17) return 'afternoon';
+            if (hour >= 17 && hour < 21) return 'evening';
+            return 'night';
+        }
+        
+        // Get seasonal default weather
+        function getSeasonalDefaultWeather() {
+            const month = new Date().getMonth();
+            if (month >= 6 && month <= 8) return "hot";      // Summer (Jun-Aug)
+            if (month >= 9 && month <= 11) return "mild";    // Fall (Sep-Nov)
+            if (month >= 12 || month <= 2) return "cold";    // Winter (Dec-Feb)
+            return "mild";                                    // Spring (Mar-May)
+        }
+        
+        // Fetch recent feedback weather
+        async function fetchRecentFeedbackWeather(timeOfDay) {
             try {
-                // Convert coordinates to city code (simplified approach)
-                // In a real implementation, you might want to use reverse geocoding first
-                const cityCode = await getCityCodeFromCoordinates(lat, lng);
+                console.log('Fetching recent feedback weather for:', timeOfDay);
                 
-                const url = 'https://restapi.amap.com/v3/weather/weatherInfo';
-                const params = new URLSearchParams({
-                    key: WEATHER_API_KEY,
-                    city: cityCode,
-                    extensions: 'base',
-                    output: 'json'
+                const response = await fetch('http://localhost:8000/recent-feedback-weather', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        user_id: "user123", 
+                        time_of_day: timeOfDay 
+                    }),
+                    signal: AbortSignal.timeout(5000)
                 });
                 
-                console.log('Fetching weather for city code:', cityCode);
-                
-                const response = await fetch(`${url}?${params}`);
-                if (!response.ok) {
-                    throw new Error(`Weather API error: ${response.status}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.weather && data.weather !== 'unknown') {
+                        console.log('Feedback weather received:', data.weather);
+                        return data.weather;
+                    }
                 }
                 
-                const data = await response.json();
-                console.log('Weather API response:', data);
+                console.log('No feedback weather available');
+                return 'unknown';
                 
-                if (data.status === '1' && data.lives && data.lives.length > 0) {
-                    return data.lives[0];
+            } catch (error) {
+                console.error('Feedback weather fetch error:', error);
+                // Don't throw, just return unknown to continue with fallback
+                return 'unknown';
+            }
+        }
+        
+        // Fetch Gaode weather with reverse geocoding
+        async function fetchGaodeWeatherWithGeocoding(lat, lng) {
+            try {
+                console.log('Fetching weather with reverse geocoding for:', lat, lng);
+                
+                // Add timeout and better error handling
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                
+                // First, get city code from coordinates
+                const geoResponse = await fetch(
+                    `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${GAODE_API_KEY}`,
+                    {
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/json',
+                            'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
+                        }
+                    }
+                );
+                
+                clearTimeout(timeoutId);
+                
+                if (!geoResponse.ok) {
+                    throw new Error(`Gaode Geocode API error: ${geoResponse.status}`);
+                }
+                
+                const geoData = await geoResponse.json();
+                console.log('Geocode response:', geoData);
+                
+                if (geoData.status !== '1' || !geoData.regeocode || !geoData.regeocode.adcode) {
+                    throw new Error('Invalid geocode response');
+                }
+                
+                const adcode = geoData.regeocode.adcode;
+                console.log('City adcode obtained:', adcode);
+                
+                // Then, get weather for the city
+                const weatherResponse = await fetch(
+                    `https://restapi.amap.com/v3/weather/weatherInfo?city=${adcode}&key=${GAODE_API_KEY}&extensions=base`,
+                    {
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/json',
+                            'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
+                        }
+                    }
+                );
+                
+                if (!weatherResponse.ok) {
+                    throw new Error(`Gaode Weather API error: ${weatherResponse.status}`);
+                }
+                
+                const weatherData = await weatherResponse.json();
+                console.log('Weather API response:', weatherData);
+                
+                if (weatherData.status === '1' && weatherData.lives && weatherData.lives.length > 0) {
+                    console.log('Weather data extracted successfully');
+                    return weatherData.lives[0];
                 } else {
-                    throw new Error(`Weather API error: ${data.info || 'Unknown error'}`);
+                    throw new Error(`Weather API error: ${weatherData.info || 'Unknown error'}`);
                 }
                 
             } catch (error) {
-                console.error('Weather API fetch failed:', error);
+                if (error.name === 'AbortError') {
+                    console.error('Gaode API request timed out');
+                    throw new Error('Gaode API request timed out');
+                }
+                console.error('Gaode weather with geocoding failed:', error);
                 throw error;
             }
         }
         
-        // Get city code from coordinates (simplified - using major cities)
-        async function getCityCodeFromCoordinates(lat, lng) {
-            // Major city coordinates and their Gaode city codes
-            const majorCities = [
-                { name: 'Shanghai', code: '310000', lat: 31.2304, lng: 121.4737 },
-                { name: 'Beijing', code: '110000', lat: 39.9042, lng: 116.4074 },
-                { name: 'Guangzhou', code: '440100', lat: 23.1291, lng: 113.2644 },
-                { name: 'Shenzhen', code: '440300', lat: 22.3193, lng: 114.1694 },
-                { name: 'Hangzhou', code: '330100', lat: 30.2741, lng: 120.1551 },
-                { name: 'Nanjing', code: '320100', lat: 32.0603, lng: 118.7969 },
-                { name: 'Wuhan', code: '420100', lat: 30.5928, lng: 114.3055 },
-                { name: 'Chengdu', code: '510100', lat: 30.5728, lng: 104.0668 },
-                { name: 'Xi\'an', code: '610100', lat: 34.3416, lng: 108.9398 },
-                { name: 'Tianjin', code: '120000', lat: 39.0842, lng: 117.2009 }
-            ];
-            
-            // Find the closest major city
-            let closestCity = majorCities[0];
-            let minDistance = Number.MAX_VALUE;
-            
-            for (const city of majorCities) {
-                const distance = Math.sqrt(
-                    Math.pow(lat - city.lat, 2) + Math.pow(lng - city.lng, 2)
-                );
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestCity = city;
-                }
-            }
-            
-            console.log(`Using weather data for closest major city: ${closestCity.name} (${closestCity.code})`);
-            return closestCity.code;
-        }
-        
-        // Categorize weather based on temperature and conditions
-        function categorizeWeather(weatherData) {
+        // Categorize Gaode weather data with Chinese mapping
+        function categorizeGaodeWeather(weatherData) {
             const temperature = parseFloat(weatherData.temperature);
-            const weatherCondition = weatherData.weather.toLowerCase();
+            const weatherCondition = weatherData.weather; // Chinese text like "晴", "雨"
             
-            console.log('Categorizing weather:', { temperature, weatherCondition });
+            console.log('Categorizing Gaode weather:', { temperature, weatherCondition });
+            
+            // Chinese weather term mapping
+            const weatherMap = {
+                "晴": "sunny",
+                "多云": "cloudy",
+                "阴": "cloudy",
+                "雨": "rainy",
+                "小雨": "rainy",
+                "中雨": "rainy",
+                "大雨": "rainy",
+                "雪": "snowy",
+                "小雪": "snowy",
+                "中雪": "snowy",
+                "大雪": "snowy",
+                "雾": "foggy",
+                "霾": "hazy"
+            };
+            
+            // Map Chinese weather to English
+            const mappedCondition = weatherMap[weatherCondition] || "unknown";
             
             // Temperature-based categorization
-            if (temperature > 25) {
-                return 'hot';
-            } else if (temperature < 10) {
-                return 'cold';
-            } else if (temperature >= 10 && temperature <= 25) {
-                return 'warm';
-            }
+            if (temperature > 25) return "hot";
+            if (temperature < 10) return "cold";
+            if (temperature >= 10 && temperature <= 25) return "warm";
             
-            // Weather condition-based categorization
-            if (weatherCondition.includes('rain') || weatherCondition.includes('drizzle')) {
-                return 'rainy';
-            } else if (weatherCondition.includes('snow') || weatherCondition.includes('blizzard')) {
-                return 'cold';
-            } else if (weatherCondition.includes('cloud') || weatherCondition.includes('overcast')) {
-                return 'cloudy';
-            } else if (weatherCondition.includes('clear') || weatherCondition.includes('sunny')) {
-                return 'sunny';
-            }
-            
-            // Default fallback
-            return 'moderate';
+            // Return mapped condition if temperature is moderate
+            return mappedCondition !== "unknown" ? mappedCondition : "moderate";
         }
+        
+        // Update weather display for manual weather
+        function updateWeatherDisplayManual(weatherCategory) {
+            const weatherIcon = document.getElementById('weatherIcon');
+            const weatherText = document.getElementById('weatherText');
+            const weatherStatus = document.getElementById('weatherStatus');
+            
+            if (!weatherIcon || !weatherText || !weatherStatus) return;
+            
+            // Set weather icon based on category
+            const iconMap = {
+                'hot': '🔥',
+                'cold': '❄️',
+                'warm': '🌡️',
+                'rainy': '🌧️',
+                'cloudy': '☁️',
+                'sunny': '☀️',
+                'snowy': '❄️',
+                'foggy': '🌫️',
+                'hazy': '😷',
+                'mild': '🌤️',
+                'moderate': '🌤️'
+            };
+            
+            weatherIcon.textContent = iconMap[weatherCategory] || '🌤️';
+            weatherText.textContent = `${weatherCategory.charAt(0).toUpperCase() + weatherCategory.slice(1)} (auto)`;
+            
+            // Show success status
+            weatherStatus.textContent = '✓ Auto-detected';
+            weatherStatus.classList.add('show');
+            setTimeout(() => {
+                weatherStatus.classList.remove('show');
+            }, 2000);
+        }
+        
+                // Old weather functions removed - using new improved system
+        
+        // Old weather functions removed - using new improved system
         
         // Update weather display
         function updateWeatherDisplay(weatherData, weatherCategory) {
@@ -1307,11 +1467,59 @@
             if (weatherIcon && weatherText && refreshBtn) {
                 console.log('✅ Weather elements found, testing functionality...');
                 
-                // Test weather refresh
-                refreshBtn.click();
+                // Test the new weather system
+                console.log('Testing new weather system...');
+                getCurrentWeather()
+                    .then(weather => {
+                        console.log('✅ Weather system test successful:', weather);
+                    })
+                    .catch(error => {
+                        console.error('❌ Weather system test failed:', error);
+                    });
                 
             } else {
                 console.error('❌ Weather elements not found!');
+            }
+        }
+        
+        // Direct weather test
+        function testShanghaiWeather() {
+            console.log('🏙️ Testing weather system directly...');
+            
+            // Update UI to show testing
+            const weatherIcon = document.getElementById('weatherIcon');
+            const weatherText = document.getElementById('weatherText');
+            const weatherStatus = document.getElementById('weatherStatus');
+            
+            if (weatherIcon && weatherText && weatherStatus) {
+                weatherIcon.textContent = '⏳';
+                weatherText.textContent = 'Testing weather...';
+                weatherStatus.textContent = '🔄 Testing';
+                weatherStatus.style.color = '#ffc107';
+                weatherStatus.classList.add('show');
+                
+                // Test the new weather system
+                getCurrentWeather()
+                    .then(weather => {
+                        console.log('✅ Weather system successful:', weather);
+                        weatherIcon.textContent = '✅';
+                        weatherText.textContent = `${weather.charAt(0).toUpperCase() + weather.slice(1)} (tested)`;
+                        weatherStatus.textContent = '✓ Success';
+                        weatherStatus.style.color = '#28a745';
+                        setTimeout(() => {
+                            weatherStatus.classList.remove('show');
+                        }, 3000);
+                    })
+                    .catch(error => {
+                        console.error('❌ Weather system failed:', error);
+                        weatherIcon.textContent = '❌';
+                        weatherText.textContent = 'Test failed';
+                        weatherStatus.textContent = '⚠️ Failed';
+                        weatherStatus.style.color = '#dc3545';
+                        setTimeout(() => {
+                            weatherStatus.classList.remove('show');
+                        }, 3000);
+                    });
             }
         }
 
@@ -1353,7 +1561,10 @@
                 const imageFile = document.getElementById('imageInput').files[0];
                 const audioFile = document.getElementById('audioInput').files[0];
                 const timeOfDay = document.getElementById('timeOfDay').value;
-                const weather = currentWeather; // Use automatic weather instead of manual input
+                
+                // Get weather (automatic with manual override)
+                const weather = await getCurrentWeather();
+                
                 const socialContext = document.getElementById('socialContext').value;
                 const energyLevel = document.getElementById('energyLevel').value;
 
@@ -1573,7 +1784,7 @@
                     feedback_text: document.getElementById('feedbackText').value,
                     context: {
                         time_of_day: document.getElementById('timeOfDay').value,
-                        weather: currentWeather,
+                        weather: await getCurrentWeather(),
                         social_context: document.getElementById('socialContext').value,
                         energy_level: document.getElementById('energyLevel').value
                     },

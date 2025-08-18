@@ -64,6 +64,10 @@ class FeedbackRequest(BaseModel):
     feedback_text: Optional[str] = None
     context: Optional[Dict[str, Any]] = None
 
+class RecentFeedbackWeatherRequest(BaseModel):
+    user_id: str
+    time_of_day: str
+
 class Restaurant(BaseModel):
     name: str
     cuisine: str
@@ -645,6 +649,42 @@ async def submit_feedback(feedback: FeedbackRequest):
     except Exception as e:
         logger.error(f"Feedback submission failed: {e}")
         return {"status": "error", "message": str(e)}
+
+@app.post("/recent-feedback-weather")
+async def get_recent_feedback_weather(request: RecentFeedbackWeatherRequest):
+    """Get the most recent weather from feedback history for a given user and time of day."""
+    try:
+        if learning_system is None:
+            return {"weather": "unknown", "status": "learning_system_unavailable"}
+
+        # Get recent feedback with weather context
+        recent_feedback = await asyncio.to_thread(
+            learning_system.get_recent_feedback_with_weather,
+            request.user_id,
+            request.time_of_day
+        )
+
+        if recent_feedback and recent_feedback.get('weather'):
+            return {
+                "weather": recent_feedback['weather'],
+                "status": "ok",
+                "timestamp": recent_feedback.get('timestamp'),
+                "source": "feedback_history"
+            }
+        else:
+            return {
+                "weather": "unknown",
+                "status": "no_weather_data",
+                "message": "No recent weather data found in feedback history"
+            }
+
+    except Exception as e:
+        logger.error(f"Recent feedback weather fetch failed: {e}")
+        return {
+            "weather": "unknown",
+            "status": "error",
+            "message": str(e)
+        }
 
 if __name__ == "__main__":
     import uvicorn
