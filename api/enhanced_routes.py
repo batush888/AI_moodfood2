@@ -352,7 +352,7 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                 _t0 = asyncio.get_event_loop().time()
                 
                 # Pass enhanced intent results to recommendation engine
-                enhanced_context = request.user_context.dict() if request.user_context else {}
+                enhanced_context = request.user_context.model_dump() if request.user_context else {}
                 enhanced_context['text_input'] = request.text_input  # Add text input for filtering
                 if intent_result and intent_result.get('primary_intent'):
                     enhanced_context['enhanced_intent'] = intent_result.get('primary_intent')

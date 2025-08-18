@@ -242,6 +242,24 @@ class MoodBasedRecommendationEngine:
         all_intents = user_context.get('all_intents', [])
         confidence = user_context.get('intent_confidence', 0.5)
         
+        logger.info(f"Enhanced intent: {enhanced_intent}")
+        logger.info(f"All intents: {all_intents}")
+        
+        # Extract intent labels from all_intents
+        intent_labels = []
+        if isinstance(all_intents, list):
+            for intent_item in all_intents:
+                if isinstance(intent_item, list) and len(intent_item) >= 1:
+                    intent_labels.append(intent_item[0].lower())
+                elif isinstance(intent_item, str):
+                    intent_labels.append(intent_item.lower())
+        
+        # Add primary intent if not already in list
+        if enhanced_intent and enhanced_intent not in intent_labels:
+            intent_labels.insert(0, enhanced_intent)
+        
+        logger.info(f"Processed intent labels: {intent_labels}")
+        
         # Map enhanced intent to mood categories
         intent_to_mood_mapping = {
             # Health and wellness
@@ -313,7 +331,17 @@ class MoodBasedRecommendationEngine:
             'meal_snack': ['meal_snack', 'occasion_party_snacks'],
             
             # Specific foods
-            'food_smoothie': ['food_smoothie', 'goal_hydration', 'goal_healthy']
+            'food_smoothie': ['food_smoothie', 'goal_hydration', 'goal_healthy'],
+            
+            # Additional granular labels from the model
+            'sensory_warming': ['SENSORY_WARMING', 'SEASON_WINTER', 'WEATHER_COLD', 'goal_comfort', 'EMOTIONAL_COMFORT'],
+            'emotional_comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting'],
+            'social_couple': ['EMOTIONAL_ROMANTIC', 'occasion_romantic', 'sensory_elegant'],
+            'occasion_party_snacks': ['occasion_party_snacks', 'sensory_festive', 'goal_indulgence'],
+            'goal_satisfaction': ['goal_satisfaction', 'sensory_satisfying', 'goal_comfort'],
+            'goal_healthy': ['goal_healthy', 'HEALTH_DETOX', 'goal_light'],
+            'emotional_romantic': ['EMOTIONAL_ROMANTIC', 'occasion_romantic', 'sensory_elegant'],
+            'health': ['HEALTH_ILLNESS', 'health_recovery', 'sensory_gentle', 'goal_soothing']
         }
         
         # Get primary mood categories from enhanced intent
@@ -321,13 +349,13 @@ class MoodBasedRecommendationEngine:
         logger.info(f"Enhanced intent: {enhanced_intent}")
         logger.info(f"Primary mood categories: {primary_mood_categories}")
         
-        # Add additional categories from all_intents if confidence is high
+        # Add additional categories from processed intent labels
         additional_categories = []
-        if confidence > 0.7 and all_intents:
-            for intent in all_intents:
-                if isinstance(intent, list) and len(intent) > 0:
-                    intent_name = intent[0].lower()
-                    additional_categories.extend(intent_to_mood_mapping.get(intent_name, []))
+        for intent_label in intent_labels:
+            if intent_label in intent_to_mood_mapping:
+                additional_categories.extend(intent_to_mood_mapping[intent_label])
+        
+        logger.info(f"Additional categories from intent labels: {additional_categories}")
         
         # Combine and remove duplicates
         all_categories = list(set(primary_mood_categories + additional_categories))

@@ -476,6 +476,31 @@ class RealTimeLearningSystem:
         
         logger.info(f"Learning data exported to {export_path}")
 
+    def get_recent_feedback_with_weather(self, user_id: str, time_of_day: str) -> Optional[Dict[str, Any]]:
+        """Get the most recent feedback with weather context for a given user and time of day."""
+        try:
+            # Look for recent feedback in the buffer
+            recent_feedback = None
+            for feedback in reversed(list(self.feedback_buffer)):
+                if (feedback.get('user_id') == user_id and 
+                    feedback.get('context', {}).get('time_of_day') == time_of_day):
+                    recent_feedback = feedback
+                    break
+            
+            if recent_feedback:
+                return {
+                    'weather': recent_feedback.get('context', {}).get('weather', 'unknown'),
+                    'timestamp': recent_feedback.get('timestamp'),
+                    'user_id': user_id,
+                    'time_of_day': time_of_day
+                }
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error getting recent feedback with weather: {e}")
+            return None
+
 # Convenience functions
 def create_learning_system(
     model_save_path: str = "models/realtime_learning"

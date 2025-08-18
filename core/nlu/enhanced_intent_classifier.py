@@ -104,16 +104,8 @@ class EnhancedIntentClassifier:
         if not TORCH_AVAILABLE:
             return "cpu"
         
-        try:
-            if torch.cuda.is_available():
-                return "cuda"
-            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-                return "mps"
-            else:
-                return "cpu"
-        except Exception as e:
-            logger.warning(f"Device setup failed: {e}, using CPU")
-            return "cpu"
+        # Force CPU to avoid MPS issues
+        return "cpu"
 
     def _load_taxonomy(self):
         """Load taxonomy with fallback."""
@@ -209,9 +201,9 @@ class EnhancedIntentClassifier:
                 if os.path.exists(config_path):
                     with open(config_path, 'r') as f:
                         config = json.load(f)
-                    num_labels = config.get('num_labels', 25)  # Default fallback
+                    num_labels = config.get('num_labels', 138)  # Default fallback
                 else:
-                    num_labels = 25  # Default fallback
+                    num_labels = 138  # Default fallback
                 
                 self.model = DistilBertDualHead(
                     model_name_or_path="distilbert-base-uncased",
@@ -223,13 +215,22 @@ class EnhancedIntentClassifier:
                 # Load the trained weights
                 model_weights_path = os.path.join(model_path, "model.safetensors")
                 if os.path.exists(model_weights_path):
-                    from safetensors.torch import load_file
-                    state_dict = load_file(model_weights_path)
-                    self.model.load_state_dict(state_dict, strict=False)
-                    logger.info("Loaded trained model weights successfully")
-                
-                self.model.to(self.device)
-                logger.info("Transformer model loaded successfully")
+                    try:
+                        from safetensors.torch import load_file
+                        state_dict = load_file(model_weights_path)
+                        self.model.load_state_dict(state_dict, strict=False)
+                        logger.info("Loaded trained model weights successfully")
+                        self.model.to(self.device)
+                        logger.info("Transformer model loaded successfully")
+                    except Exception as load_error:
+                        logger.warning(f"Failed to load model weights: {load_error}")
+                        logger.info("Using keyword fallback classification")
+                        self.model = None
+                        return
+                else:
+                    logger.warning("Model weights not found, using keyword fallback")
+                    self.model = None
+                    return
             else:
                 logger.info(f"No local transformer model found at: {self.model_dir}")
                 
@@ -249,14 +250,14 @@ class EnhancedIntentClassifier:
         """Setup basic fallback methods for intent classification."""
         logger.info("Setting up fallback intent classification methods")
         
-        # Basic keyword-based fallback
+        # Enhanced keyword-based fallback
         self.fallback_keywords = {
-            "comfort": ["comfort", "warm", "cozy", "soothing", "nurturing"],
-            "energy": ["energy", "vitality", "energetic", "powerful"],
-            "health": ["healthy", "fresh", "light", "clean", "natural", "ill", "sick", "recovery", "nauseous", "weak", "feeling ill"],
-            "indulgence": ["indulge", "treat", "sweet", "rich", "decadent"],
-            "quick": ["quick", "fast", "efficient", "simple"],
-            "romantic": ["romantic", "elegant", "sophisticated", "intimate"]
+            "comfort": ["comfort", "warm", "cozy", "soothing", "nurturing", "warming", "comforting", "comfortable"],
+            "energy": ["energy", "vitality", "energetic", "powerful", "energizing"],
+            "health": ["healthy", "fresh", "light", "clean", "natural", "ill", "sick", "recovery", "nauseous", "weak", "feeling ill", "health"],
+            "indulgence": ["indulge", "treat", "sweet", "rich", "decadent", "indulgence"],
+            "quick": ["quick", "fast", "efficient", "simple", "quickly"],
+            "romantic": ["romantic", "elegant", "sophisticated", "intimate", "romance"]
         }
 
     def classify_intent(self, text: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -277,7 +278,23 @@ class EnhancedIntentClassifier:
             # Try transformer-based classification first
             if self._has_working_models():
                 result = self._transformer_classification(text, context)
-                if result:
+                if result and result.get('primary_intent') != 'unknown':
+                    # Check if the result makes sense for the input
+                    primary_intent = result.get('primary_intent', '')
+                    text_lower = text.lower()
+                    
+                    # Force fallback for obvious mismatches
+                    if (primary_intent in ['occasion_party_snacks', 'social_couple', 'emotional_romantic'] and 
+                        any(word in text_lower for word in ['comfort', 'warm', 'cozy', 'soothing', 'warming'])):
+                        logger.info(f"Forcing fallback due to intent mismatch: {primary_intent} for comfort/warming query")
+                        return self._fallback_intent_classification(text, context)
+                    
+                    # Also check if confidence is too low for the detected intent
+                    confidence = result.get('confidence', 0.0)
+                    if confidence < 0.7:
+                        logger.info(f"Forcing fallback due to low confidence: {confidence}")
+                        return self._fallback_intent_classification(text, context)
+                    
                     return result
             
             # Fallback to basic methods
@@ -293,12 +310,14 @@ class EnhancedIntentClassifier:
             # Prioritize DistilBERT model over sentence transformer
             if self.tokenizer and self.model:
                 result = self._distilbert_classification(text, context)
-                if result:
+                if result and result.get('primary_intent') != 'unknown':
                     return result
             
             # Fallback to sentence transformer
             if self.sentence_transformer:
-                return self._sentence_transformer_classification(text, context)
+                result = self._sentence_transformer_classification(text, context)
+                if result and result.get('primary_intent') != 'unknown':
+                    return result
         except Exception as e:
             logger.warning(f"Transformer classification failed: {e}")
         return None
@@ -341,7 +360,7 @@ class EnhancedIntentClassifier:
             with open(label_mappings_path, 'r') as f:
                 label_mappings = json.load(f)
             
-            id_to_label = {int(k): v for k, v in label_mappings.get("id_to_label", {}).items()}
+            id_to_label = {int(k): v for k, v in label_mappings.get("unified_id_to_label", {}).items()}
             
             # Tokenize input
             inputs = self.tokenizer(

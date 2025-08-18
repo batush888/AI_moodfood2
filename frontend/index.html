@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoodFood - Find Food That Matches Your Mood</title>
+    <title>MoodFood - AI-Powered Food Recommendations</title>
     <style>
         * {
             margin: 0;
@@ -13,27 +13,27 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #fff8f0 0%, #ffffff 100%);
+            background: linear-gradient(135deg, #fff8f0 0%, #ffffff 50%, #fef7f0 100%);
             min-height: 100vh;
             color: #1f2937;
             line-height: 1.6;
         }
 
-        /* Header */
+        /* Modern Header */
         .header {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid #fed7aa;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(249, 115, 22, 0.1);
             position: sticky;
             top: 0;
-            z-index: 50;
+            z-index: 100;
             padding: 1rem 0;
         }
 
         .header-content {
-            max-width: 72rem;
+            max-width: 80rem;
             margin: 0 auto;
-            padding: 0 1rem;
+            padding: 0 2rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -55,19 +55,24 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
-            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .logo-icon svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            fill: white;
         }
 
         .logo-text h1 {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #1f2937;
             margin: 0;
         }
 
         .logo-text p {
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             color: #6b7280;
             margin: 0;
         }
@@ -75,7 +80,7 @@
         .nav {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         .nav-item {
@@ -94,6 +99,7 @@
         .nav-item:hover {
             color: #f97316;
             background: rgba(249, 115, 22, 0.05);
+            transform: translateY(-1px);
         }
 
         .nav-item.active {
@@ -102,24 +108,30 @@
             border-color: #f97316;
         }
 
-        /* Main Content */
-        .main {
-            max-width: 72rem;
-            margin: 0 auto;
-            padding: 2rem 1rem;
+        .nav-item svg {
+            width: 1.125rem;
+            height: 1.125rem;
         }
 
+        /* Main Content */
+        .main {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
         .hero {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
         }
 
         .hero h2 {
-            font-size: 3rem;
-            font-weight: 700;
+            font-size: 3.5rem;
+            font-weight: 800;
             color: #1f2937;
-            margin-bottom: 1rem;
-            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
         }
 
         .hero .highlight {
@@ -130,16 +142,16 @@
         }
 
         .hero p {
-            font-size: 1.125rem;
+            font-size: 1.25rem;
             color: #6b7280;
-            max-width: 32rem;
+            max-width: 40rem;
             margin: 0 auto 2rem;
         }
 
-        /* Search Input */
+        /* Modern Search Container */
         .search-container {
-            max-width: 48rem;
-            margin: 0 auto 2rem;
+            max-width: 56rem;
+            margin: 0 auto 3rem;
             position: relative;
         }
 
@@ -149,29 +161,34 @@
 
         .search-input {
             width: 100%;
-            padding: 1.5rem 3rem 1.5rem 3rem;
+            padding: 1.5rem 4rem 1.5rem 4rem;
             font-size: 1.125rem;
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
             border: 2px solid #fed7aa;
             border-radius: 1.5rem;
-            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
+            box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
 
         .search-input:focus {
             outline: none;
             border-color: #f97316;
-            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1), 0 8px 25px -5px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1), 0 8px 32px -8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
         }
 
         .search-icon {
             position: absolute;
-            left: 1rem;
+            left: 1.25rem;
             top: 50%;
             transform: translateY(-50%);
             color: #f97316;
-            font-size: 1.25rem;
+        }
+
+        .search-icon svg {
+            width: 1.25rem;
+            height: 1.25rem;
         }
 
         .search-button {
@@ -179,20 +196,19 @@
             right: 0.5rem;
             top: 50%;
             transform: translateY(-50%);
-            background: #f97316;
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
             color: white;
             border: none;
             border-radius: 0.75rem;
-            padding: 0.75rem;
+            padding: 0.875rem;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
         }
 
         .search-button:hover {
-            background: #ea580c;
             transform: translateY(-50%) scale(1.05);
-            box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
+            box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
         }
 
         .search-button:disabled {
@@ -202,24 +218,29 @@
             box-shadow: none;
         }
 
-        /* Suggestions Dropdown */
+        .search-button svg {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+
+        /* Enhanced Suggestions Dropdown */
         .suggestions-dropdown {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            margin-top: 0.5rem;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
+            margin-top: 0.75rem;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(16px);
             border-radius: 1.5rem;
-            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.15);
-            border: 1px solid #fed7aa;
+            box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(249, 115, 22, 0.1);
             padding: 1.5rem;
             z-index: 50;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-10px);
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .suggestions-dropdown.show {
@@ -257,36 +278,51 @@
             background: #fef3c7;
             border-color: #f97316;
             color: #92400e;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
         }
 
-        /* Context Controls */
+        /* Context Controls Grid */
         .context-controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            flex: 1;
+            min-width: 0;
+            min-height: 6rem;
         }
 
         .control-label {
             font-weight: 600;
             color: #374151;
             font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-label svg {
+            width: 1rem;
+            height: 1rem;
+            color: #f97316;
         }
 
         .control-input {
-            padding: 0.75rem;
+            padding: 0.875rem;
             border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             background: white;
             transition: all 0.2s;
+            font-size: 0.875rem;
+            height: 3rem;
+            box-sizing: border-box;
         }
 
         .control-input:focus {
@@ -298,39 +334,109 @@
         .time-display {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem;
+            gap: 0.75rem;
+            padding: 0.875rem;
             background: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 0.5rem;
+            border: 1px solid #fed7aa;
+            border-radius: 0.75rem;
             font-size: 0.875rem;
+            color: #92400e;
+            height: 3rem;
+            box-sizing: border-box;
+        }
+
+        .time-display svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .time-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .time-button {
+            padding: 0.25rem 0.5rem;
+            background: white;
+            border: 1px solid #fed7aa;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-button:hover {
+            background: #f97316;
+            color: white;
+            border-color: #f97316;
         }
 
         .weather-display {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem;
-            background: #dbeafe;
-            border: 1px solid #3b82f6;
-            border-radius: 0.5rem;
+            gap: 0.75rem;
+            padding: 0.875rem;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.75rem;
             font-size: 0.875rem;
+            color: #1e40af;
+            height: 3rem;
+            box-sizing: border-box;
         }
 
-        /* AI Analysis */
+        .weather-display svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 3rem;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .results-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .results-count {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        /* AI Analysis Section */
         .ai-analysis {
-            background: #f0f9ff;
-            border: 1px solid #0ea5e9;
-            border-radius: 0.75rem;
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+            border: 1px solid #f97316;
+            border-radius: 1rem;
             padding: 1.5rem;
             margin-bottom: 2rem;
         }
 
-        .ai-title {
-            font-weight: 600;
-            color: #0369a1;
-            margin-bottom: 1rem;
+        .ai-analysis h3 {
             font-size: 1.125rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ai-analysis h3 svg {
+            width: 1.25rem;
+            height: 1.25rem;
         }
 
         .ai-details {
@@ -339,66 +445,82 @@
             gap: 1rem;
         }
 
-        .ai-item {
+        .ai-detail {
             background: white;
             padding: 1rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            border: 1px solid #e0f2fe;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(249, 115, 22, 0.2);
         }
 
-        .detail-label {
-            font-size: 0.875rem;
-            color: #64748b;
+        .ai-detail-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             margin-bottom: 0.25rem;
         }
 
-        .detail-value {
-            font-weight: 600;
-            color: #0f172a;
+        .ai-detail-value {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #1f2937;
         }
 
-        /* Results */
-        .results-section {
-            margin-top: 2rem;
+        /* Recommendations Grid */
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
         }
 
         .recommendation-card {
             background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             overflow: hidden;
+            transition: all 0.3s ease;
             border: 1px solid #f3f4f6;
         }
 
-        .recommendation-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .recommendation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
             padding: 1.5rem;
             border-bottom: 1px solid #f3f4f6;
         }
 
         .food-name {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: #1f2937;
+            margin-bottom: 0.5rem;
         }
 
-        .food-score {
-            background: #f97316;
-            color: white;
+        .food-category {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
             padding: 0.25rem 0.75rem;
-            border-radius: 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-content {
+            padding: 1.5rem;
         }
 
         .food-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
-            padding: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .detail-item {
@@ -408,98 +530,252 @@
         }
 
         .detail-label {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            font-weight: 600;
             color: #6b7280;
-            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .detail-value {
-            font-weight: 600;
+            font-size: 0.875rem;
             color: #1f2937;
+            font-weight: 500;
         }
 
-        .reasoning {
-            background: #fef3c7;
-            padding: 1.5rem;
-            border-top: 1px solid #f3f4f6;
-        }
-
-        .reasoning h4 {
-            color: #92400e;
+        .food-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
             margin-bottom: 1rem;
-            font-size: 1rem;
         }
 
-        .reasoning ul {
+        .food-tag {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .score-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #f97316;
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .reasoning-section {
+            background: #fef3c7;
+            border: 1px solid #fed7aa;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+
+        .reasoning-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.5rem;
+        }
+
+        .reasoning-list {
             list-style: none;
             padding: 0;
         }
 
-        .reasoning li {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #fde68a;
+        .reasoning-item {
+            font-size: 0.875rem;
             color: #92400e;
+            margin-bottom: 0.25rem;
+            padding-left: 1rem;
+            position: relative;
         }
 
-        .reasoning li:last-child {
-            border-bottom: none;
-        }
-
-        /* Loading and Error States */
-        .loading-section {
-            text-align: center;
-            padding: 3rem 1rem;
-        }
-
-        .loading-spinner {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
+        .reasoning-item::before {
+            content: "•";
+            position: absolute;
+            left: 0;
             color: #f97316;
+            font-weight: bold;
         }
 
-        .spinner {
-            width: 2rem;
-            height: 2rem;
-            border: 3px solid #f97316;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        /* Debug Toggle */
+        .debug-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1000;
+            transition: all 0.2s;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .debug-toggle:hover {
+            background: rgba(0, 0, 0, 0.9);
         }
 
-        .error-section {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 0.75rem;
+        .debug-toggle.active {
+            background: #f97316;
+        }
+
+        .debug-toggle svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Debug Section */
+        .debug-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
             padding: 1.5rem;
             margin-bottom: 2rem;
-            color: #dc2626;
         }
 
-        /* Feedback Section */
-        .feedback-section {
-            background: white;
-            border-radius: 1rem;
-            padding: 2rem;
-            margin-top: 2rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .feedback-title {
-            font-size: 1.25rem;
+        .debug-section h3 {
+            font-size: 1.125rem;
             font-weight: 600;
             color: #1f2937;
             margin-bottom: 1rem;
         }
 
-        .rating-stars {
-            display: flex;
-            gap: 0.5rem;
+        .debug-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .debug-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .debug-item h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .debug-item pre {
+            background: #f1f5f9;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            color: #475569;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #f97316;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.125rem;
+            color: #6b7280;
+        }
+
+        /* Error Section */
+        .error-section {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .error-content h3 {
+            color: #dc2626;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-content p {
+            color: #7f1d1d;
+            font-size: 0.875rem;
+        }
+
+        /* Feedback Section */
+        .feedback-section {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .feedback-section h3 {
+            color: #0369a1;
+            font-size: 1.125rem;
+            font-weight: 600;
             margin-bottom: 1rem;
+        }
+
+        .feedback-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .rating-section {
+            text-align: center;
+        }
+
+        .stars {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
         .star {
@@ -509,75 +785,253 @@
             transition: color 0.2s;
         }
 
+        .star:hover,
         .star.active {
             color: #fbbf24;
         }
 
-        .feedback-textarea {
+        .feedback-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .feedback-input textarea {
             width: 100%;
+            min-height: 100px;
             padding: 0.75rem;
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             resize: vertical;
-            min-height: 100px;
-            margin-bottom: 1rem;
+            font-family: inherit;
         }
 
-        .feedback-button {
-            background: #f97316;
+        .feedback-input button {
+            align-self: flex-end;
+            background: #0369a1;
             color: white;
             border: none;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            font-weight: 500;
+            transition: background 0.2s;
         }
 
-        .feedback-button:hover {
-            background: #ea580c;
+        .feedback-input button:hover {
+            background: #075985;
         }
 
-        /* Debug Section */
-        .debug-section {
-            background: #1f2937;
-            color: #f9fafb;
-            padding: 1.5rem;
+        /* Custom Dropdown Styles */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 2px solid #fed7aa;
             border-radius: 0.75rem;
-            margin-top: 2rem;
-            font-family: 'Monaco', 'Menlo', monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
             font-size: 0.875rem;
+            color: #1f2937;
+            height: 3rem;
+            box-sizing: border-box;
         }
 
-        .debug-toggle {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background: rgba(31, 41, 55, 0.8);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 0.875rem;
+        .dropdown-trigger:hover {
+            border-color: #f97316;
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .dropdown-trigger:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+        }
+
+        .dropdown-value {
+            font-weight: 500;
+        }
+
+        .dropdown-arrow {
+            width: 1rem;
+            height: 1rem;
+            color: #6b7280;
+            transition: transform 0.3s ease;
+        }
+
+        .custom-dropdown.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 0.5rem;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(249, 115, 22, 0.1);
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
             z-index: 1000;
+            overflow: hidden;
+        }
+
+        .custom-dropdown.open .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* Backdrop effect for dropdown */
+        .custom-dropdown.open::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        .dropdown-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            color: #1f2937;
+        }
+
+        .dropdown-option:hover {
+            background: rgba(249, 115, 22, 0.05);
+        }
+
+        .dropdown-option:first-child {
+            border-radius: 0.75rem 0.75rem 0 0;
+        }
+
+        .dropdown-option:last-child {
+            border-radius: 0 0 0.75rem 0.75rem;
+        }
+
+        .energy-indicator {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .energy-indicator.low {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        }
+
+        .energy-indicator.medium {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+        }
+
+        .energy-indicator.high {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Energy indicator animations */
+        .energy-indicator {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .energy-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .dropdown-option:hover .energy-indicator::before {
+            left: 100%;
+        }
+
+        /* Keyboard navigation support */
+        .dropdown-option:focus {
+            outline: none;
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        /* Smooth transitions for all interactive elements */
+        .dropdown-trigger * {
+            transition: all 0.2s ease;
         }
 
         /* Responsive Design */
+        @media (max-width: 1024px) {
+            .context-controls {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.25rem;
+            }
+        }
+
         @media (max-width: 768px) {
-            .hero h2 {
-                font-size: 2rem;
+            .header-content {
+                padding: 0 1rem;
             }
 
-            .nav {
-                display: none;
+            .main {
+                padding: 1rem;
+            }
+
+            .hero h2 {
+                font-size: 2.5rem;
+            }
+
+            .search-input {
+                padding: 1.25rem 3.5rem 1.25rem 3.5rem;
+                font-size: 1rem;
             }
 
             .context-controls {
                 grid-template-columns: 1fr;
+                gap: 1rem;
             }
 
-            .ai-details {
+            .control-group {
+                min-height: auto;
+            }
+
+            .dropdown-menu {
+                position: fixed;
+                top: auto;
+                left: 1rem;
+                right: 1rem;
+                margin-top: 0.25rem;
+            }
+
+            .recommendations-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -591,8 +1045,16 @@
             display: none !important;
         }
 
-        .show {
-            display: block !important;
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
         }
     </style>
 </head>
@@ -601,32 +1063,36 @@
     <header class="header">
         <div class="header-content">
             <a href="#" class="logo">
-                <div class="logo-icon">🍽️</div>
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
                 <div class="logo-text">
                     <h1>MoodFood</h1>
-                    <p>Find food that matches your mood</p>
+                    <p>AI-Powered Food Recommendations</p>
                 </div>
             </a>
             <nav class="nav">
                 <a href="#" class="nav-item active">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
                     </svg>
-                    <span>Search</span>
+                    Search
                 </a>
                 <a href="#" class="nav-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
-                    <span>Favorites</span>
+                    Favorites
                 </a>
                 <a href="#" class="nav-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
                     </svg>
-                    <span>Profile</span>
+                    Profile
                 </a>
             </nav>
         </div>
@@ -635,194 +1101,234 @@
     <!-- Main Content -->
     <main class="main">
         <!-- Hero Section -->
-        <div class="hero">
-            <h2>What's your <span class="highlight">craving</span>?</h2>
-            <p>Tell us your mood and we'll find the perfect dishes for you, along with the best places to get them.</p>
-        </div>
+        <section class="hero">
+            <h2>Find Your Perfect <span class="highlight">Mood Food</span></h2>
+            <p>Tell us how you're feeling and we'll recommend the perfect food to match your mood, preferences, and context.</p>
+        </section>
 
-        <!-- Search Input -->
-        <div class="search-container">
+        <!-- Search Container -->
+        <section class="search-container">
             <form class="search-form" id="searchForm">
+                <div class="search-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
                 <input 
                     type="text" 
-                    id="textInput" 
                     class="search-input" 
+                    id="textInput" 
                     placeholder="What are you craving today?"
-                    required
+                    autocomplete="off"
                 >
-                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
                 <button type="submit" class="search-button" id="searchButton">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                     </svg>
                 </button>
             </form>
-            
+
             <!-- Suggestions Dropdown -->
             <div class="suggestions-dropdown" id="suggestionsDropdown">
                 <div class="suggestions-title">Try these suggestions:</div>
                 <div class="suggestions-grid">
-                    <div class="suggestion-chip" data-suggestion="I want something light and healthy">I want something light and healthy</div>
-                    <div class="suggestion-chip" data-suggestion="Craving spicy and bold flavors">Craving spicy and bold flavors</div>
-                    <div class="suggestion-chip" data-suggestion="Need some warm comfort food">Need some warm comfort food</div>
-                    <div class="suggestion-chip" data-suggestion="Looking for a romantic dinner">Looking for a romantic dinner</div>
-                    <div class="suggestion-chip" data-suggestion="Something quick for lunch">Something quick for lunch</div>
-                    <div class="suggestion-chip" data-suggestion="I feel like celebrating!">I feel like celebrating!</div>
+                    <div class="suggestion-chip">I want something light and healthy</div>
+                    <div class="suggestion-chip">Craving spicy and bold flavors</div>
+                    <div class="suggestion-chip">Need some warm comfort food</div>
+                    <div class="suggestion-chip">Looking for a romantic dinner with my partner</div>
+                    <div class="suggestion-chip">Something quick for lunch with colleagues</div>
+                    <div class="suggestion-chip">I feel like celebrating with friends!</div>
+                    <div class="suggestion-chip">Family dinner ideas for tonight</div>
+                    <div class="suggestion-chip">Comfort food for when I'm alone</div>
+                    <div class="suggestion-chip">Date night restaurant suggestions</div>
+                    <div class="suggestion-chip">Work lunch with the team</div>
+                    <div class="suggestion-chip">Dinner with my parents</div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Context Controls -->
-        <div class="context-controls">
+        <section class="context-controls">
             <div class="control-group">
-                <label class="control-label">Time of Day</label>
+                <label class="control-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    Time of Day
+                </label>
                 <div class="time-display" id="timeDisplay">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12,6 12,12 16,14"></polyline>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,6 12,12 16,14"/>
                     </svg>
-                    <span id="currentTime">Loading...</span>
-                    <span id="timeCategory">Morning</span>
-                </div>
-                <input type="hidden" id="timeOfDay" value="morning">
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                    <button type="button" id="refreshTime" style="padding: 0.5rem 0.75rem; background: #f97316; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="23,4 23,10 17,10"></polyline>
-                            <polyline points="1,20 1,14 7,14"></polyline>
-                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-                        </svg>
-                        Refresh
-                    </button>
-                    <button type="button" id="timeFormatToggle" style="padding: 0.5rem 0.75rem; background: #6b7280; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12,6 12,12 16,14"></polyline>
-                        </svg>
-                        12/24
-                    </button>
+                    <span id="timeText">Detecting...</span>
+                    <div class="time-buttons">
+                        <button class="time-button" onclick="refreshTime()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                <path d="M21 3v5h-5"/>
+                                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                <path d="M3 21v-5h5"/>
+                            </svg>
+                        </button>
+                        <button class="time-button" onclick="toggleTimeFormat()">12/24</button>
+                    </div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Weather</label>
-                <input type="text" id="weather" class="control-input" placeholder="Enter weather (optional)">
+                <label class="control-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 6.34L4.93 4.93M19.07 19.07l-1.41-1.41"/>
+                    </svg>
+                    Weather
+                </label>
                 <div class="weather-display" id="weatherDisplay">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 6.34L4.93 4.93M19.07 19.07l-1.41-1.41"/>
                     </svg>
-                    <span id="weatherText">Detecting weather...</span>
+                    <span id="weatherText">Detecting...</span>
+                    <button class="time-button" onclick="getCurrentWeather()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M3 21v-5h5"/>
+                        </svg>
+                    </button>
                 </div>
-                <button type="button" id="refreshWeather" style="padding: 0.5rem 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="23,4 23,10 17,10"></polyline>
-                        <polyline points="1,20 1,14 7,14"></polyline>
-                        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-                    </svg>
-                    Refresh
-                </button>
             </div>
+
+
 
             <div class="control-group">
-                <label class="control-label">Social Context</label>
-                <select id="socialContext" class="control-input">
-                    <option value="">Select social context</option>
-                    <option value="alone">Alone</option>
-                    <option value="family">Family</option>
-                    <option value="friends">Friends</option>
-                    <option value="romantic">Romantic</option>
-                    <option value="business">Business</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">Energy Level</label>
-                <select id="energyLevel" class="control-input">
-                    <option value="">Select energy level</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- AI Analysis Section -->
-        <div class="ai-analysis hidden" id="aiAnalysis">
-            <div class="ai-title">🤖 AI Analysis</div>
-            <div class="ai-details">
-                <div class="ai-item">
-                    <div class="detail-label">Primary Intent</div>
-                    <div class="detail-value" id="primaryIntent">-</div>
-                </div>
-                <div class="ai-item">
-                    <div class="detail-label">Confidence</div>
-                    <div class="detail-value" id="intentConfidence">-</div>
-                </div>
-                <div class="ai-item">
-                    <div class="detail-label">Processing Time</div>
-                    <div class="detail-value" id="processingTime">-</div>
+                <label class="control-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    Energy Level
+                </label>
+                <div class="custom-dropdown" id="energyDropdown">
+                    <div class="dropdown-trigger" onclick="toggleEnergyDropdown()" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
+                        <span class="dropdown-value" id="energyValue">Medium Energy</span>
+                        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-menu" id="energyMenu">
+                        <div class="dropdown-option" data-value="low" onclick="selectEnergyLevel('low', 'Low Energy')">
+                            <div class="energy-indicator low"></div>
+                            <span>Low Energy</span>
+                        </div>
+                        <div class="dropdown-option" data-value="medium" onclick="selectEnergyLevel('medium', 'Medium Energy')">
+                            <div class="energy-indicator medium"></div>
+                            <span>Medium Energy</span>
+                        </div>
+                        <div class="dropdown-option" data-value="high" onclick="selectEnergyLevel('high', 'High Energy')">
+                            <div class="energy-indicator high"></div>
+                            <span>High Energy</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Loading Section -->
-        <div class="loading-section hidden" id="loadingSection">
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <span>Finding your perfect dishes...</span>
-            </div>
+        <!-- Debug Toggle -->
+        <div class="debug-toggle" onclick="toggleDebug()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+            </svg>
+            Debug
         </div>
-
-        <!-- Error Section -->
-        <div class="error-section hidden" id="errorSection">
-            <div id="errorMessage">An error occurred</div>
-        </div>
-
-        <!-- Results Section -->
-        <div class="results-section hidden" id="resultsSection">
-            <div id="recommendationsList"></div>
-        </div>
-
-        <!-- Feedback Section -->
-        <div class="feedback-section hidden" id="feedbackSection">
-            <div class="feedback-title">How was your experience?</div>
-            <div class="rating-stars">
-                <span class="star" data-rating="1">⭐</span>
-                <span class="star" data-rating="2">⭐</span>
-                <span class="star" data-rating="3">⭐</span>
-                <span class="star" data-rating="4">⭐</span>
-                <span class="star" data-rating="5">⭐</span>
-            </div>
-            <textarea class="feedback-textarea" id="feedbackText" placeholder="Tell us more about your experience..."></textarea>
-            <button class="feedback-button" onclick="submitFeedback()">Submit Feedback</button>
-        </div>
+        
+        <!-- Weather Test Button -->
+        <button onclick="testWeatherSystem()" style="position: fixed; top: 10px; right: 10px; z-index: 1000; padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Test Weather
+        </button>
 
         <!-- Debug Section -->
-        <div class="debug-section hidden" id="debugSection">
+        <section class="debug-section hidden" id="debugSection">
             <h3>Debug Information</h3>
-            <p><strong>API Base:</strong> <span id="debugApiBase">-</span></p>
-            <p><strong>Request:</strong></p>
-            <pre id="debugRequest">-</pre>
-            <p><strong>Response:</strong></p>
-            <pre id="debugResponse">-</pre>
-            <p><strong>Performance:</strong></p>
-            <pre id="debugPerformance">-</pre>
-        </div>
-    </main>
+            <div class="debug-content">
+                <div class="debug-item">
+                    <h4>API Base</h4>
+                    <pre id="debugApiBase"></pre>
+                </div>
+                <div class="debug-item">
+                    <h4>Request Payload</h4>
+                    <pre id="debugRequest"></pre>
+                </div>
+                <div class="debug-item">
+                    <h4>Response</h4>
+                    <pre id="debugResponse"></pre>
+                </div>
+                <div class="debug-item">
+                    <h4>Performance</h4>
+                    <pre id="debugPerformance"></pre>
+                </div>
+            </div>
+        </section>
 
-    <!-- Debug Toggle -->
-    <button class="debug-toggle" onclick="toggleDebug()">Debug</button>
+        <!-- AI Analysis Section -->
+        <section class="ai-analysis hidden" id="aiAnalysis">
+            <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                AI Analysis
+            </h3>
+            <div class="ai-details" id="aiDetails">
+                <!-- AI analysis details will be populated here -->
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <h2 class="results-title">Recommended for You</h2>
+                <span class="results-count" id="resultsCount">0 recommendations</span>
+            </div>
+            <div class="recommendations-grid" id="recommendationsGrid">
+                <!-- Recommendations will be populated here -->
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <section class="loading hidden" id="loadingSection">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Finding perfect matches for your mood...</p>
+        </section>
+
+        <!-- Error Section -->
+        <section class="error-section hidden" id="errorSection">
+            <div class="error-content">
+                <h3>Error</h3>
+                <p id="errorMessage"></p>
+            </div>
+        </section>
+
+        <!-- Feedback Section -->
+        <section class="feedback-section hidden" id="feedbackSection">
+            <h3>How was your experience?</h3>
+            <div class="feedback-content">
+                <div class="rating-section">
+                    <div class="stars">
+                        <span class="star" data-rating="1">★</span>
+                        <span class="star" data-rating="2">★</span>
+                        <span class="star" data-rating="3">★</span>
+                        <span class="star" data-rating="4">★</span>
+                        <span class="star" data-rating="5">★</span>
+                    </div>
+                </div>
+                <div class="feedback-input">
+                    <textarea id="feedbackText" placeholder="Tell us more about your experience..."></textarea>
+                    <button onclick="submitFeedback()">Submit Feedback</button>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script>
         // Configuration
@@ -864,11 +1370,9 @@
             if (document.readyState !== 'complete') return;
             
             const now = new Date();
-            const currentTimeElement = document.getElementById('currentTime');
-            const timeCategoryElement = document.getElementById('timeCategory');
-            const timeOfDayInput = document.getElementById('timeOfDay');
+            const currentTimeElement = document.getElementById('timeText');
             
-            if (!currentTimeElement || !timeCategoryElement || !timeOfDayInput) return;
+            if (!currentTimeElement) return;
             
             // Format current time based on user preference
             const timeString = now.toLocaleTimeString('en-US', {
@@ -896,25 +1400,17 @@
                 timeValue = 'night';
             }
             
-            timeCategoryElement.textContent = timeCategory;
-            timeOfDayInput.value = timeValue;
+            // The timeCategory and timeValue are now handled by the time-display div
         }
 
         function setupTimeRefresh() {
-            const refreshBtn = document.getElementById('refreshTime');
-            const formatBtn = document.getElementById('timeFormatToggle');
+            const refreshBtn = document.querySelector('.time-button');
             
-            if (!refreshBtn || !formatBtn) return;
+            if (!refreshBtn) return;
             
-            refreshBtn.onclick = function() {
+            refreshBtn.addEventListener('click', function() {
                 updateTimeDisplay();
-            };
-            
-            formatBtn.onclick = function() {
-                _use24Hour = !_use24Hour;
-                updateTimeDisplay();
-                saveUserPreferences();
-            };
+            });
         }
 
         function loadUserPreferences() {
@@ -935,8 +1431,12 @@
 
         async function getCurrentWeather() {
             try {
-                const manualWeather = document.getElementById("weather")?.value?.trim();
-                if (manualWeather) {
+                const weatherTextElement = document.getElementById("weatherText");
+                const manualWeather = weatherTextElement?.textContent?.trim();
+                
+                // Only use manual weather if it's not the default "Detecting..." text
+                if (manualWeather && manualWeather !== "Detecting..." && manualWeather !== "unknown") {
+                    console.log('Using manual weather:', manualWeather);
                     currentWeather = manualWeather;
                     updateWeatherDisplayManual(manualWeather);
                     return manualWeather;
@@ -951,27 +1451,33 @@
                 }
                 
                 try {
+                    console.log('Fetching weather for location:', userLocation);
                     const weatherData = await fetchGaodeWeatherWithGeocoding(userLocation.latitude, userLocation.longitude);
                     
                     if (!weatherData) {
                         throw new Error('No weather data received from Gaode API');
                     }
                     
+                    console.log('Weather data received:', weatherData);
                     const weatherCategory = categorizeGaodeWeather(weatherData);
+                    console.log('Weather category:', weatherCategory);
                     updateWeatherDisplay(weatherData, weatherCategory);
-                    document.getElementById('weather').value = weatherCategory;
+                    document.getElementById('weatherText').textContent = `${weatherCategory} ${weatherData.temperature}°C`;
                     currentWeather = weatherCategory;
                     return weatherCategory;
                     
                 } catch (apiError) {
+                    console.log('Gaode API failed, trying fallback methods:', apiError);
                     try {
                         const timeOfDay = getTimeOfDay();
+                        console.log('Trying feedback weather for time of day:', timeOfDay);
                         const feedbackWeather = await fetchRecentFeedbackWeather(timeOfDay);
                         
                         if (feedbackWeather && feedbackWeather !== 'unknown') {
+                            console.log('Using feedback weather:', feedbackWeather);
                             currentWeather = feedbackWeather;
                             updateWeatherDisplayManual(feedbackWeather);
-                            document.getElementById('weather').value = feedbackWeather;
+                            document.getElementById('weatherText').textContent = `${feedbackWeather} (auto)`;
                             return feedbackWeather;
                         }
                     } catch (feedbackError) {
@@ -979,18 +1485,20 @@
                     }
                     
                     const seasonalWeather = getSeasonalDefaultWeather();
+                    console.log('Using seasonal weather:', seasonalWeather);
                     currentWeather = seasonalWeather;
                     updateWeatherDisplayManual(seasonalWeather);
-                    document.getElementById('weather').value = seasonalWeather;
+                    document.getElementById('weatherText').textContent = `${seasonalWeather} (auto)`;
                     return seasonalWeather;
                 }
                 
             } catch (error) {
                 console.error('All weather methods failed:', error);
                 const fallbackWeather = getSeasonalDefaultWeather();
+                console.log('Using final fallback weather:', fallbackWeather);
                 currentWeather = fallbackWeather;
                 updateWeatherDisplayManual(fallbackWeather);
-                document.getElementById('weather').value = fallbackWeather;
+                document.getElementById('weatherText').textContent = `${fallbackWeather} (auto)`;
                 return fallbackWeather;
             }
         }
@@ -1065,19 +1573,20 @@
 
         async function fetchGaodeWeatherWithGeocoding(lat, lng) {
             try {
+                console.log('Making Gaode API call for coordinates:', lat, lng);
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
                 
-                const geoResponse = await fetch(
-                    `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${GAODE_API_KEY}`,
-                    {
-                        signal: controller.signal,
-                        headers: {
-                            'Accept': 'application/json',
-                            'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
-                        }
+                const geoUrl = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${GAODE_API_KEY}`;
+                console.log('Geocoding URL:', geoUrl);
+                
+                const geoResponse = await fetch(geoUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
                     }
-                );
+                });
                 
                 clearTimeout(timeoutId);
                 
@@ -1086,31 +1595,35 @@
                 }
                 
                 const geoData = await geoResponse.json();
+                console.log('Geocoding response:', geoData);
                 
                 if (geoData.status !== '1' || !geoData.regeocode || !geoData.regeocode.adcode) {
                     throw new Error('Invalid geocode response');
                 }
                 
                 const adcode = geoData.regeocode.adcode;
+                console.log('Adcode:', adcode);
                 
-                const weatherResponse = await fetch(
-                    `https://restapi.amap.com/v3/weather/weatherInfo?city=${adcode}&key=${GAODE_API_KEY}&extensions=base`,
-                    {
-                        signal: controller.signal,
-                        headers: {
-                            'Accept': 'application/json',
-                            'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
-                        }
+                const weatherUrl = `https://restapi.amap.com/v3/weather/weatherInfo?city=${adcode}&key=${GAODE_API_KEY}&extensions=base`;
+                console.log('Weather API URL:', weatherUrl);
+                
+                const weatherResponse = await fetch(weatherUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
                     }
-                );
+                });
                 
                 if (!weatherResponse.ok) {
                     throw new Error(`Gaode Weather API error: ${weatherResponse.status}`);
                 }
                 
                 const weatherData = await weatherResponse.json();
+                console.log('Weather API response:', weatherData);
                 
                 if (weatherData.status === '1' && weatherData.lives && weatherData.lives.length > 0) {
+                    console.log('Weather data extracted:', weatherData.lives[0]);
                     return weatherData.lives[0];
                 } else {
                     throw new Error(`Weather API error: ${weatherData.info || 'Unknown error'}`);
@@ -1179,7 +1692,7 @@
                 svgIcon.innerHTML = iconMap[weatherCategory] || iconMap['mild'];
             }
             
-            weatherText.textContent = `${weatherCategory.charAt(0).toUpperCase() + weatherCategory.slice(1)} (auto)`;
+            weatherText.textContent = weatherCategory.charAt(0).toUpperCase() + weatherCategory.slice(1);
         }
 
         function updateWeatherDisplay(weatherData, weatherCategory) {
@@ -1208,7 +1721,7 @@
         }
 
         function setupWeatherRefresh() {
-            const refreshBtn = document.getElementById('refreshWeather');
+            const refreshBtn = document.querySelector('#weatherDisplay .time-button');
             if (refreshBtn) {
                 refreshBtn.addEventListener('click', function() {
                     getCurrentWeather();
@@ -1217,8 +1730,26 @@
         }
 
         function initializeWeatherSystem() {
+            console.log('Initializing weather system...');
             setupWeatherRefresh();
             getCurrentWeather();
+        }
+
+        // Test function for debugging weather
+        async function testWeatherSystem() {
+            console.log('=== Testing Weather System ===');
+            console.log('Current weather element:', document.getElementById('weatherText'));
+            console.log('Current weather text:', document.getElementById('weatherText')?.textContent);
+            
+            try {
+                const location = await getUserLocation();
+                console.log('User location:', location);
+                
+                const weather = await getCurrentWeather();
+                console.log('Final weather result:', weather);
+            } catch (error) {
+                console.error('Weather test failed:', error);
+            }
         }
 
         // Event listeners
@@ -1246,7 +1777,7 @@
             // Handle suggestion clicks
             document.querySelectorAll('.suggestion-chip').forEach(chip => {
                 chip.addEventListener('click', function() {
-                    const suggestion = this.dataset.suggestion;
+                    const suggestion = this.textContent.trim();
                     textInput.value = suggestion;
                     suggestionsDropdown.classList.remove('show');
                     getEnhancedRecommendations(new Event('submit'));
@@ -1270,6 +1801,57 @@
             });
         }
 
+        // Function to detect social context from text input
+        function detectSocialContext(text) {
+            if (!text || text.trim() === '') {
+                return 'alone';
+            }
+            
+            const lowerText = text.toLowerCase();
+            
+            // Check for social context keywords with priority order
+            // Partner/Romantic context (highest priority)
+            if (lowerText.includes('with partner') || lowerText.includes('with my partner') ||
+                lowerText.includes('romantic') || lowerText.includes('date night') ||
+                lowerText.includes('date') || lowerText.includes('boyfriend') ||
+                lowerText.includes('girlfriend') || lowerText.includes('spouse') ||
+                lowerText.includes('husband') || lowerText.includes('wife') ||
+                lowerText.includes('valentine') || lowerText.includes('anniversary')) {
+                return 'with_partner';
+            }
+            
+            // Family context
+            if (lowerText.includes('with family') || lowerText.includes('family dinner') ||
+                lowerText.includes('family meal') || lowerText.includes('family') ||
+                lowerText.includes('mom') || lowerText.includes('dad') || 
+                lowerText.includes('parents') || lowerText.includes('kids') ||
+                lowerText.includes('children') || lowerText.includes('siblings') ||
+                lowerText.includes('brother') || lowerText.includes('sister') ||
+                lowerText.includes('grandma') || lowerText.includes('grandpa')) {
+                return 'with_family';
+            }
+            
+            // Work/Colleagues context
+            if (lowerText.includes('with colleagues') || lowerText.includes('with coworkers') ||
+                lowerText.includes('work lunch') || lowerText.includes('office') ||
+                lowerText.includes('colleague') || lowerText.includes('coworker') ||
+                lowerText.includes('team') || lowerText.includes('business') ||
+                lowerText.includes('meeting') || lowerText.includes('work') ||
+                lowerText.includes('professional') || lowerText.includes('client')) {
+                return 'with_colleagues';
+            }
+            
+            // Friends context (lower priority to avoid false positives)
+            if ((lowerText.includes('with friend') || lowerText.includes('with friends')) ||
+                (lowerText.includes('hanging out with') && (lowerText.includes('friend') || lowerText.includes('friends'))) ||
+                (lowerText.includes('meeting friends') || lowerText.includes('friend group'))) {
+                return 'with_friends';
+            }
+            
+            // Default to alone if no social context detected
+            return 'alone';
+        }
+
         // Main recommendation function
         async function getEnhancedRecommendations(e) {
             e.preventDefault();
@@ -1289,10 +1871,10 @@
                 clearResults();
 
                 const textInput = document.getElementById('textInput').value.trim();
-                const timeOfDay = document.getElementById('timeOfDay').value;
+                const timeOfDay = document.getElementById('timeDisplay').textContent.replace('Morning', 'morning').replace('Afternoon', 'afternoon').replace('Evening', 'evening').replace('Night', 'night');
                 const weather = await getCurrentWeather();
-                const socialContext = document.getElementById('socialContext').value;
-                const energyLevel = document.getElementById('energyLevel').value;
+                const socialContext = detectSocialContext(textInput);
+                const energyLevel = window.selectedEnergyLevel || 'medium';
 
                 if (!textInput) {
                     throw new Error('Please provide a text input');
@@ -1310,8 +1892,24 @@
                     }
                 };
 
-                if (document.querySelector('.debug-toggle').classList.contains('active')) {
+                const debugToggle = document.querySelector('.debug-toggle');
+                if (debugToggle && debugToggle.classList.contains('active')) {
                     document.getElementById('debugRequest').textContent = JSON.stringify(requestData, null, 2);
+                    document.getElementById('debugApiBase').textContent = API_BASE;
+                    
+                    // Add social context detection info to debug
+                    const debugInfo = {
+                        original_text: textInput,
+                        detected_social_context: socialContext,
+                        detection_method: 'automatic_from_text'
+                    };
+                    const debugInfoElement = document.createElement('div');
+                    debugInfoElement.classList.add('debug-item');
+                    debugInfoElement.innerHTML = `
+                        <h4>Social Context Detection</h4>
+                        <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+                    `;
+                    document.querySelector('.debug-content').appendChild(debugInfoElement);
                 }
 
                 const startTime = Date.now();
@@ -1330,7 +1928,7 @@
                 const data = await response.json();
                 const endTime = Date.now();
 
-                if (document.querySelector('.debug-toggle').classList.contains('active')) {
+                if (debugToggle && debugToggle.classList.contains('active')) {
                     document.getElementById('debugResponse').textContent = JSON.stringify(data, null, 2);
                     document.getElementById('debugPerformance').textContent = `Response time: ${endTime - startTime}ms`;
                 }
@@ -1369,7 +1967,7 @@
         function clearResults() {
             document.getElementById('aiAnalysis').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'none';
-            document.getElementById('recommendationsList').innerHTML = '';
+            document.getElementById('recommendationsGrid').innerHTML = '';
             document.getElementById('feedbackSection').style.display = 'none';
         }
 
@@ -1377,10 +1975,10 @@
             showAIAnalysis(data);
             
             const resultsSection = document.getElementById('resultsSection');
-            const recommendationsList = document.getElementById('recommendationsList');
+            const recommendationsGrid = document.getElementById('recommendationsGrid');
             
             if (!data.recommendations || data.recommendations.length === 0) {
-                recommendationsList.innerHTML = '<p>No recommendations found. Please try a different input.</p>';
+                recommendationsGrid.innerHTML = '<p>No recommendations found. Please try a different input.</p>';
                 resultsSection.style.display = 'block';
                 return;
             }
@@ -1389,35 +1987,42 @@
             data.recommendations.forEach((rec, index) => {
                 html += `
                     <div class="recommendation-card">
-                        <div class="recommendation-header">
-                            <div class="food-name">${escapeHtml(rec.food_name || rec.title || rec.name || 'Unknown')}</div>
-                            <div class="food-score">${rec.score ? rec.score.toFixed(2) : 'N/A'}</div>
+                        <div class="card-header">
+                            <h3 class="food-name">${escapeHtml(rec.food_name || rec.title || rec.name || 'Unknown')}</h3>
+                            <span class="food-category">${escapeHtml(rec.food_category || rec.category || 'N/A')}</span>
                         </div>
                         
-                        <div class="food-details">
-                            <div class="detail-item">
-                                <div class="detail-label">Category</div>
-                                <div class="detail-value">${escapeHtml(rec.food_category || rec.category || 'N/A')}</div>
+                        <div class="card-content">
+                            <div class="food-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Region</div>
+                                    <div class="detail-value">${escapeHtml(rec.food_region || rec.region || 'N/A')}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Culture</div>
+                                    <div class="detail-value">${escapeHtml(rec.food_culture || rec.culture || 'N/A')}</div>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Region</div>
-                                <div class="detail-value">${escapeHtml(rec.food_region || rec.region || 'N/A')}</div>
+                            <div class="food-tags">
+                                ${rec.food_tags && rec.food_tags.length > 0 ? rec.food_tags.map(tag => `<span class="food-tag">${escapeHtml(tag)}</span>`).join('') : ''}
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Culture</div>
-                                <div class="detail-value">${escapeHtml(rec.food_culture || rec.culture || 'N/A')}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Mood Match</div>
-                                <div class="detail-value">${rec.mood_match ? rec.mood_match.toFixed(2) : 'N/A'}</div>
+                            <div class="score-section">
+                                <div class="score-item">
+                                    <div class="score-value">${rec.score ? rec.score.toFixed(2) : 'N/A'}</div>
+                                    <div class="score-label">Score</div>
+                                </div>
+                                <div class="score-item">
+                                    <div class="score-value">${rec.mood_match ? rec.mood_match.toFixed(2) : 'N/A'}</div>
+                                    <div class="score-label">Mood Match</div>
+                                </div>
                             </div>
                         </div>
                         
                         ${rec.reasoning && rec.reasoning.length > 0 ? `
-                            <div class="reasoning">
-                                <h4>🤔 Why this recommendation?</h4>
-                                <ul>
-                                    ${rec.reasoning.map(reason => `<li>${escapeHtml(reason)}</li>`).join('')}
+                            <div class="reasoning-section">
+                                <h4 class="reasoning-title">🤔 Why this recommendation?</h4>
+                                <ul class="reasoning-list">
+                                    ${rec.reasoning.map(reason => `<li class="reasoning-item">${escapeHtml(reason)}</li>`).join('')}
                                 </ul>
                             </div>
                         ` : ''}
@@ -1425,26 +2030,55 @@
                 `;
             });
 
-            recommendationsList.innerHTML = html;
+            recommendationsGrid.innerHTML = html;
             resultsSection.style.display = 'block';
         }
 
         function showAIAnalysis(data) {
             try {
                 const analysisDiv = document.getElementById('aiAnalysis');
+                const aiDetailsDiv = document.getElementById('aiDetails');
+                
+                // Clear previous analysis
+                aiDetailsDiv.innerHTML = '';
+                
+                // Show detected social context
+                const textInput = document.getElementById('textInput').value.trim();
+                const detectedSocialContext = detectSocialContext(textInput);
+                const socialContextElement = document.createElement('div');
+                socialContextElement.classList.add('ai-detail');
+                socialContextElement.innerHTML = `
+                    <div class="ai-detail-label">Social Context</div>
+                    <div class="ai-detail-value">${detectedSocialContext.replace(/_/g, ' ')}</div>
+                `;
+                aiDetailsDiv.appendChild(socialContextElement);
                 
                 if (data.intent_prediction && data.intent_prediction.primary_intent) {
-                    document.getElementById('primaryIntent').textContent = 
-                        data.intent_prediction.primary_intent.replace(/_/g, ' ');
+                    const primaryIntentElement = document.createElement('div');
+                    primaryIntentElement.classList.add('ai-detail');
+                    primaryIntentElement.innerHTML = `
+                        <div class="ai-detail-label">Primary Intent</div>
+                        <div class="ai-detail-value">${data.intent_prediction.primary_intent.replace(/_/g, ' ')}</div>
+                    `;
+                    aiDetailsDiv.appendChild(primaryIntentElement);
                     
-                    const confidence = data.intent_prediction.confidence;
-                    document.getElementById('intentConfidence').textContent = 
-                        confidence > 0 ? `${(confidence * 100).toFixed(0)}%` : 'N/A';
+                    const confidenceElement = document.createElement('div');
+                    confidenceElement.classList.add('ai-detail');
+                    confidenceElement.innerHTML = `
+                        <div class="ai-detail-label">Confidence</div>
+                        <div class="ai-detail-value">${data.intent_prediction.confidence > 0 ? `${(data.intent_prediction.confidence * 100).toFixed(0)}%` : 'N/A'}</div>
+                    `;
+                    aiDetailsDiv.appendChild(confidenceElement);
                 }
                 
                 if (data.processing_time) {
-                    document.getElementById('processingTime').textContent = 
-                        `${(data.processing_time * 1000).toFixed(0)}ms`;
+                    const processingTimeElement = document.createElement('div');
+                    processingTimeElement.classList.add('ai-detail');
+                    processingTimeElement.innerHTML = `
+                        <div class="ai-detail-label">Processing Time</div>
+                        <div class="ai-detail-value">${(data.processing_time * 1000).toFixed(0)}ms</div>
+                    `;
+                    aiDetailsDiv.appendChild(processingTimeElement);
                 }
                 
                 analysisDiv.style.display = 'block';
@@ -1472,10 +2106,10 @@
                     rating: currentRating,
                     feedback_text: document.getElementById('feedbackText').value,
                     context: {
-                        time_of_day: document.getElementById('timeOfDay').value,
+                        time_of_day: document.getElementById('timeDisplay').textContent.replace('Morning', 'morning').replace('Afternoon', 'afternoon').replace('Evening', 'evening').replace('Night', 'night'),
                         weather: await getCurrentWeather(),
-                        social_context: document.getElementById('socialContext').value,
-                        energy_level: document.getElementById('energyLevel').value
+                        social_context: detectSocialContext(document.getElementById('textInput').value),
+                        energy_level: window.selectedEnergyLevel || 'medium'
                     },
                     model_version: currentRecommendations.model_version || '1.0.0'
                 };
@@ -1507,6 +2141,55 @@
             toggle.classList.toggle('active');
             document.getElementById('debugApiBase').textContent = API_BASE;
         }
+
+        // Energy Level Dropdown Functions
+        function toggleEnergyDropdown() {
+            const dropdown = document.getElementById('energyDropdown');
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const isOpen = dropdown.classList.contains('open');
+            
+            dropdown.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', !isOpen);
+        }
+
+        function selectEnergyLevel(value, displayText) {
+            document.getElementById('energyValue').textContent = displayText;
+            const dropdown = document.getElementById('energyDropdown');
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            
+            dropdown.classList.remove('open');
+            trigger.setAttribute('aria-expanded', 'false');
+            
+            // Store the selected value for use in recommendations
+            window.selectedEnergyLevel = value;
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('energyDropdown');
+            if (!dropdown.contains(event.target)) {
+                dropdown.classList.remove('open');
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Keyboard navigation for dropdown
+        document.addEventListener('keydown', function(event) {
+            const dropdown = document.getElementById('energyDropdown');
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const isOpen = dropdown.classList.contains('open');
+            
+            if (event.key === 'Escape' && isOpen) {
+                dropdown.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+            
+            if (event.key === 'Enter' && event.target.classList.contains('dropdown-trigger')) {
+                event.preventDefault();
+                toggleEnergyDropdown();
+            }
+        });
 
         function escapeHtml(text) {
             if (typeof text !== 'string') return text;
