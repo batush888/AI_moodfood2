@@ -1,0 +1,10 @@
+provider: openrouter
+model: deepseek/deepseek-r1-0528:free
+api_key: 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
+api_url: https://openrouter.ai/api/v1/chat/completions
+max_tokens: 512
+temperature: 0.0
+timeout: 30
+retry_attempts: 3
+site_url: http://localhost:8000
+site_name: AI Mood Food Recommender

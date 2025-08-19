@@ -81,10 +81,11 @@ class EnhancedIntentClassifier:
     - Robust error handling for production use
     """
 
-    def __init__(self, taxonomy_path: str, model_dir: str = "models/intent_classifier"):
+    def __init__(self, taxonomy_path: str, model_dir: str = "models/intent_classifier", use_hybrid: bool = True):
         self.taxonomy_path = taxonomy_path
         self.model_dir = Path(model_dir)
         self.device = self._setup_device()
+        self.use_hybrid = use_hybrid
         
         # Initialize components with fallbacks
         self.tokenizer = None
@@ -97,7 +98,26 @@ class EnhancedIntentClassifier:
         self._load_taxonomy()
         self._load_models()
         
-        logger.info(f"Enhanced intent classifier initialized on device: {self.device}")
+        # Initialize hybrid LLM components if enabled
+        if self.use_hybrid:
+            self._init_hybrid_components()
+        
+        logger.info(f"Enhanced intent classifier initialized on device: {self.device} (hybrid: {self.use_hybrid})")
+
+    def _init_hybrid_components(self):
+        """Initialize hybrid LLM components."""
+        try:
+            # Import hybrid components
+            from .llm_parser import classify_with_llm
+            from .validator import validate_labels
+            
+            self.llm_classify = classify_with_llm
+            self.validate_labels = validate_labels
+            
+            logger.info("Hybrid LLM components initialized successfully")
+        except Exception as e:
+            logger.warning(f"Failed to initialize hybrid components: {e}")
+            self.use_hybrid = False
 
     def _setup_device(self) -> str:
         """Setup optimal device with fallbacks."""
@@ -259,6 +279,51 @@ class EnhancedIntentClassifier:
             "quick": ["quick", "fast", "efficient", "simple", "quickly"],
             "romantic": ["romantic", "elegant", "sophisticated", "intimate", "romance"]
         }
+
+    async def classify_intent_hybrid(self, text: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Classify intent using hybrid approach (LLM + Validation + ML).
+        
+        Returns:
+            Dict with hybrid classification results
+        """
+        if not self.use_hybrid:
+            logger.warning("Hybrid mode not available, falling back to standard classification")
+            return self.classify_intent(text, context)
+        
+        try:
+            logger.info(f"Performing hybrid classification for: '{text}'")
+            
+            # Step 1: LLM Classification
+            llm_labels = await self.llm_classify(text, self.intent_labels)
+            logger.info(f"LLM labels: {llm_labels}")
+            
+            # Step 2: Validation
+            validated_labels = self.validate_labels(llm_labels, self.intent_labels)
+            logger.info(f"Validated labels: {validated_labels}")
+            
+            # Step 3: ML Classification for comparison
+            ml_result = self.classify_intent(text, context)
+            
+            # Combine results
+            result = {
+                "primary_intent": validated_labels[0] if validated_labels else "unknown",
+                "confidence": 1.0 if validated_labels else 0.0,
+                "all_intents": validated_labels,
+                "method": "hybrid_llm",
+                "llm_labels": llm_labels,
+                "validated_labels": validated_labels,
+                "ml_result": ml_result,
+                "fallback": False
+            }
+            
+            logger.info(f"Hybrid classification result: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Hybrid classification failed: {e}")
+            # Fallback to standard classification
+            return self.classify_intent(text, context)
 
     def classify_intent(self, text: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

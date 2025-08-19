@@ -1,155 +1,129 @@
-# Frontend-Backend API Contract
+# AI Mood Food Recommender - Hybrid LLM System
 
-This document maps each frontend HTML file to its corresponding backend API endpoints and data contracts.
+## 🚀 Hybrid Intent Classification System
 
-## 📁 **File Structure**
+This system now integrates **DeepSeek LLM** for semantic parsing while maintaining our existing **taxonomy & classifier as guardrails**.
+
+### 🔄 New Flow: LLM → Validator → Classifier
 
 ```
-frontend/
-├── index.html                    # Main unified frontend (recommended)
-├── enhanced_ui.html             # Advanced features frontend
-├── enhanced_ui_simple.html      # Simplified version
-├── debug_test.html              # Testing/debugging interface
-└── README.md                    # This file
+User Query → DeepSeek LLM → Taxonomy Validation → ML Classifier (optional) → Final Labels
 ```
 
-## 🔗 **API Endpoint Mapping**
+### 📁 System Components
 
-### **Main Frontend (index.html)**
-- **Primary Endpoint**: `/enhanced-recommend` (POST)
-- **Health Check**: `/health` (GET)
-- **Examples**: `/examples` (GET)
-- **Feedback**: `/feedback` (POST)
+#### 1. **LLM Parser** (`core/nlu/llm_parser.py`)
+- **DeepSeek API Integration**: Semantic understanding of user queries
+- **Strict JSON Output**: Always returns `{"labels": ["label1", "label2"]}`
+- **Error Handling**: Robust fallback mechanisms
+- **Configuration**: `config/llm.yaml`
 
-### **Enhanced UI (enhanced_ui.html)**
-- **Primary Endpoint**: `/enhanced-recommend` (POST)
-- **Health Check**: `/health` (GET)
-- **Examples**: `/examples` (GET)
-- **Feedback**: `/feedback` (POST)
+#### 2. **Validator** (`core/nlu/validator.py`)
+- **Taxonomy Guardrails**: Ensures all labels exist in our taxonomy
+- **Normalization**: Standardizes label formatting
+- **Deduplication**: Removes duplicate labels
+- **Suggestions**: Provides alternatives for invalid labels
 
-### **Simple UI (enhanced_ui_simple.html)**
-- **Primary Endpoint**: `/enhanced-recommend` (POST)
-- **Health Check**: `/health` (GET)
+#### 3. **Hybrid Pipeline** (`scripts/hybrid_infer.py`)
+- **Combined Classification**: LLM + Validation + ML comparison
+- **Interactive Testing**: Command-line and interactive modes
+- **Data Logging**: Auto-grows dataset for future training
+- **Comparison Analysis**: Shows agreement between LLM and ML
 
-### **Debug Test (debug_test.html)**
-- **Test Endpoint**: `/test` (GET)
-- **Test Recommendations**: `/test-recommendations` (POST)
+### 🎯 Usage Examples
 
-## 📊 **Data Contracts**
+#### Command Line
+```bash
+# Single query
+python scripts/hybrid_infer.py "I want something warm and spicy for dinner"
 
-### **Enhanced Recommendation Request**
+# Interactive mode
+python scripts/hybrid_infer.py
+```
+
+#### API Integration
+```python
+from core.nlu.enhanced_intent_classifier import EnhancedIntentClassifier
+
+classifier = EnhancedIntentClassifier(taxonomy_path, use_hybrid=True)
+result = await classifier.classify_intent_hybrid("I want comfort food")
+```
+
+### 📊 Output Format
+
 ```json
 {
-  "text_input": "string",
-  "image_base64": "string|null",
-  "audio_base64": "string|null",
-  "user_context": {
-    "time_of_day": "string",
-    "weather": "string",
-    "social_context": "string",
-    "energy_level": "string"
-  }
+  "primary_intent": "goal_comfort",
+  "confidence": 1.0,
+  "all_intents": ["goal_comfort", "sensory_warming", "meal_dinner"],
+  "method": "hybrid_llm",
+  "llm_labels": ["goal_comfort", "sensory_warming", "meal_dinner"],
+  "validated_labels": ["goal_comfort", "sensory_warming", "meal_dinner"],
+  "ml_result": {...},
+  "fallback": false
 }
 ```
 
-### **Enhanced Recommendation Response**
-```json
-{
-  "recommendations": [
-    {
-      "food_name": "string",
-      "food_category": "string",
-      "food_region": "string",
-      "food_culture": "string",
-      "score": "float",
-      "mood_match": "float",
-      "reasoning": ["string"],
-      "restaurant": {
-        "name": "string",
-        "rating": "float",
-        "cuisine_type": "string",
-        "delivery_available": "boolean"
-      }
-    }
-  ],
-  "intent_prediction": {
-    "primary_intent": "string",
-    "confidence": "float",
-    "all_intents": [["string", "float"]]
-  },
-  "multimodal_analysis": {
-    "combined_confidence": "float",
-    "mood_categories": ["string"]
-  },
-  "processing_time": "float",
-  "model_version": "string",
-  "system_performance": {
-    "phase_times_ms": {
-      "intent_ms": "float",
-      "multimodal_ms": "float",
-      "engine_ms": "float",
-      "format_ms": "float"
-    },
-    "timeouts": {
-      "intent": "boolean",
-      "multimodal": "boolean",
-      "engine": "boolean"
-    },
-    "input_sizes": {
-      "text_len": "integer",
-      "image_b64_len": "integer",
-      "audio_b64_len": "integer"
-    }
-  }
-}
+### 🔧 Configuration
+
+#### LLM Settings (`config/llm.yaml`)
+```yaml
+provider: deepseek
+model: deepseek-chat
+api_key: your-api-key
+max_tokens: 256
+temperature: 0.0
+timeout: 30
+retry_attempts: 3
 ```
 
-### **Feedback Request**
-```json
-{
-  "user_id": "string",
-  "session_id": "string",
-  "input_text": "string",
-  "recommended_foods": ["string"],
-  "selected_food": "string|null",
-  "rating": "float|null",
-  "feedback_text": "string|null",
-  "context": "object|null",
-  "model_version": "string"
-}
+### 📈 Dataset Growth
+
+- **Auto-Labeled Data**: `data/auto_labeled.jsonl`
+- **Passive Collection**: Every query is logged with LLM + ML results
+- **Future Training**: Use collected data to retrain ML classifier
+- **Quality Control**: Validation ensures data quality
+
+### 🛡️ Safety Features
+
+1. **Taxonomy Validation**: All LLM outputs validated against our taxonomy
+2. **Fallback Mechanisms**: Multiple fallback levels if LLM fails
+3. **Error Handling**: Robust error handling throughout pipeline
+4. **Backward Compatibility**: Existing systems continue to work
+
+### 🚀 Benefits
+
+1. **Immediate Power**: DeepSeek provides semantic understanding overnight
+2. **Data Growth**: Passive dataset collection for future training
+3. **Cost Efficiency**: Train local model when dataset reaches 5k-10k samples
+4. **Privacy**: Local validation and processing
+5. **Flexibility**: Easy to switch LLM providers
+
+### 🔄 Migration Path
+
+1. **Phase 1**: Use hybrid system alongside existing classifier
+2. **Phase 2**: Collect auto-labeled data (5k-10k samples)
+3. **Phase 3**: Retrain local classifier with expanded dataset
+4. **Phase 4**: Switch to local-only or hybrid based on performance
+
+### 📝 Example Prompts
+
+The LLM receives structured prompts like:
+
+```
+User query: "I want something warm and spicy for dinner"
+
+Taxonomy labels (choose only from this list):
+goal_comfort, goal_hydration, goal_light, season_winter, sensory_warming, 
+sensory_refreshing, meal_dinner, occasion_home
+
+Return only JSON in this exact format:
+{"labels": ["label1", "label2", "label3"]}
 ```
 
-## 🚨 **Troubleshooting Guide**
+### 🎯 Future Enhancements
 
-### **Frontend Hangs at "Loading..."**
-1. Check browser console for JavaScript errors
-2. Verify API endpoint is accessible (`/health`)
-3. Check backend logs for request processing
-4. Verify request payload matches expected schema
-
-### **API Returns 500 Error**
-1. Check backend logs for Python exceptions
-2. Verify all required fields are present in request
-3. Check if AI components are properly initialized
-4. Look for Pydantic validation errors
-
-### **No Recommendations Generated**
-1. Check if intent classification succeeded
-2. Verify recommendation engine is operational
-3. Check taxonomy file exists and is valid
-4. Look for fallback recommendation logic
-
-## 🔧 **Development Notes**
-
-- **Base URL**: All frontends use `window.location.origin` for dynamic API resolution
-- **CORS**: Backend serves frontend from same origin to avoid CORS issues
-- **Error Handling**: Frontend includes comprehensive error handling and user feedback
-- **Performance**: API includes detailed timing metrics for debugging
-- **Fallbacks**: System gracefully degrades when AI components fail
-
-## 📈 **Future Enhancements**
-
-- **Real-time Updates**: WebSocket integration for live recommendations
-- **User Profiles**: Persistent user preferences and history
-- **A/B Testing**: Multiple recommendation algorithms
-- **Analytics Dashboard**: User behavior and system performance metrics
+- **Provider Switching**: Easy migration between LLM providers
+- **Advanced Validation**: Fuzzy matching and label suggestions
+- **Performance Metrics**: Track LLM vs ML agreement over time
+- **Active Learning**: Use disagreement to identify training opportunities
