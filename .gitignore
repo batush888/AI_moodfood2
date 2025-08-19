@@ -1,10 +1,10 @@
 __pycache__/
-llm.yaml
 *.pyc
 *.pyo
 *.pyd
 build/
 dist/
+/.env
 .env
 .vscode/
 .DS_Store
