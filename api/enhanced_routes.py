@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import asyncio
+from datetime import datetime
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 
@@ -285,6 +286,24 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
     start_time = asyncio.get_event_loop().time()
     session_id = "2a53f226-5bbc-4149-8571-57e3ddff668f"  # Simplified session handling
     
+    # Initialize comprehensive logging
+    try:
+        from core.logging.query_logger import log_query_sync, log_intent_results_sync, log_recommendations_sync, log_error_sync
+        
+        # Log incoming query
+        query_id = log_query_sync(
+            text_input=request.text_input,
+            image_input=request.image_base64,
+            audio_input=request.audio_base64,
+            user_context=request.user_context.model_dump() if request.user_context else None,
+            session_id=session_id
+        )
+        logger.info(f"Logged query {query_id} for session {session_id}")
+        
+    except ImportError:
+        logger.warning("Query logging not available, continuing without logging")
+        query_id = None
+    
     logger.info(f"Processing enhanced recommendation request: session={session_id}, text_length={len(request.text_input)}")
     
     try:
@@ -310,6 +329,20 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                 phase_times_ms["intent_ms"] = round((asyncio.get_event_loop().time() - _t0) * 1000.0, 2)
                 logger.info(f"Intent classification completed: {intent_result.get('primary_intent', 'unknown')}")
                 logger.info(f"Full intent result: {intent_result}")
+                
+                # Log intent classification results
+                if query_id and 'log_intent_results_sync' in locals():
+                    try:
+                        log_intent_results_sync(
+                            query_id=query_id,
+                            primary_intent=intent_result.get('primary_intent', 'unknown'),
+                            confidence=intent_result.get('confidence', 0.0),
+                            all_intents=intent_result.get('all_intents', []),
+                            method=intent_result.get('method', 'unknown'),
+                            processing_time_ms=phase_times_ms["intent_ms"]
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to log intent results: {e}")
             except asyncio.TimeoutError:
                 logger.warning("Intent classification timed out, using fallback")
                 timeouts["intent"] = True
@@ -429,6 +462,17 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
                 phase_times_ms["format_ms"] = round((asyncio.get_event_loop().time() - _fmt_t0) * 1000.0, 2)
                 logger.info(f"Generated {len(recommendations)} formatted recommendations")
                 
+                # Log recommendation results
+                if query_id and 'log_recommendations_sync' in locals():
+                    try:
+                        log_recommendations_sync(
+                            query_id=query_id,
+                            recommendations=recommendations,
+                            engine_time_ms=phase_times_ms.get("engine_ms", 0)
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to log recommendations: {e}")
+                
             except asyncio.TimeoutError:
                 logger.warning("Recommendation generation timed out")
                 timeouts["engine"] = True
@@ -497,6 +541,20 @@ async def enhanced_recommend(request: EnhancedRecommendationRequest):
         
     except Exception as e:
         logger.error(f"Enhanced recommendation failed: {e}")
+        
+        # Log error if logging is available
+        if query_id and 'log_error_sync' in locals():
+            try:
+                import traceback
+                log_error_sync(
+                    query_id=query_id,
+                    error_type="recommendation_failure",
+                    error_message=str(e),
+                    stack_trace=traceback.format_exc()
+                )
+            except Exception as log_error:
+                logger.error(f"Failed to log error: {log_error}")
+        
         # Return fallback response
         return EnhancedRecommendationResponse(
             recommendations=[
@@ -683,6 +741,96 @@ async def get_recent_feedback_weather(request: RecentFeedbackWeatherRequest):
         logger.error(f"Recent feedback weather fetch failed: {e}")
         return {
             "weather": "unknown",
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.get("/logging/stats")
+async def get_logging_statistics():
+    """Get comprehensive logging statistics for monitoring and analysis."""
+    try:
+        from core.logging.query_logger import query_logger
+        
+        stats = query_logger.get_statistics()
+        return {
+            "status": "ok",
+            "statistics": stats,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except ImportError:
+        return {
+            "status": "logging_unavailable",
+            "message": "Query logging system not available"
+        }
+    except Exception as e:
+        logger.error(f"Failed to get logging statistics: {e}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.post("/logging/export-training")
+async def export_training_dataset(output_file: str = "data/training_dataset.jsonl"):
+    """Export high-quality logged queries for training dataset."""
+    try:
+        from core.logging.query_logger import query_logger
+        
+        count = query_logger.export_for_training(output_file)
+        return {
+            "status": "ok",
+            "exported_count": count,
+            "output_file": output_file,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except ImportError:
+        return {
+            "status": "logging_unavailable",
+            "message": "Query logging system not available"
+        }
+    except Exception as e:
+        logger.error(f"Failed to export training dataset: {e}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+@app.get("/logging/query/{query_id}")
+async def get_query_log(query_id: str):
+    """Get detailed log entry for a specific query."""
+    try:
+        from core.logging.query_logger import query_logger
+        
+        # Read the log file to find the specific query
+        import json
+        from pathlib import Path
+        
+        log_file = Path("data/logs/query_logs.jsonl")
+        if not log_file.exists():
+            return {"status": "not_found", "message": "Log file not found"}
+        
+        with open(log_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    entry = json.loads(line)
+                    if entry.get('query_id') == query_id:
+                        return {
+                            "status": "ok",
+                            "query": entry,
+                            "timestamp": datetime.now().isoformat()
+                        }
+        
+        return {"status": "not_found", "message": f"Query ID {query_id} not found"}
+        
+    except ImportError:
+        return {
+            "status": "logging_unavailable",
+            "message": "Query logging system not available"
+        }
+    except Exception as e:
+        logger.error(f"Failed to get query log: {e}")
+        return {
             "status": "error",
             "message": str(e)
         }

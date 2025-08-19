@@ -1913,6 +1913,10 @@
                 }
 
                 const startTime = Date.now();
+                
+                // Log query locally for dataset growth
+                logQueryLocally(textInput, requestData, startTime);
+                
                 const response = await fetch(`${API_BASE}/enhanced-recommend`, {
                     method: 'POST',
                     headers: {
@@ -1928,6 +1932,9 @@
                 const data = await response.json();
                 const endTime = Date.now();
 
+                // Log successful response locally
+                logResponseLocally(data, endTime, startTime);
+
                 if (debugToggle && debugToggle.classList.contains('active')) {
                     document.getElementById('debugResponse').textContent = JSON.stringify(data, null, 2);
                     document.getElementById('debugPerformance').textContent = `Response time: ${endTime - startTime}ms`;
@@ -1938,6 +1945,8 @@
                 showFeedbackSection(data);
 
             } catch (error) {
+                // Log error locally
+                logErrorLocally(error, startTime);
                 showError(error);
             } finally {
                 hideLoader();
@@ -2203,6 +2212,238 @@
 
         // Initialize debug info
         document.getElementById('debugApiBase').textContent = API_BASE;
+        
+        // ========================================
+        // COMPREHENSIVE QUERY LOGGING SYSTEM
+        // ========================================
+        
+        // Local storage key for query logs
+        const QUERY_LOG_KEY = 'moodfood_query_logs';
+        const MAX_LOCAL_LOGS = 1000; // Keep last 1000 queries locally
+        
+        /**
+         * Log query locally for dataset growth and analysis
+         */
+        function logQueryLocally(textInput, requestData, startTime) {
+            try {
+                const queryLog = {
+                    id: generateQueryId(),
+                    timestamp: new Date().toISOString(),
+                    text_input: textInput,
+                    user_context: requestData.user_context,
+                    request_data: requestData,
+                    start_time: startTime,
+                    status: 'pending',
+                    source: 'frontend'
+                };
+                
+                // Get existing logs
+                const existingLogs = getLocalQueryLogs();
+                existingLogs.push(queryLog);
+                
+                // Keep only the last MAX_LOCAL_LOGS entries
+                if (existingLogs.length > MAX_LOCAL_LOGS) {
+                    existingLogs.splice(0, existingLogs.length - MAX_LOCAL_LOGS);
+                }
+                
+                // Save back to localStorage
+                localStorage.setItem(QUERY_LOG_KEY, JSON.stringify(existingLogs));
+                
+                // Store current query ID for response logging
+                window.currentQueryId = queryLog.id;
+                
+                console.log(`📝 Logged query locally: ${queryLog.id}`);
+                
+            } catch (error) {
+                console.error('Failed to log query locally:', error);
+            }
+        }
+        
+        /**
+         * Log API response locally
+         */
+        function logResponseLocally(responseData, endTime, startTime) {
+            try {
+                if (!window.currentQueryId) return;
+                
+                const existingLogs = getLocalQueryLogs();
+                const queryIndex = existingLogs.findIndex(log => log.id === window.currentQueryId);
+                
+                if (queryIndex !== -1) {
+                    const processingTime = endTime - startTime;
+                    
+                    existingLogs[queryIndex] = {
+                        ...existingLogs[queryIndex],
+                        status: 'completed',
+                        response_data: responseData,
+                        end_time: endTime,
+                        processing_time_ms: processingTime,
+                        intent_results: {
+                            primary_intent: responseData.intent_prediction?.primary_intent,
+                            confidence: responseData.intent_prediction?.confidence,
+                            all_intents: responseData.intent_prediction?.all_intents
+                        },
+                        recommendations: {
+                            count: responseData.recommendations?.length || 0,
+                            items: responseData.recommendations || []
+                        },
+                        system_performance: responseData.system_performance || {}
+                    };
+                    
+                    // Save updated logs
+                    localStorage.setItem(QUERY_LOG_KEY, JSON.stringify(existingLogs));
+                    
+                    console.log(`📝 Updated query log: ${window.currentQueryId}`);
+                }
+                
+            } catch (error) {
+                console.error('Failed to log response locally:', error);
+            }
+        }
+        
+        /**
+         * Log error locally
+         */
+        function logErrorLocally(error, startTime) {
+            try {
+                if (!window.currentQueryId) return;
+                
+                const existingLogs = getLocalQueryLogs();
+                const queryIndex = existingLogs.findIndex(log => log.id === window.currentQueryId);
+                
+                if (queryIndex !== -1) {
+                    existingLogs[queryIndex] = {
+                        ...existingLogs[queryIndex],
+                        status: 'error',
+                        error: {
+                            message: error.message,
+                            type: error.name,
+                            stack: error.stack
+                        },
+                        end_time: Date.now(),
+                        processing_time_ms: Date.now() - startTime
+                    };
+                    
+                    // Save updated logs
+                    localStorage.setItem(QUERY_LOG_KEY, JSON.stringify(existingLogs));
+                    
+                    console.log(`📝 Logged error for query: ${window.currentQueryId}`);
+                }
+                
+            } catch (logError) {
+                console.error('Failed to log error locally:', logError);
+            }
+        }
+        
+        /**
+         * Get local query logs
+         */
+        function getLocalQueryLogs() {
+            try {
+                const logs = localStorage.getItem(QUERY_LOG_KEY);
+                return logs ? JSON.parse(logs) : [];
+            } catch (error) {
+                console.error('Failed to get local query logs:', error);
+                return [];
+            }
+        }
+        
+        /**
+         * Generate unique query ID
+         */
+        function generateQueryId() {
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substr(2, 9);
+            return `frontend_${timestamp}_${random}`;
+        }
+        
+        /**
+         * Export local logs for analysis
+         */
+        function exportLocalLogs() {
+            try {
+                const logs = getLocalQueryLogs();
+                const dataStr = JSON.stringify(logs, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `moodfood_query_logs_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                console.log(`📊 Exported ${logs.length} query logs`);
+                
+            } catch (error) {
+                console.error('Failed to export local logs:', error);
+            }
+        }
+        
+        /**
+         * Get logging statistics
+         */
+        function getLocalLogStats() {
+            try {
+                const logs = getLocalQueryLogs();
+                const total = logs.length;
+                const completed = logs.filter(log => log.status === 'completed').length;
+                const errors = logs.filter(log => log.status === 'error').length;
+                const pending = logs.filter(log => log.status === 'pending').length;
+                
+                return {
+                    total_queries: total,
+                    completed: completed,
+                    errors: errors,
+                    pending: pending,
+                    success_rate: total > 0 ? (completed / total * 100).toFixed(1) : 0
+                };
+            } catch (error) {
+                console.error('Failed to get local log stats:', error);
+                return {};
+            }
+        }
+        
+        // Add logging buttons to the UI
+        function addLoggingUI() {
+            const header = document.querySelector('.header-content');
+            if (header) {
+                const loggingDiv = document.createElement('div');
+                loggingDiv.className = 'nav';
+                loggingDiv.innerHTML = `
+                    <button onclick="exportLocalLogs()" class="nav-item" title="Export Query Logs">
+                        📊 Export Logs
+                    </button>
+                    <button onclick="showLogStats()" class="nav-item" title="View Log Statistics">
+                        📈 Log Stats
+                    </button>
+                `;
+                header.appendChild(loggingDiv);
+            }
+        }
+        
+        /**
+         * Show logging statistics
+         */
+        function showLogStats() {
+            const stats = getLocalLogStats();
+            const message = `
+📊 Query Logging Statistics
+
+Total Queries: ${stats.total_queries}
+Completed: ${stats.completed}
+Errors: ${stats.errors}
+Pending: ${stats.pending}
+Success Rate: ${stats.success_rate}%
+
+Logs are stored locally and can be exported for analysis.
+            `;
+            alert(message);
+        }
+        
+        // Initialize logging UI when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            addLoggingUI();
+        });
+        
     </script>
 </body>
 </html> 

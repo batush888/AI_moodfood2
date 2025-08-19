@@ -19,6 +19,14 @@ class LLMParser:
         try:
             with open(config_path, 'r') as f:
                 config = yaml.safe_load(f)
+            
+            # Replace environment variable placeholders
+            if isinstance(config.get('api_key'), str) and config['api_key'].startswith('${') and config['api_key'].endswith('}'):
+                env_var = config['api_key'][2:-1]  # Remove ${ and }
+                config['api_key'] = os.environ.get(env_var)
+                if not config['api_key']:
+                    logger.warning(f"Environment variable {env_var} not set")
+            
             logger.info(f"Loaded LLM config: {config['provider']} - {config['model']}")
             return config
         except Exception as e:
@@ -27,9 +35,9 @@ class LLMParser:
             return {
                 "provider": "openrouter",
                 "model": "deepseek/deepseek-r1-0528:free",
-                "api_key": os.environ.get("API_KEY"),
+                "api_key": os.environ.get("OPENROUTER_API_KEY"),
                 "api_url": "https://openrouter.ai/api/v1/chat/completions",
-                "max_tokens": 256,
+                "max_tokens": 512,
                 "temperature": 0.0,
                 "timeout": 30,
                 "retry_attempts": 3,
