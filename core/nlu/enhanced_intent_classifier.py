@@ -4,6 +4,7 @@ Phase 3: Advanced AI Features - Deep Learning Models
 
 Features:
 - Transformer-based intent classification
+- ML classifier with hot reloading
 - Semantic embeddings for better understanding
 - Offline fallback mechanisms
 - Robust error handling
@@ -50,6 +51,16 @@ except ImportError:
     TRANSFORMERS_AVAILABLE = False
     logger.warning("Transformers not available, using fallback methods")
 
+# Try to import ML classifier libraries
+try:
+    import joblib
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
+    ML_CLASSIFIER_AVAILABLE = True
+except ImportError:
+    ML_CLASSIFIER_AVAILABLE = False
+    logger.warning("ML classifier libraries not available (scikit-learn, joblib)")
+
 # Custom model class to match the trained architecture
 class DistilBertDualHead(nn.Module):
     def __init__(self, model_name_or_path, taxonomy_classes: int, mlb_classes: int, dropout: float = 0.2):
@@ -72,10 +83,11 @@ class DistilBertDualHead(nn.Module):
 
 class EnhancedIntentClassifier:
     """
-    Enhanced intent classifier with transformer models and offline fallbacks.
+    Enhanced intent classifier with transformer models, ML classifier, and offline fallbacks.
     
     Features:
     - Transformer-based classification with DistilBERT
+    - ML classifier with hot reloading capability
     - Sentence embeddings for semantic understanding
     - Comprehensive offline fallback system
     - Robust error handling for production use
@@ -94,15 +106,22 @@ class EnhancedIntentClassifier:
         self.taxonomy = None
         self.intent_labels = []
         
+        # ML Classifier components
+        self.ml_classifier = None
+        self.ml_vectorizer = None
+        self.ml_labels = []
+        self.ml_classifier_path = self.model_dir / "ml_classifier.pkl"
+        self.ml_mapping_path = self.model_dir / "label_mappings.json"
+        
         # Load components with comprehensive fallbacks
         self._load_taxonomy()
         self._load_models()
+        self._load_ml_classifier()
         
-        # Initialize hybrid LLM components if enabled
-        if self.use_hybrid:
-            self._init_hybrid_components()
+        # Setup fallback methods
+        self._setup_fallback_methods()
         
-        logger.info(f"Enhanced intent classifier initialized on device: {self.device} (hybrid: {self.use_hybrid})")
+        logger.info(f"Enhanced intent classifier initialized on device: {self.device}")
 
     def _init_hybrid_components(self):
         """Initialize hybrid LLM components."""
@@ -259,11 +278,123 @@ class EnhancedIntentClassifier:
             import traceback
             traceback.print_exc()
 
+    def _load_ml_classifier(self):
+        """Load ML classifier with fallbacks."""
+        if not ML_CLASSIFIER_AVAILABLE:
+            logger.warning("ML classifier libraries not available")
+            return
+        
+        try:
+            if self.ml_classifier_path.exists() and self.ml_mapping_path.exists():
+                logger.info(f"Loading ML classifier from: {self.ml_classifier_path}")
+                
+                # Load the ML classifier
+                model_data = joblib.load(self.ml_classifier_path)
+                
+                if isinstance(model_data, dict) and 'classifier' in model_data and 'vectorizer' in model_data:
+                    self.ml_classifier = model_data['classifier']
+                    self.ml_vectorizer = model_data['vectorizer']
+                    self.ml_labels = model_data.get('labels', [])
+                    
+                    logger.info(f"ML classifier loaded successfully with {len(self.ml_labels)} labels")
+                    logger.info(f"Available ML labels: {self.ml_labels[:10]}...")  # Show first 10
+                else:
+                    logger.warning("Invalid ML classifier format")
+                    self.ml_classifier = None
+                    self.ml_vectorizer = None
+                    
+            else:
+                logger.info("No ML classifier found, will use fallback methods")
+                self.ml_classifier = None
+                self.ml_vectorizer = None
+                
+        except Exception as e:
+            logger.error(f"Failed to load ML classifier: {e}")
+            self.ml_classifier = None
+            self.ml_vectorizer = None
+
+    def reload_ml_classifier(self) -> bool:
+        """Hot reload the ML classifier from disk."""
+        if not ML_CLASSIFIER_AVAILABLE:
+            logger.warning("ML classifier libraries not available for reloading")
+            return False
+        
+        try:
+            logger.info("Reloading ML classifier...")
+            
+            if self.ml_classifier_path.exists() and self.ml_mapping_path.exists():
+                # Load the new ML classifier
+                model_data = joblib.load(self.ml_classifier_path)
+                
+                if isinstance(model_data, dict) and 'classifier' in model_data and 'vectorizer' in model_data:
+                    self.ml_classifier = model_data['classifier']
+                    self.ml_vectorizer = model_data['vectorizer']
+                    self.ml_labels = model_data.get('labels', [])
+                    
+                    logger.info(f"✅ ML classifier reloaded successfully with {len(self.ml_labels)} labels")
+                    return True
+                else:
+                    logger.error("Invalid ML classifier format during reload")
+                    return False
+            else:
+                logger.warning("ML classifier files not found during reload")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to reload ML classifier: {e}")
+            return False
+
+    def _ml_classification(self, text: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Classify intent using ML classifier."""
+        if not self.ml_classifier or not self.ml_vectorizer or not self.ml_labels:
+            logger.debug("ML classifier not available")
+            return None
+        
+        try:
+            # Vectorize the text
+            X = self.ml_vectorizer.transform([text])
+            
+            # Get predictions
+            predictions = self.ml_classifier.predict(X)
+            probabilities = self.ml_classifier.predict_proba(X)
+            
+            # Get predicted labels
+            predicted_labels = []
+            for i, pred in enumerate(predictions[0]):
+                if pred == 1:  # Label is predicted
+                    label = self.ml_labels[i]
+                    prob = probabilities[0][i] if i < len(probabilities[0]) else 0.5
+                    predicted_labels.append((label, prob))
+            
+            # Sort by probability
+            predicted_labels.sort(key=lambda x: x[1], reverse=True)
+            
+            if predicted_labels:
+                primary_intent = predicted_labels[0][0]
+                confidence = predicted_labels[0][1]
+                all_intents = [(label, prob) for label, prob in predicted_labels[:5]]  # Top 5
+                
+                return {
+                    'primary_intent': primary_intent,
+                    'confidence': confidence,
+                    'all_intents': all_intents,
+                    'method': 'ml_classifier',
+                    'fallback': False
+                }
+            else:
+                logger.debug("No labels predicted by ML classifier")
+                return None
+                
+        except Exception as e:
+            logger.error(f"ML classification failed: {e}")
+            return None
+
     def _has_working_models(self) -> bool:
         """Check if we have any working models."""
         return (
             self.sentence_transformer is not None or 
-            (self.tokenizer is not None and self.model is not None)
+            (self.tokenizer is not None and self.model is not None) or
+            (self.ml_classifier is not None and self.ml_vectorizer is not None)
         )
 
     def _setup_fallback_methods(self):
@@ -340,7 +471,16 @@ class EnhancedIntentClassifier:
             return self._create_fallback_response("no_text")
         
         try:
-            # Try transformer-based classification first
+            # Try ML classifier first (fastest and most reliable)
+            if self.ml_classifier and self.ml_vectorizer:
+                result = self._ml_classification(text, context)
+                if result and result.get('primary_intent') != 'unknown':
+                    confidence = result.get('confidence', 0.0)
+                    if confidence >= 0.5:  # Accept ML predictions with decent confidence
+                        logger.info(f"Using ML classifier result: {result.get('primary_intent')} (confidence: {confidence:.3f})")
+                        return result
+            
+            # Try transformer-based classification second
             if self._has_working_models():
                 result = self._transformer_classification(text, context)
                 if result and result.get('primary_intent') != 'unknown':
@@ -556,5 +696,8 @@ class EnhancedIntentClassifier:
             "torch_available": TORCH_AVAILABLE,
             "numpy_available": NUMPY_AVAILABLE,
             "sentence_transformers_available": SENTENCE_TRANSFORMERS_AVAILABLE,
-            "transformers_available": TRANSFORMERS_AVAILABLE
+            "transformers_available": TRANSFORMERS_AVAILABLE,
+            "ml_classifier_available": ML_CLASSIFIER_AVAILABLE,
+            "ml_classifier_loaded": self.ml_classifier is not None,
+            "ml_labels_count": len(self.ml_labels) if self.ml_labels else 0
         } 

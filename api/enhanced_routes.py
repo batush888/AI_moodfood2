@@ -835,6 +835,281 @@ async def get_query_log(query_id: str):
             "message": str(e)
         }
 
+@app.post("/retrain")
+async def retrain_model(background_tasks: BackgroundTasks):
+    """Retrain the ML classifier and hot reload it."""
+    try:
+        logger.info("🚀 Starting model retraining...")
+        
+        # Import retraining components
+        try:
+            from scripts.retrain_classifier import AutomatedRetrainer
+        except ImportError as e:
+            logger.error(f"Failed to import retraining components: {e}")
+            return {
+                "status": "error",
+                "message": "Retraining components not available",
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # Run retraining in background
+        async def run_retraining():
+            try:
+                retrainer = AutomatedRetrainer()
+                success = retrainer.retrain(force=True)
+                
+                if success:
+                    # Check if model was actually deployed (performance comparison passed)
+                    if hasattr(retrainer, 'performance_comparison') and retrainer.performance_comparison.get('should_deploy', False):
+                        # Hot reload the ML classifier
+                        if enhanced_classifier:
+                            reload_success = enhanced_classifier.reload_ml_classifier()
+                            if reload_success:
+                                logger.info("✅ Model retrained and hot reloaded successfully")
+                                logger.info(f"Performance: {retrainer.performance_comparison.get('reason', 'Unknown')}")
+                            else:
+                                logger.error("❌ Model retrained but hot reload failed")
+                        else:
+                            logger.warning("Enhanced classifier not available for hot reload")
+                    else:
+                        logger.info("✅ Retraining completed but model not deployed due to performance degradation")
+                        logger.info(f"Reason: {retrainer.performance_comparison.get('reason', 'Unknown')}")
+                else:
+                    logger.error("❌ Model retraining failed")
+                    
+            except Exception as e:
+                logger.error(f"Retraining failed: {e}")
+        
+        # Add retraining task to background
+        background_tasks.add_task(run_retraining)
+        
+        return {
+            "status": "started",
+            "message": "Model retraining started in background",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to start retraining: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+@app.get("/retrain/status")
+async def get_retrain_status():
+    """Get retraining status and recommendations."""
+    try:
+        from scripts.retrain_classifier import AutomatedRetrainer
+        
+        retrainer = AutomatedRetrainer()
+        status = retrainer.get_retrain_status()
+        
+        # Add current model status
+        model_status = {
+            "ml_classifier_loaded": enhanced_classifier.ml_classifier is not None if enhanced_classifier else False,
+            "ml_labels_count": len(enhanced_classifier.ml_labels) if enhanced_classifier and enhanced_classifier.ml_labels else 0,
+            "transformer_loaded": enhanced_classifier.model is not None if enhanced_classifier else False
+        }
+        
+        status["current_model_status"] = model_status
+        
+        return {
+            "status": "ok",
+            "retrain_status": status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get retrain status: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+@app.get("/retrain/metrics")
+async def get_model_metrics():
+    """Get current model performance metrics."""
+    try:
+        import json
+        from pathlib import Path
+        
+        metrics_file = Path("models/intent_classifier/metrics.json")
+        if not metrics_file.exists():
+            return {
+                "status": "not_found",
+                "message": "No metrics file found",
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        with open(metrics_file, 'r', encoding='utf-8') as f:
+            metrics = json.load(f)
+        
+        return {
+            "status": "ok",
+            "metrics": metrics,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get model metrics: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+@app.get("/model/status")
+async def get_model_status():
+    """Get comprehensive model status including version, metrics, and retraining info."""
+    try:
+        import json
+        from pathlib import Path
+        
+        # Get metrics
+        metrics_file = Path("models/intent_classifier/metrics.json")
+        metrics = {}
+        if metrics_file.exists():
+            with open(metrics_file, 'r', encoding='utf-8') as f:
+                metrics = json.load(f)
+        
+        # Get retraining status
+        from scripts.retrain_classifier import AutomatedRetrainer
+        retrainer = AutomatedRetrainer()
+        retrain_status = retrainer.get_retrain_status()
+        
+        # Get dataset info
+        dataset_file = Path("data/logs/training_dataset.jsonl")
+        dataset_size = 0
+        if dataset_file.exists():
+            with open(dataset_file, 'r') as f:
+                dataset_size = sum(1 for line in f)
+        
+        # Get model file info
+        model_file = Path("models/intent_classifier/ml_classifier.pkl")
+        model_info = {
+            "exists": model_file.exists(),
+            "size_mb": model_file.stat().st_size / (1024 * 1024) if model_file.exists() else 0,
+            "last_modified": datetime.fromtimestamp(model_file.stat().st_mtime).isoformat() if model_file.exists() else None
+        }
+        
+        # Get enhanced classifier status
+        classifier_status = {
+            "ml_classifier_loaded": enhanced_classifier.ml_classifier is not None if enhanced_classifier else False,
+            "ml_labels_count": len(enhanced_classifier.ml_labels) if enhanced_classifier and enhanced_classifier.ml_labels else 0,
+            "transformer_loaded": enhanced_classifier.model is not None if enhanced_classifier else False,
+            "fallback_mode": enhanced_classifier.fallback_mode if enhanced_classifier else True
+        }
+        
+        # Get scheduler status
+        try:
+            from scripts.automated_scheduler import get_scheduler_status
+            scheduler_status = get_scheduler_status()
+        except:
+            scheduler_status = {"status": "not_available"}
+        
+        return {
+            "status": "ok",
+            "model_info": {
+                "version": metrics.get('training_date', 'unknown'),
+                "accuracy": metrics.get('accuracy', 0),
+                "f1_macro": metrics.get('f1_macro', 0),
+                "f1_weighted": metrics.get('f1_weighted', 0),
+                "n_classes": metrics.get('n_classes', 0),
+                "n_features": metrics.get('n_features', 0),
+                "n_samples": metrics.get('n_samples', 0)
+            },
+            "retraining_info": {
+                "last_retrain": retrain_status.get('last_retrain', 'Never'),
+                "next_retrain_recommended": retrain_status.get('next_retrain_recommended', 'Unknown'),
+                "retrain_count": retrain_status.get('retrain_count', 0)
+            },
+            "dataset_info": {
+                "total_samples": dataset_size,
+                "dataset_file": str(dataset_file),
+                "dataset_exists": dataset_file.exists()
+            },
+            "model_files": model_info,
+            "classifier_status": classifier_status,
+            "scheduler_status": scheduler_status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get model status: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+@app.get("/scheduler/status")
+async def get_scheduler_status():
+    """Get automated scheduler status."""
+    try:
+        from scripts.automated_scheduler import get_scheduler_status
+        status = get_scheduler_status()
+        
+        return {
+            "status": "ok",
+            "scheduler": status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get scheduler status: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+@app.post("/scheduler/start")
+async def start_scheduler():
+    """Start the automated retraining scheduler."""
+    try:
+        from scripts.automated_scheduler import start_automated_scheduler
+        
+        success = start_automated_scheduler()
+        
+        return {
+            "status": "ok" if success else "error",
+            "message": "Scheduler started successfully" if success else "Failed to start scheduler",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+@app.post("/scheduler/stop")
+async def stop_scheduler():
+    """Stop the automated retraining scheduler."""
+    try:
+        from scripts.automated_scheduler import stop_automated_scheduler
+        
+        stop_automated_scheduler()
+        
+        return {
+            "status": "ok",
+            "message": "Scheduler stopped successfully",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to stop scheduler: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

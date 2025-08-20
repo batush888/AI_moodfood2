@@ -41,6 +41,7 @@ class QueryLogEntry:
     validated_labels: Optional[List[str]] = None
     ml_labels: Optional[List[str]] = None
     comparison_score: Optional[float] = None
+    llm_validated: Optional[bool] = None  # Whether this sample was validated by LLM
     
     # Recommendation results
     recommendations: Optional[List[Dict[str, Any]]] = None
@@ -223,6 +224,38 @@ class QueryLogger:
         except Exception as e:
             logger.error(f"Failed to log error: {e}")
     
+    def log_llm_validation(self, 
+                          query_id: str,
+                          llm_validated: bool,
+                          validation_reason: Optional[str] = None):
+        """Log LLM validation results for borderline cases"""
+        
+        validation_entry = {
+            'query_id': query_id,
+            'timestamp': datetime.now().isoformat(),
+            'llm_validated': llm_validated,
+            'validation_reason': validation_reason,
+            'validation_type': 'borderline_case'
+        }
+        
+        try:
+            with self._lock:
+                # Update the main log entry
+                self._update_log_entry(query_id, {
+                    'llm_validated': llm_validated,
+                    'validation_reason': validation_reason
+                })
+                
+                # Also log to a separate validation log
+                validation_log_file = self.log_dir / "llm_validations.jsonl"
+                with open(validation_log_file, 'a', encoding='utf-8') as f:
+                    f.write(json.dumps(validation_entry, ensure_ascii=False) + '\n')
+                    
+            logger.info(f"Logged LLM validation for {query_id}: {llm_validated}")
+            
+        except Exception as e:
+            logger.error(f"Failed to log LLM validation: {e}")
+    
     def _update_log_entry(self, query_id: str, updates: Dict[str, Any]) -> bool:
         """Update existing log entry with new information"""
         
@@ -297,6 +330,54 @@ class QueryLogger:
         confidence = entry.get('confidence', 0)
         if confidence < 0.3:  # Low confidence entries are filtered out
             return False
+
+    def log_retraining_event(self, trigger: str, status: str, details: Optional[Dict[str, Any]] = None):
+        """Log retraining events for monitoring and analysis"""
+        
+        retrain_entry = {
+            'event_type': 'retraining',
+            'trigger': trigger,  # 'api_triggered', 'cron_triggered', 'manual'
+            'status': status,    # 'deployed', 'rejected', 'failed', 'started'
+            'timestamp': datetime.now().isoformat(),
+            'details': details or {}
+        }
+        
+        # Add performance comparison details if available
+        if details and 'comparison' in details:
+            comparison = details['comparison']
+            retrain_entry['performance_summary'] = {
+                'old_accuracy': comparison.get('old_accuracy', 0),
+                'new_accuracy': comparison.get('new_accuracy', 0),
+                'old_f1_macro': comparison.get('old_f1_macro', 0),
+                'new_f1_macro': comparison.get('new_f1_macro', 0),
+                'accuracy_improvement': comparison.get('accuracy_improvement', 0),
+                'f1_improvement': comparison.get('f1_improvement', 0),
+                'deployment_reason': comparison.get('reason', 'Unknown')
+            }
+        
+        # Add filter statistics if available
+        if details and 'filter_stats' in details:
+            filter_stats = details['filter_stats']
+            retrain_entry['data_quality_summary'] = {
+                'original_count': filter_stats.get('original_count', 0),
+                'duplicates_removed': filter_stats.get('duplicates_removed', 0),
+                'low_confidence_removed': filter_stats.get('low_confidence_removed', 0),
+                'malformed_removed': filter_stats.get('malformed_removed', 0),
+                'final_count': filter_stats.get('final_count', 0),
+                'filtering_efficiency': f"{filter_stats.get('final_count', 0) / filter_stats.get('original_count', 1) * 100:.1f}%"
+            }
+        
+        try:
+            with self._lock:
+                with open(self.log_file, 'a', encoding='utf-8') as f:
+                    f.write(json.dumps(retrain_entry, ensure_ascii=False) + '\n')
+                    
+            logger.info(f"Logged retraining event: {trigger} - {status}")
+            if details and 'comparison' in details:
+                logger.info(f"Performance: accuracy {details['comparison'].get('accuracy_improvement', 0):+.4f}, F1 {details['comparison'].get('f1_improvement', 0):+.4f}")
+            
+        except Exception as e:
+            logger.error(f"Failed to log retraining event: {e}")
         
         # Must have recommendations (successful queries)
         if not entry.get('recommendations'):
