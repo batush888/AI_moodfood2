@@ -1330,9 +1330,12 @@
         </section>
     </main>
 
+    <!-- Load configuration first -->
+    <script src="config.js"></script>
+    
     <script>
         // Configuration
-        const API_BASE = 'http://localhost:8000';
+        const API_BASE = window.appConfig ? window.appConfig.API_BASE : 'http://localhost:8000';
         let currentRecommendations = null;
         let currentRating = 0;
         let hasSearched = false;
@@ -1425,7 +1428,7 @@
         }
 
         // Weather system functions
-        const GaoDeApiKey = process.env.GAODE_API_KEY;
+        const GaoDeApiKey = window.appConfig ? window.appConfig.WEATHER.GAODE_API_KEY : '';
         let currentWeather = 'unknown';
         let userLocation = null;
 
