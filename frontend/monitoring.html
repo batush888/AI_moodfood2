@@ -325,6 +325,13 @@
             </div>
         </div>
 
+        <!-- Hybrid Filter Stats Panel -->
+        <div class="p-6 bg-white rounded-xl shadow-md mt-6" style="margin: 20px auto; max-width: 800px;">
+            <h2 class="text-xl font-bold mb-4" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #333;">Hybrid Filter Stats</h2>
+            <canvas id="filterStatsChart" class="w-full h-64" style="width: 100%; height: 256px;"></canvas>
+            <div id="filterStatsTable" class="mt-4 text-sm" style="margin-top: 1rem; font-size: 0.875rem;"></div>
+        </div>
+
         <button class="refresh-btn" onclick="refreshAllData()" title="Refresh Data">
             🔄
         </button>
@@ -682,6 +689,159 @@
         window.addEventListener('beforeunload', function() {
             if (refreshInterval) {
                 clearInterval(refreshInterval);
+            }
+        });
+
+        // Hybrid Filter Stats Chart
+        let filterChart;
+        let filterStatsInterval;
+
+        // Initialize filter stats chart
+        function initializeFilterChart() {
+            const ctx = document.getElementById('filterStatsChart');
+            if (ctx) {
+                filterChart = new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ML Confident ✅', 'LLM Fallback ⚠️', 'Rejected ❌'],
+                        datasets: [{
+                            data: [0, 0, 0],
+                            backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true
+                        }
+                    }
+                });
+            }
+        }
+
+        // Refresh filter stats
+        async function refreshFilterStats() {
+            try {
+                const response = await fetch(`${API_BASE}/logging/filter-stats`);
+                const stats = await response.json();
+
+                if (filterChart) {
+                    filterChart.data.datasets[0].data = [
+                        stats.ml_confident || 0,
+                        stats.llm_fallback || 0,
+                        stats.rejected || 0
+                    ];
+                    filterChart.update('active');
+                }
+
+                // Update stats table
+                const totalSamples = stats.total_samples || 0;
+                const mlConfident = stats.ml_confident || 0;
+                const llmFallback = stats.llm_fallback || 0;
+                const rejected = stats.rejected || 0;
+                const timestamp = stats.timestamp || 'Unknown';
+                const source = stats.source || 'Unknown';
+                const note = stats.note || '';
+
+                let statsHtml = `
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-size: 1.5rem; font-weight: 600; color: #10B981;">${totalSamples}</div>
+                            <div style="color: #6c757d;">Total Samples</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-size: 1.5rem; font-weight: 600; color: #F59E0B;">${timestamp.split('T')[0]}</div>
+                            <div style="color: #6c757d;">Last Updated</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <div style="text-align: center; padding: 10px; background: #ecfdf5; border-radius: 8px; border-left: 4px solid #10B981;">
+                            <div style="font-weight: 600; color: #10B981;">${mlConfident}</div>
+                            <div style="font-size: 0.8rem; color: #6c757d;">ML Confident</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: #fffbeb; border-radius: 8px; border-left: 4px solid #F59E0B;">
+                            <div style="font-weight: 600; color: #F59E0B;">${llmFallback}</div>
+                            <div style="font-size: 0.8rem; color: #6c757d;">LLM Fallback</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #EF4444;">
+                            <div style="font-weight: 600; color: #EF4444;">${rejected}</div>
+                            <div style="font-size: 0.8rem; color: #6c757d;">Rejected</div>
+                        </div>
+                    </div>
+                `;
+
+                if (note) {
+                    statsHtml += `<div style="margin-top: 15px; padding: 10px; background: #f3f4f6; border-radius: 8px; color: #6c757d; font-style: italic;">${note}</div>`;
+                }
+
+                if (source) {
+                    statsHtml += `<div style="margin-top: 10px; font-size: 0.8rem; color: #9ca3af;">Source: ${source}</div>`;
+                }
+
+                document.getElementById('filterStatsTable').innerHTML = statsHtml;
+
+            } catch (err) {
+                console.error("Failed to fetch filter stats:", err);
+                document.getElementById('filterStatsTable').innerHTML = `
+                    <div style="color: #EF4444; text-align: center; padding: 20px;">
+                        ❌ Failed to load filter statistics
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize filter stats when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Chart.js if available
+            if (typeof Chart !== 'undefined') {
+                initializeFilterChart();
+                // Refresh filter stats every 5 seconds
+                filterStatsInterval = setInterval(refreshFilterStats, 5000);
+                refreshFilterStats(); // Initial load
+            } else {
+                // Load Chart.js from CDN if not available
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+                script.onload = function() {
+                    initializeFilterChart();
+                    filterStatsInterval = setInterval(refreshFilterStats, 5000);
+                    refreshFilterStats(); // Initial load
+                };
+                document.head.appendChild(script);
+            }
+        });
+
+        // Cleanup filter stats interval
+        window.addEventListener('beforeunload', function() {
+            if (filterStatsInterval) {
+                clearInterval(filterStatsInterval);
             }
         });
     </script>

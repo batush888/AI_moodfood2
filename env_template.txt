@@ -1,0 +1,36 @@
+# API Keys - Keep these secure and never expose to frontend
+# Copy this file to .env and fill in your actual API keys
+# These keys are used server-side only through secure proxy endpoints
+
+# OpenRouter API Key for DeepSeek R1 0528
+# Get your key from: https://openrouter.ai/keys
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+# Gaode/Amap API Key for weather and geocoding
+# Get your key from: https://lbs.amap.com/
+GAODE_API_KEY=your_gaode_api_key_here
+
+# Application Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+API_WORKERS=1
+
+# Security Settings
+ALLOWED_ORIGINS=*
+CORS_ENABLED=true
+
+# Logging Configuration
+LOG_LEVEL=INFO
+LOG_FILE=data/logs/app.log
+
+# Model Configuration
+MODEL_DIR=models/intent_classifier
+MIN_CONFIDENCE_THRESHOLD=0.5
+LLM_FALLBACK_RANGE_MIN=0.45
+LLM_FALLBACK_RANGE_MAX=0.55
+
+# Retraining Configuration
+MIN_TRAINING_SAMPLES=100
+PERFORMANCE_TOLERANCE=0.02
+WEEKLY_RETRAIN=true
+MONTHLY_RETRAIN=true

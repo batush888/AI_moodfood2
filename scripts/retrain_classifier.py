@@ -401,6 +401,32 @@ class AutomatedRetrainer:
             logger.info(f"✅ Metrics saved to: {METRICS_FILE}")
         except Exception as e:
             logger.error(f"Failed to save metrics: {e}")
+    
+    def _save_rejection_metrics(self, old_metrics: Dict[str, Any], comparison: Dict[str, Any]):
+        """Save rejection metrics while preserving old performance data"""
+        try:
+            os.makedirs(MODEL_DIR, exist_ok=True)
+            
+            # Create rejection metrics that preserve old performance data
+            rejection_metrics = {
+                'accuracy': old_metrics.get('accuracy', 0),
+                'f1_macro': old_metrics.get('f1_macro', 0),
+                'deployment_status': 'rejected',
+                'used': False,
+                'reason': comparison.get('reason', 'Unknown'),
+                'rejection_date': datetime.now().isoformat(),
+                'comparison': comparison,
+                'note': 'Model rejected due to performance degradation - old metrics preserved',
+                'original_metrics': old_metrics
+            }
+            
+            with open(METRICS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(rejection_metrics, f, indent=2, ensure_ascii=False)
+            logger.info(f"✅ Rejection metrics saved to: {METRICS_FILE}")
+            logger.info(f"   Preserved old accuracy: {old_metrics.get('accuracy', 0):.4f}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save rejection metrics: {e}")
 
     def _compare_models(self, new_metrics: Dict[str, Any], old_metrics: Optional[Dict[str, Any]]) -> Tuple[bool, Dict[str, Any]]:
         """Compare new model performance with old model"""
@@ -493,7 +519,7 @@ class AutomatedRetrainer:
             raise
     
     def _validate_model(self) -> bool:
-        """Validate the newly trained model"""
+        """Validate the newly trained model with diverse test queries"""
         
         try:
             import joblib
@@ -512,17 +538,75 @@ class AutomatedRetrainer:
                     logger.error(f"Missing required key: {key}")
                     return False
             
-            # Test prediction
-            test_text = "I want comfort food"
+            # Test with diverse sample queries
+            test_queries = [
+                "I want comfort food",
+                "romantic dinner for two",
+                "healthy meal options",
+                "quick snack ideas",
+                "warm soup for cold weather"
+            ]
+            
             vectorizer = model_data['vectorizer']
             classifier = model_data['classifier']
+            available_labels = set(model_data['labels'])
             
-            X_test = vectorizer.transform([test_text])
-            prediction = classifier.predict(X_test)
+            predictions = []
+            all_empty = True
+            all_identical = True
+            first_prediction = None
+            
+            logger.info("Testing model with diverse queries...")
+            
+            for i, query in enumerate(test_queries):
+                X_test = vectorizer.transform([query])
+                prediction = classifier.predict(X_test)
+                predictions.append(prediction)
+                
+                # Check if prediction is empty
+                if prediction.sum() > 0:
+                    all_empty = False
+                
+                # Check if all predictions are identical
+                if i == 0:
+                    first_prediction = prediction.copy()
+                elif not (prediction == first_prediction).all():
+                    all_identical = False
+                
+                # Check if predictions contain labels outside taxonomy
+                predicted_labels = []
+                for j, pred in enumerate(prediction[0]):
+                    if pred == 1 and j < len(available_labels):
+                        predicted_labels.append(list(available_labels)[j])
+                
+                logger.info(f"  Query {i+1}: '{query}' -> {predicted_labels}")
+            
+            # Validation checks
+            if all_empty:
+                logger.error("❌ Model validation failed: All predictions are empty")
+                return False
+            
+            if all_identical:
+                logger.error("❌ Model validation failed: All predictions are identical")
+                return False
+            
+            # Check for out-of-bounds predictions
+            max_label_index = len(available_labels) - 1
+            for i, pred in enumerate(predictions):
+                if pred.max() > max_label_index:
+                    logger.error(f"❌ Model validation failed: Prediction {i+1} index {pred.max()} exceeds available labels ({max_label_index})")
+                    return False
+                
+                # Log prediction statistics for debugging
+                non_zero_count = (pred == 1).sum()
+                logger.info(f"   Prediction {i+1}: {non_zero_count} labels predicted")
             
             logger.info(f"✅ Model validation successful")
-            logger.info(f"   Test prediction shape: {prediction.shape}")
-            logger.info(f"   Available labels: {len(model_data['labels'])}")
+            logger.info(f"   Tested {len(test_queries)} diverse queries")
+            logger.info(f"   Prediction shape: {predictions[0].shape}")
+            logger.info(f"   Available labels: {len(available_labels)}")
+            logger.info(f"   Predictions varied: {not all_identical}")
+            logger.info(f"   Some predictions non-empty: {not all_empty}")
             
             return True
             
@@ -539,6 +623,7 @@ class AutomatedRetrainer:
             'status': 'success',
             'dataset_quality': quality_metrics,
             'training_metrics': self.training_metrics,
+            'filter_stats': self.filter_stats,  # Include filtering details
             'model_files': {
                 'model_file': MODEL_FILE,
                 'mapping_file': MAPPING_FILE
@@ -632,15 +717,21 @@ class AutomatedRetrainer:
                     shutil.copytree(backup_path, MODEL_DIR)
                     logger.info("✅ Previous model restored")
                 
-                # Update training metrics to reflect the decision
+                # Preserve old metrics and append rejection info
+                old_metrics = old_metrics or {}
                 self.training_metrics = {
-                    'accuracy': comparison['old_accuracy'],
-                    'f1_macro': comparison['old_f1_macro'],
+                    'accuracy': old_metrics.get('accuracy', 0),
+                    'f1_macro': old_metrics.get('f1_macro', 0),
                     'deployment_status': 'rejected',
+                    'used': False,
                     'reason': comparison['reason'],
                     'comparison': comparison,
-                    'training_date': datetime.now().isoformat()
+                    'training_date': datetime.now().isoformat(),
+                    'note': 'Model rejected due to performance degradation - old metrics preserved'
                 }
+                
+                # Update metrics.json with rejection info while preserving old performance data
+                self._save_rejection_metrics(old_metrics, comparison)
             
             # Store comparison for logging
             self.performance_comparison = comparison
@@ -831,6 +922,24 @@ def main():
         sys.exit(0)
     else:
         print("❌ Retraining failed!")
+        
+        # Show error details from last retrain history entry
+        try:
+            if retrainer.retrain_history:
+                last_entry = retrainer.retrain_history[-1]
+                if last_entry.get('status') == 'failed':
+                    print(f"\n🔍 Error Details:")
+                    print(f"   Error: {last_entry.get('error', 'Unknown error')}")
+                    if 'traceback' in last_entry:
+                        print(f"   Traceback available in retrain log")
+                else:
+                    print(f"\n🔍 Last retrain status: {last_entry.get('status', 'Unknown')}")
+            else:
+                print("\n🔍 No retrain history available")
+        except Exception as e:
+            print(f"\n🔍 Could not retrieve error details: {e}")
+        
+        print(f"\n📋 Check the retrain log for full details: data/logs/retrain.log")
         sys.exit(1)
 
 if __name__ == "__main__":

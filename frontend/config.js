@@ -1,37 +1,49 @@
 // Frontend Configuration
-// Auto-generated from .env file - DO NOT EDIT MANUALLY
-// Run: python scripts/generate_frontend_config.py
+// SECURE CONFIGURATION - No API keys exposed to frontend
+// All API calls go through secure backend proxy endpoints
 
 const config = {
     // API Configuration
     API_BASE: 'http://localhost:8000',
     
-    // Weather API Configuration
-    WEATHER: {
-        // Gaode/Amap API Key (from .env file)
-        GAODE_API_KEY: 'f2f2807dd694c0e3e46d99bc30e9139f',
-        
-        // Fallback weather settings
-        ENABLE_FALLBACK: true,
-        FALLBACK_TIMEOUT: 5000,
-        
-        // Default coordinates (San Francisco) if geolocation fails
-        DEFAULT_LAT: 37.7749,
-        DEFAULT_LNG: -122.4194
+    // Secure Proxy Endpoints
+    PROXY: {
+        // OpenRouter proxy endpoint
+        CHAT: '/api/chat',
+        // Gaode geocoding proxy endpoint
+        GEOCODE: '/api/geocode',
+        // Gaode weather proxy endpoint
+        WEATHER: '/api/weather',
+        // Health check endpoint
+        HEALTH: '/api/health'
     },
     
-    // LLM API Configuration
+    // Weather Configuration (no API keys in frontend)
+    WEATHER: {
+        // Enable fallback weather detection
+        ENABLE_FALLBACK: true,
+        // Fallback timeout in seconds
+        FALLBACK_TIMEOUT: 5,
+        // Default coordinates (Beijing)
+        DEFAULT_LAT: 39.9042,
+        DEFAULT_LNG: 116.4074
+    },
+    
+    // LLM Configuration (no API keys in frontend)
     LLM: {
-        // OpenRouter API Key (from .env file)
-        OPENROUTER_API_KEY: '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',
-        MODEL: 'deepseek/deepseek-r1-0528:free'
+        MODEL: 'deepseek/deepseek-r1-0528:free',
+        MAX_TOKENS: 256,
+        TEMPERATURE: 0.0
     },
     
     // UI Configuration
     UI: {
-        REFRESH_INTERVAL: 300000, // 5 minutes
-        LOADING_TIMEOUT: 10000,   // 10 seconds
-        ANIMATION_DURATION: 300   // 300ms
+        // Animation duration in milliseconds
+        ANIMATION_DURATION: 300,
+        // Auto-refresh interval in seconds
+        AUTO_REFRESH_INTERVAL: 30,
+        // Loading timeout in seconds
+        LOADING_TIMEOUT: 10
     }
 };
 

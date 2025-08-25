@@ -40,6 +40,14 @@ except ImportError as e:
     logger.error(f"Core imports failed: {e}")
     CORE_IMPORTS_AVAILABLE = False
 
+# Import proxy routes for secure API key handling
+try:
+    from api.proxy_routes import router as proxy_router
+    PROXY_AVAILABLE = True
+except ImportError as e:
+    logger.error(f"Proxy routes import failed: {e}")
+    PROXY_AVAILABLE = False
+
 # Pydantic models for API
 class UserContext(BaseModel):
     time_of_day: Optional[str] = None
@@ -135,6 +143,13 @@ if FASTAPI_AVAILABLE:
             logger.warning(f"Frontend directory not found at {frontend_path}")
     except Exception as e:
         logger.error(f"Failed to mount frontend: {e}")
+    
+    # Include proxy routes for secure API key handling
+    if PROXY_AVAILABLE:
+        app.include_router(proxy_router)
+        logger.info("Proxy routes included for secure API key handling")
+    else:
+        logger.warning("Proxy routes not available - API keys may be exposed")
 else:
     app = None
     logger.error("FastAPI not available - API routes cannot be created")
@@ -833,6 +848,100 @@ async def get_query_log(query_id: str):
         return {
             "status": "error",
             "message": str(e)
+        }
+
+@app.get("/logging/filter-stats")
+async def get_filter_statistics():
+    """Get hybrid filter statistics for monitoring data quality."""
+    try:
+        # Priority 1: Try to get live stats from global hybrid filter instance
+        try:
+            from core.filtering.global_filter import get_global_filter_live_stats
+            
+            # Get live stats from the global hybrid filter
+            live_stats = get_global_filter_live_stats()
+            
+            # Always return live stats if available, even if 0
+            return {
+                **live_stats,
+                "source": "live_hybrid_filter"
+            }
+        except Exception as e:
+            logger.debug(f"Live hybrid filter stats not available: {e}")
+        
+        # Priority 2: Try to get stats from the most recent retrain report
+        retrain_history_file = Path("data/logs/retrain_history.jsonl")
+        
+        if retrain_history_file.exists():
+            # Read the most recent retrain entry
+            with open(retrain_history_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if lines:
+                    # Get the last line (most recent)
+                    last_line = lines[-1].strip()
+                    if last_line:
+                        try:
+                            latest_report = json.loads(last_line)
+                            filter_stats = latest_report.get('filter_stats', {})
+                            
+                            if filter_stats:
+                                # Extract the required fields
+                                total_samples = filter_stats.get('original_count', 0)
+                                ml_confident = filter_stats.get('ml_confident', 0)
+                                llm_fallback = filter_stats.get('llm_validated', 0)
+                                rejected = filter_stats.get('rejected', 0)
+                                
+                                # If we have the specific fields we need
+                                if 'ml_confident' in filter_stats and 'llm_validated' in filter_stats:
+                                    return {
+                                        "timestamp": latest_report.get('timestamp', datetime.now().isoformat()),
+                                        "total_samples": total_samples,
+                                        "ml_confident": ml_confident,
+                                        "llm_fallback": llm_fallback,
+                                        "rejected": rejected,
+                                        "source": "latest_retrain"
+                                    }
+                        except json.JSONDecodeError:
+                            pass
+        
+        # Priority 3: Try to get stats from the retrainer's hybrid filter
+        try:
+            from scripts.retrain_classifier import AutomatedRetrainer
+            retrainer = AutomatedRetrainer()
+            if hasattr(retrainer, 'hybrid_filter') and retrainer.hybrid_filter:
+                filter_stats = retrainer.hybrid_filter.get_filter_summary()
+                if filter_stats:
+                    return {
+                        "timestamp": datetime.now().isoformat(),
+                        "total_samples": filter_stats.get('total_samples', 0),
+                        "ml_confident": filter_stats.get('ml_confident', 0),
+                        "llm_fallback": filter_stats.get('llm_fallback', 0),
+                        "rejected": filter_stats.get('rejected', 0),
+                        "source": "retrainer_filter"
+                    }
+        except Exception:
+            pass
+        
+        # No stats available
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "total_samples": 0,
+            "ml_confident": 0,
+            "llm_fallback": 0,
+            "rejected": 0,
+            "note": "no stats yet"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get filter statistics: {e}")
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "total_samples": 0,
+            "ml_confident": 0,
+            "llm_fallback": 0,
+            "rejected": 0,
+            "note": "error occurred",
+            "error": str(e)
         }
 
 @app.post("/retrain")

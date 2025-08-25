@@ -6,6 +6,7 @@ Hybrid filtering system combining ML-based filtering with LLM fallback
 import json
 import logging
 import os
+import threading
 from datetime import datetime
 from typing import Dict, List, Tuple
 
@@ -33,6 +34,15 @@ class HybridFilter:
             'llm_rejected': 0,
             'final_count': 0
         }
+        
+        # Live stats for real-time monitoring during inference
+        self.live_stats = {
+            "total": 0,
+            "ml_confident": 0,
+            "llm_fallback": 0,
+            "rejected": 0
+        }
+        self.live_stats_lock = threading.Lock()
     
     def filter_training_data(self, samples: List[Dict]) -> Tuple[List[Dict], Dict]:
         """
@@ -222,3 +232,47 @@ Efficiency: {efficiency:.1f}%
                 'max_sample_length': MAX_SAMPLE_LENGTH
             }
         }
+    
+    def update_live_stats(self, decision: str) -> None:
+        """
+        Update live statistics during inference
+        
+        Args:
+            decision: One of 'ml_confident', 'llm_fallback', or 'rejected'
+        """
+        with self.live_stats_lock:
+            self.live_stats["total"] += 1
+            if decision == "ml_confident":
+                self.live_stats["ml_confident"] += 1
+            elif decision == "llm_fallback":
+                self.live_stats["llm_fallback"] += 1
+            elif decision == "rejected":
+                self.live_stats["rejected"] += 1
+            else:
+                logger.warning(f"Unknown decision type: {decision}")
+    
+    def get_live_stats(self) -> Dict[str, any]:
+        """
+        Get live statistics for real-time monitoring
+        
+        Returns:
+            Dict containing live stats with timestamp
+        """
+        with self.live_stats_lock:
+            return {
+                "timestamp": datetime.now().isoformat(),
+                "total_samples": self.live_stats["total"],
+                "ml_confident": self.live_stats["ml_confident"],
+                "llm_fallback": self.live_stats["llm_fallback"],
+                "rejected": self.live_stats["rejected"]
+            }
+    
+    def reset_live_stats(self) -> None:
+        """Reset live statistics counters"""
+        with self.live_stats_lock:
+            self.live_stats = {
+                "total": 0,
+                "ml_confident": 0,
+                "llm_fallback": 0,
+                "rejected": 0
+            }

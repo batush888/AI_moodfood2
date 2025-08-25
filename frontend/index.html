@@ -1427,9 +1427,8 @@
             localStorage.setItem('timeFormat24Hour', _use24Hour.toString());
         }
 
-        // Weather system functions
-        const GaoDeApiKey = window.appConfig ? window.appConfig.WEATHER.GAODE_API_KEY : '';
-        let currentWeather = 'unknown';
+                        // Weather system functions - using secure proxy endpoints
+                let currentWeather = 'unknown';
         let userLocation = null;
 
         async function getCurrentWeather() {
@@ -1576,25 +1575,26 @@
 
         async function fetchGaodeWeatherWithGeocoding(lat, lng) {
             try {
-                console.log('Making Gaode API call for coordinates:', lat, lng);
+                console.log('Making secure proxy API call for coordinates:', lat, lng);
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
                 
-                const geoUrl = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${GAODE_API_KEY}`;
-                console.log('Geocoding URL:', geoUrl);
+                // Use secure proxy endpoint for geocoding
+                const geoUrl = `${API_BASE}${window.appConfig.PROXY.GEOCODE}?location=${lng},${lat}`;
+                console.log('Secure geocoding URL:', geoUrl);
                 
                 const geoResponse = await fetch(geoUrl, {
                     signal: controller.signal,
                     headers: {
                         'Accept': 'application/json',
-                        'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
+                        'Content-Type': 'application/json'
                     }
                 });
                 
                 clearTimeout(timeoutId);
                 
                 if (!geoResponse.ok) {
-                    throw new Error(`Gaode Geocode API error: ${geoResponse.status}`);
+                    throw new Error(`Secure geocoding API error: ${geoResponse.status}`);
                 }
                 
                 const geoData = await geoResponse.json();
@@ -1607,19 +1607,20 @@
                 const adcode = geoData.regeocode.adcode;
                 console.log('Adcode:', adcode);
                 
-                const weatherUrl = `https://restapi.amap.com/v3/weather/weatherInfo?city=${adcode}&key=${GAODE_API_KEY}&extensions=base`;
-                console.log('Weather API URL:', weatherUrl);
+                // Use secure proxy endpoint for weather
+                const weatherUrl = `${API_BASE}${window.appConfig.PROXY.WEATHER}?city=${adcode}&extensions=base`;
+                console.log('Secure weather API URL:', weatherUrl);
                 
                 const weatherResponse = await fetch(weatherUrl, {
                     signal: controller.signal,
                     headers: {
                         'Accept': 'application/json',
-                        'User-Agent': 'Mozilla/5.0 (compatible; WeatherApp/1.0)'
+                        'Content-Type': 'application/json'
                     }
                 });
                 
                 if (!weatherResponse.ok) {
-                    throw new Error(`Gaode Weather API error: ${weatherResponse.status}`);
+                    throw new Error(`Secure weather API error: ${weatherResponse.status}`);
                 }
                 
                 const weatherData = await weatherResponse.json();
@@ -1634,7 +1635,7 @@
                 
             } catch (error) {
                 if (error.name === 'AbortError') {
-                    throw new Error('Gaode API request timed out');
+                    throw new Error('Secure API request timed out');
                 }
                 throw error;
             }
