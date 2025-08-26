@@ -1,0 +1,8 @@
+# Redis dependencies for production scalability
+redis>=4.0.0
+
+# Optional: For Redis cluster support
+# redis-py-cluster>=2.1.0
+
+# Optional: For Redis Sentinel support  
+# redis-sentinel>=0.1.0

@@ -650,7 +650,7 @@ async def phase3_status():
 async def serve_frontend():
     """Serve the main frontend page."""
     try:
-        frontend_path = Path(__file__).parent.parent / "frontend" / "enhanced_ui.html"
+        frontend_path = Path(__file__).parent.parent / "frontend" / "index.html"
         if frontend_path.exists():
             return FileResponse(str(frontend_path))
         else:
@@ -663,6 +663,19 @@ async def serve_frontend():
 async def serve_ui():
     """Alternative route to serve the frontend."""
     return await serve_frontend()
+
+@app.get("/monitoring")
+async def serve_monitoring():
+    """Serve the monitoring dashboard."""
+    try:
+        monitoring_path = Path(__file__).parent.parent / "frontend" / "monitoring.html"
+        if monitoring_path.exists():
+            return FileResponse(str(monitoring_path))
+        else:
+            return {"message": "Monitoring dashboard not found", "path": str(monitoring_path)}
+    except Exception as e:
+        logger.error(f"Error serving monitoring dashboard: {e}")
+        return {"error": "Failed to serve monitoring dashboard"}
 
 @app.get("/examples")
 async def get_examples():
@@ -854,20 +867,17 @@ async def get_query_log(query_id: str):
 async def get_filter_statistics():
     """Get hybrid filter statistics for monitoring data quality."""
     try:
-        # Priority 1: Try to get live stats from global hybrid filter instance
+        # Priority 1: Try to get live stats from Redis-backed global hybrid filter instance
         try:
             from core.filtering.global_filter import get_global_filter_live_stats
             
-            # Get live stats from the global hybrid filter
+            # Get live stats from the Redis-backed global hybrid filter
             live_stats = get_global_filter_live_stats()
             
             # Always return live stats if available, even if 0
-            return {
-                **live_stats,
-                "source": "live_hybrid_filter"
-            }
+            return live_stats  # Already includes source information
         except Exception as e:
-            logger.debug(f"Live hybrid filter stats not available: {e}")
+            logger.debug(f"Redis-backed global filter stats not available: {e}")
         
         # Priority 2: Try to get stats from the most recent retrain report
         retrain_history_file = Path("data/logs/retrain_history.jsonl")
