@@ -138,6 +138,14 @@ def get_client_ip(request: Request) -> str:
     # Fallback to direct IP
     return request.client.host if request.client else "unknown"
 
+@router.post("/openai")
+async def openai_proxy(request: OpenRouterRequest, http_request: Request):
+    """
+    Proxy endpoint for OpenAI-compatible requests.
+    This is an alias for the /chat endpoint to maintain compatibility.
+    """
+    return await proxy_openrouter(request, http_request)
+
 @router.post("/chat")
 async def proxy_openrouter(request: OpenRouterRequest, http_request: Request):
     """
@@ -389,6 +397,7 @@ async def proxy_health():
         "status": "healthy",
         "services": {
             "openrouter": "available" if OPENROUTER_API_KEY else "not_configured",
+        "deepseek": "available" if os.getenv("DEEPSEEK_API_KEY") else "not_configured",
             "gaode": "available" if GAODE_API_KEY else "not_configured"
         },
         "rate_limiting": {

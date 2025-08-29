@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moodfood-ai
+  labels:
+    app: moodfood-ai
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: moodfood-ai
+  template:
+    metadata:
+      labels:
+        app: moodfood-ai
+    spec:
+      containers:
+      - name: moodfood-ai
+        image: moodfood-ai:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 9189
+          name: metrics
+        env:
+        - name: OPENROUTER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-keys
+              key: openrouter-key
+        - name: DEEPSEEK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-keys
+              key: deepseek-key
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: LLM_MOCK_MODE
+          value: "false"
+        - name: DEBUG
+          value: "false"
+        - name: PROMETHEUS_PORT
+          value: "9189"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /app/logs
+        - name: models-volume
+          mountPath: /app/models
+      volumes:
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: moodfood-logs-pvc
+      - name: models-volume
+        persistentVolumeClaim:
+          claimName: moodfood-models-pvc
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: moodfood-ai-service
+spec:
+  selector:
+    app: moodfood-ai
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 9189
+    targetPort: 9189
+    protocol: TCP
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-keys
+type: Opaque
+data:
+  # Base64 encoded API keys
+  # Replace with actual base64 encoded keys:
+  # echo -n "your_openrouter_key" | base64
+  # echo -n "your_deepseek_key" | base64
+  openrouter-key: eW91cl9vcGVucm91dGVyX2tleQ==
+  deepseek-key: eW91cl9kZWVwc2Vla19rZXk=
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: moodfood-logs-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: moodfood-models-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

@@ -6,6 +6,10 @@
 # Get your key from: https://openrouter.ai/keys
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 
+# DeepSeek API Key (alternative to OpenRouter)
+# Get your key from: https://openrouter.ai/keys
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+
 # Gaode/Amap API Key for weather and geocoding
 # Get your key from: https://lbs.amap.com/
 GAODE_API_KEY=your_gaode_api_key_here

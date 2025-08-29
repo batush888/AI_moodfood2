@@ -1,56 +1,39 @@
 // Frontend Configuration
-// SECURE CONFIGURATION - No API keys exposed to frontend
-// All API calls go through secure backend proxy endpoints
+// This file contains configuration settings for the frontend
 
-const config = {
+const CONFIG = {
     // API Configuration
-    API_BASE: 'http://localhost:8000',
+    API_BASE: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:8000' 
+        : window.location.origin,
     
-    // Secure Proxy Endpoints
-    PROXY: {
-        // OpenRouter proxy endpoint
-        CHAT: '/api/chat',
-        // Gaode geocoding proxy endpoint
-        GEOCODE: '/api/geocode',
-        // Gaode weather proxy endpoint
-        WEATHER: '/api/weather',
-        // Health check endpoint
-        HEALTH: '/api/health'
-    },
-    
-    // Weather Configuration (no API keys in frontend)
-    WEATHER: {
-        // Enable fallback weather detection
-        ENABLE_FALLBACK: true,
-        // Fallback timeout in seconds
-        FALLBACK_TIMEOUT: 5,
-        // Default coordinates (Beijing)
-        DEFAULT_LAT: 39.9042,
-        DEFAULT_LNG: 116.4074
-    },
-    
-    // LLM Configuration (no API keys in frontend)
-    LLM: {
-        MODEL: 'deepseek/deepseek-r1-0528:free',
-        MAX_TOKENS: 256,
-        TEMPERATURE: 0.0
-    },
+    // Feature Flags
+    ENABLE_DEBUG: true,
+    ENABLE_ANALYTICS: false,
+    ENABLE_FEEDBACK: true,
     
     // UI Configuration
-    UI: {
-        // Animation duration in milliseconds
-        ANIMATION_DURATION: 300,
-        // Auto-refresh interval in seconds
-        AUTO_REFRESH_INTERVAL: 30,
-        // Loading timeout in seconds
-        LOADING_TIMEOUT: 10
+    MAX_RECOMMENDATIONS: 10,
+    ANIMATION_DURATION: 300,
+    LOADING_TIMEOUT: 30000,
+    
+    // Default Values
+    DEFAULT_QUERY_PLACEHOLDER: "What are you craving? Describe your mood, preferences, or any specific food you'd like...",
+    DEFAULT_ERROR_MESSAGE: "Something went wrong. Please try again.",
+    
+    // Social Context Detection
+    SOCIAL_CONTEXT_KEYWORDS: {
+        'family': ['family', 'kids', 'children', 'parents', 'grandparents'],
+        'romantic': ['romantic', 'date', 'anniversary', 'valentine', 'couple'],
+        'party': ['party', 'celebration', 'birthday', 'anniversary', 'festival'],
+        'business': ['business', 'meeting', 'lunch', 'dinner', 'client'],
+        'casual': ['casual', 'quick', 'simple', 'easy', 'fast']
     }
 };
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = config;
+    module.exports = CONFIG;
 } else {
-    // Browser environment
-    window.appConfig = config;
+    window.CONFIG = CONFIG;
 }

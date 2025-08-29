@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 from core.filtering.hybrid_filter import HybridFilter
 
 # Global instance that can be accessed from anywhere in the system
-global_hybrid_filter = HybridFilter()
+# Note: This will be properly initialized when needed
+global_hybrid_filter = None
 
 # Redis connection (will be initialized on first use)
 _redis_client = None
@@ -79,6 +80,32 @@ def _get_redis_client():
 
 def get_global_hybrid_filter() -> HybridFilter:
     """Get the global hybrid filter instance"""
+    global global_hybrid_filter
+    
+    if global_hybrid_filter is None:
+        # Initialize with default components
+        try:
+            from core.filtering.llm_validator import LLMValidator
+            from core.nlu.enhanced_intent_classifier import EnhancedIntentClassifier
+            
+            llm_validator = LLMValidator()
+            ml_classifier = EnhancedIntentClassifier("data/taxonomy/mood_food_taxonomy.json")
+            
+            global_hybrid_filter = HybridFilter(
+                llm_validator=llm_validator,
+                ml_classifier=ml_classifier,
+                confidence_threshold=0.7
+            )
+            logger.info("Global hybrid filter initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize global hybrid filter: {e}")
+            # Create a minimal fallback instance
+            global_hybrid_filter = HybridFilter(
+                llm_validator=None,
+                ml_classifier=None,
+                confidence_threshold=0.7
+            )
+    
     return global_hybrid_filter
 
 def update_global_filter_stats(decision: str) -> None:

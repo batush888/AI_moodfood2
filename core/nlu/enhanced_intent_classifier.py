@@ -121,6 +121,12 @@ class EnhancedIntentClassifier:
         # Setup fallback methods
         self._setup_fallback_methods()
         
+        # Initialize taxonomy mapper for bridging 20->138 categories
+        self.taxonomy_mapper = None
+        
+        # Initialize taxonomy mapper immediately (don't wait for transformer model)
+        self._init_taxonomy_mapper()
+        
         logger.info(f"Enhanced intent classifier initialized on device: {self.device}")
 
     def _init_hybrid_components(self):
@@ -228,26 +234,24 @@ class EnhancedIntentClassifier:
                 self.tokenizer = DistilBertTokenizerFast.from_pretrained(str(self.model_dir))
                 
                 # Load the trained model with the correct architecture
-                # First try to load the saved model weights
+                # IMPORTANT: The model was trained for 20 classes, not 138
+                # We need to use the original architecture to avoid size mismatch
                 model_path = str(self.model_dir)
                 
                 # Load the base DistilBERT model
                 base_model = DistilBertModel.from_pretrained("distilbert-base-uncased")
                 
-                # Create our custom dual-head model
-                # We need to determine the number of classes from the saved model
-                config_path = os.path.join(model_path, "config.json")
-                if os.path.exists(config_path):
-                    with open(config_path, 'r') as f:
-                        config = json.load(f)
-                    num_labels = config.get('num_labels', 138)  # Default fallback
-                else:
-                    num_labels = 138  # Default fallback
+                # Create our custom dual-head model with the CORRECT architecture
+                # The model was trained with:
+                # - taxonomy_head: 20 classes (from taxonomy_labels.json)
+                # - mlb_head: 35 classes (from mlb_classes.json)
+                taxonomy_classes = 20
+                mlb_classes = 35
                 
                 self.model = DistilBertDualHead(
                     model_name_or_path="distilbert-base-uncased",
-                    taxonomy_classes=num_labels,
-                    mlb_classes=num_labels,  # Same as taxonomy for now
+                    taxonomy_classes=taxonomy_classes,  # 20 classes
+                    mlb_classes=mlb_classes,           # 35 classes
                     dropout=0.2
                 )
                 
@@ -261,6 +265,10 @@ class EnhancedIntentClassifier:
                         logger.info("Loaded trained model weights successfully")
                         self.model.to(self.device)
                         logger.info("Transformer model loaded successfully")
+                        
+                        # Initialize taxonomy mapper for bridging 20->138
+                        self._init_taxonomy_mapper()
+                        
                     except Exception as load_error:
                         logger.warning(f"Failed to load model weights: {load_error}")
                         logger.info("Using keyword fallback classification")
@@ -277,6 +285,21 @@ class EnhancedIntentClassifier:
             logger.warning(f"Failed to load transformer model: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _init_taxonomy_mapper(self):
+        """Initialize the taxonomy mapper for bridging 20->138 categories."""
+        try:
+            from .taxonomy_mapper import TaxonomyMapper
+            self.taxonomy_mapper = TaxonomyMapper(str(self.model_dir))
+            logger.info("Taxonomy mapper initialized successfully")
+            
+            # Print mapping statistics
+            stats = self.taxonomy_mapper.get_mapping_stats()
+            logger.info(f"Taxonomy mapping stats: {stats}")
+            
+        except Exception as e:
+            logger.warning(f"Failed to initialize taxonomy mapper: {e}")
+            self.taxonomy_mapper = None
 
     def _load_ml_classifier(self):
         """Load ML classifier with fallbacks."""
@@ -401,14 +424,58 @@ class EnhancedIntentClassifier:
         """Setup basic fallback methods for intent classification."""
         logger.info("Setting up fallback intent classification methods")
         
-        # Enhanced keyword-based fallback
+        # Enhanced keyword-based fallback with comprehensive coverage
         self.fallback_keywords = {
+            # Comfort and warming
             "comfort": ["comfort", "warm", "cozy", "soothing", "nurturing", "warming", "comforting", "comfortable"],
+            
+            # Energy and vitality
             "energy": ["energy", "vitality", "energetic", "powerful", "energizing"],
+            
+            # Health and wellness
             "health": ["healthy", "fresh", "light", "clean", "natural", "ill", "sick", "recovery", "nauseous", "weak", "feeling ill", "health"],
+            
+            # Indulgence and treats
             "indulgence": ["indulge", "treat", "sweet", "rich", "decadent", "indulgence"],
+            
+            # Quick and simple
             "quick": ["quick", "fast", "efficient", "simple", "quickly"],
-            "romantic": ["romantic", "elegant", "sophisticated", "intimate", "romance"]
+            
+            # Romantic and elegant
+            "romantic": ["romantic", "elegant", "sophisticated", "intimate", "romance"],
+            
+            # Japanese cuisine
+            "japanese": ["japanese", "japan", "sushi", "ramen", "tempura", "miso", "teriyaki", "udon", "soba", "bento"],
+            
+            # Cold and refreshing
+            "cold": ["cold", "cool", "refreshing", "chilled", "ice", "frozen", "cold", "refreshing"],
+            
+            # Spicy and hot
+            "spicy": ["spicy", "hot", "spice", "chili", "pepper", "fiery", "burning", "zesty"],
+            
+            # Southeast Asian cuisine
+            "southeast_asian": ["thai", "vietnamese", "malaysian", "indonesian", "filipino", "southeast", "asian", "curry", "lemongrass", "coconut"],
+            
+            # Chinese cuisine
+            "chinese": ["chinese", "china", "dim sum", "kung pao", "sweet and sour", "chow mein", "fried rice"],
+            
+            # Italian cuisine
+            "italian": ["italian", "italy", "pasta", "pizza", "risotto", "bruschetta", "tiramisu"],
+            
+            # Mexican cuisine
+            "mexican": ["mexican", "mexico", "taco", "burrito", "enchilada", "guacamole", "salsa"],
+            
+            # Indian cuisine
+            "indian": ["indian", "india", "curry", "tandoori", "naan", "biryani", "masala"],
+            
+            # Mediterranean cuisine
+            "mediterranean": ["mediterranean", "greek", "turkish", "lebanese", "hummus", "falafel", "tabbouleh"],
+            
+            # American cuisine
+            "american": ["american", "usa", "burger", "hot dog", "bbq", "steak", "apple pie"],
+            
+            # French cuisine
+            "french": ["french", "france", "croissant", "quiche", "ratatouille", "coq au vin", "creme brulee"]
         }
 
     async def classify_intent_hybrid(self, text: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -496,7 +563,7 @@ class EnhancedIntentClassifier:
                     
                     # Also check if confidence is too low for the detected intent
                     confidence = result.get('confidence', 0.0)
-                    if confidence < 0.7:
+                    if confidence < 0.5:  # Lowered from 0.7 to 0.5 to allow ML model usage
                         logger.info(f"Forcing fallback due to low confidence: {confidence}")
                         return self._fallback_intent_classification(text, context)
                     
@@ -556,16 +623,14 @@ class EnhancedIntentClassifier:
     def _distilbert_classification(self, text: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Classify using DistilBERT model."""
         try:
-            # Load label mappings
-            label_mappings_path = self.model_dir / "unified_label_mappings.json"
-            if not label_mappings_path.exists():
-                logger.warning("Label mappings not found, using fallback")
+            # Load the ORIGINAL 20 labels that the model was trained on
+            taxonomy_labels_path = self.model_dir / "taxonomy_labels.json"
+            if not taxonomy_labels_path.exists():
+                logger.warning("Original taxonomy labels not found, using fallback")
                 return None
             
-            with open(label_mappings_path, 'r') as f:
-                label_mappings = json.load(f)
-            
-            id_to_label = {int(k): v for k, v in label_mappings.get("unified_id_to_label", {}).items()}
+            with open(taxonomy_labels_path, 'r') as f:
+                original_labels = json.load(f)
             
             # Tokenize input
             inputs = self.tokenizer(
@@ -580,36 +645,74 @@ class EnhancedIntentClassifier:
             if self.device != "cpu":
                 inputs = {k: v.to(self.device) for k, v in inputs.items()}
             
-            # Get predictions
+            # Get predictions from the 20-class model
             with torch.no_grad():
                 outputs = self.model(**inputs)
                 logits = outputs["logits"]  # Get taxonomy logits from our custom model
                 probs = torch.sigmoid(logits)  # Use sigmoid for multi-label classification
             
-            # Get top predictions (multi-label)
+            # Get top predictions from the 20 classes
             probs_np = probs.cpu().numpy()[0]
             top_indices = np.argsort(probs_np)[-3:]  # Get top 3 predictions
             
-            # Convert to intent labels
-            all_intents = []
+            # Convert to original intent labels (20 classes)
+            original_intents = []
             for idx in top_indices:
-                if idx in id_to_label:
-                    label = id_to_label[idx]
+                if idx < len(original_labels):
+                    label = original_labels[idx]
                     confidence = float(probs_np[idx])
-                    all_intents.append([label, confidence])
+                    original_intents.append([label, confidence])
             
             # Sort by confidence
-            all_intents.sort(key=lambda x: x[1], reverse=True)
+            original_intents.sort(key=lambda x: x[1], reverse=True)
             
-            # Get primary intent
-            primary_intent = all_intents[0][0] if all_intents else "unknown"
-            primary_confidence = all_intents[0][1] if all_intents else 0.0
+            # Get primary intent from original 20 classes
+            primary_original_intent = original_intents[0][0] if original_intents else "unknown"
+            primary_confidence = original_intents[0][1] if original_intents else 0.0
             
+            # Now use taxonomy mapper to bridge to 138 categories
+            logger.info(f"Attempting taxonomy mapping for: {primary_original_intent} (confidence: {primary_confidence})")
+            logger.info(f"Taxonomy mapper available: {self.taxonomy_mapper is not None}")
+            
+            if self.taxonomy_mapper and primary_original_intent != "unknown":
+                mapped_categories = self.taxonomy_mapper.map_ml_prediction(
+                    primary_original_intent, primary_confidence
+                )
+                
+                logger.info(f"Mapping result: {mapped_categories}")
+                
+                if mapped_categories:
+                    # Use the top mapped category as primary intent
+                    top_mapped_category, mapped_confidence = mapped_categories[0]
+                    
+                    # Create response with mapped categories
+                    mapped_intents = []
+                    for category, conf in mapped_categories:
+                        mapped_intents.append([category, conf])
+                    
+                    logger.info(f"Successfully mapped to: {top_mapped_category} (confidence: {mapped_confidence})")
+                    
+                    return {
+                        "primary_intent": top_mapped_category,
+                        "confidence": mapped_confidence,
+                        "all_intents": mapped_intents,
+                        "method": "distilbert_mapped",
+                        "original_ml_intent": primary_original_intent,
+                        "original_confidence": primary_confidence,
+                        "logits_shape": list(logits.shape)
+                    }
+                else:
+                    logger.warning(f"Mapping returned empty result for {primary_original_intent}")
+            else:
+                logger.warning(f"Taxonomy mapper not available or primary intent is unknown: mapper={self.taxonomy_mapper}, intent={primary_original_intent}")
+            
+            # Fallback to original 20-class results if mapping fails
+            logger.warning(f"Taxonomy mapping failed for {primary_original_intent}, using original results")
             return {
-                "primary_intent": primary_intent,
+                "primary_intent": primary_original_intent,
                 "confidence": primary_confidence,
-                "all_intents": all_intents,
-                "method": "distilbert",
+                "all_intents": original_intents,
+                "method": "distilbert_original",
                 "logits_shape": list(logits.shape)
             }
             
@@ -619,13 +722,29 @@ class EnhancedIntentClassifier:
 
     def _calculate_intent_similarities(self, embedding, text: str) -> Dict[str, float]:
         """Calculate similarities between text and intent categories."""
-        # Simple keyword matching as fallback
+        # Enhanced keyword matching as fallback
         text_lower = text.lower()
         scores = {}
         
         for intent, keywords in self.fallback_keywords.items():
-            score = sum(1 for keyword in keywords if keyword in text_lower)
-            scores[intent] = score / len(keywords) if score > 0 else 0.0
+            # Count exact keyword matches
+            exact_matches = sum(1 for keyword in keywords if keyword in text_lower)
+            
+            # Count partial word matches (for compound words)
+            partial_matches = 0
+            for keyword in keywords:
+                if len(keyword) > 3:  # Only check longer keywords
+                    for word in text_lower.split():
+                        if keyword in word or word in keyword:
+                            partial_matches += 0.5  # Partial match gets lower score
+            
+            # Calculate total score
+            total_score = exact_matches + partial_matches
+            scores[intent] = total_score / len(keywords) if total_score > 0 else 0.0
+        
+        # If no matches found, don't default to first intent
+        if not any(scores.values()):
+            return {}
         
         # Normalize scores
         max_score = max(scores.values()) if scores else 1.0
@@ -641,7 +760,44 @@ class EnhancedIntentClassifier:
             intent_scores = self._calculate_intent_similarities(None, text)
             
             if not intent_scores:
-                return self._create_fallback_response("unknown")
+                # No keyword matches found, try to infer from text content
+                text_lower = text.lower()
+                
+                # Check for cuisine-specific words
+                if any(word in text_lower for word in ['japanese', 'japan', 'sushi', 'ramen']):
+                    return {
+                        "primary_intent": "japanese",
+                        "confidence": 0.8,
+                        "all_intents": [["japanese", 0.8]],
+                        "method": "fallback_inference",
+                        "fallback": True
+                    }
+                elif any(word in text_lower for word in ['cold', 'cool', 'refreshing', 'chilled']):
+                    return {
+                        "primary_intent": "cold",
+                        "confidence": 0.8,
+                        "all_intents": [["cold", 0.8]],
+                        "method": "fallback_inference",
+                        "fallback": True
+                    }
+                elif any(word in text_lower for word in ['spicy', 'hot', 'chili', 'pepper']):
+                    return {
+                        "primary_intent": "spicy",
+                        "confidence": 0.8,
+                        "all_intents": [["spicy", 0.8]],
+                        "method": "fallback_inference",
+                        "fallback": True
+                    }
+                elif any(word in text_lower for word in ['thai', 'vietnamese', 'malaysian', 'southeast', 'asian']):
+                    return {
+                        "primary_intent": "southeast_asian",
+                        "confidence": 0.8,
+                        "all_intents": [["southeast_asian", 0.8]],
+                        "method": "fallback_inference",
+                        "fallback": True
+                    }
+                else:
+                    return self._create_fallback_response("unknown")
             
             # Get top intent
             top_intent = max(intent_scores.items(), key=lambda x: x[1])

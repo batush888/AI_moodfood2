@@ -55,6 +55,7 @@ class QueryLogEntry:
     # System information
     api_version: str = "v1.0"
     system_status: str = "operational"
+    model_version: Optional[str] = None  # Current model version for A/B analysis
     
     # Metadata for dataset growth
     tags: Optional[List[str]] = None
@@ -109,6 +110,14 @@ class QueryLogger:
         
         query_id = self._generate_query_id()
         
+        # Try to get current model version
+        model_version = None
+        try:
+            from core.nlu.model_loader import get_current_version
+            model_version = get_current_version()
+        except Exception:
+            pass  # Model version is optional
+        
         entry = QueryLogEntry(
             query_id=query_id,
             timestamp=datetime.now().isoformat(),
@@ -117,7 +126,8 @@ class QueryLogger:
             audio_input=audio_input,
             user_context=user_context,
             session_id=session_id,
-            user_id=user_id
+            user_id=user_id,
+            model_version=model_version
         )
         
         try:
@@ -255,6 +265,24 @@ class QueryLogger:
             
         except Exception as e:
             logger.error(f"Failed to log LLM validation: {e}")
+    
+    def update_model_version(self, query_id: str, model_version: str) -> bool:
+        """
+        Update the model version for a specific query entry.
+        Useful for A/B testing and model version correlation.
+        
+        Args:
+            query_id: The query ID to update
+            model_version: The model version that processed this query
+            
+        Returns:
+            bool: True if update successful, False otherwise
+        """
+        try:
+            return self._update_log_entry(query_id, {'model_version': model_version})
+        except Exception as e:
+            logger.error(f"Failed to update model version for {query_id}: {e}")
+            return False
     
     def _update_log_entry(self, query_id: str, updates: Dict[str, Any]) -> bool:
         """Update existing log entry with new information"""
@@ -436,6 +464,104 @@ class QueryLogger:
         except Exception as e:
             logger.error(f"Failed to get statistics: {e}")
             return {}
+
+    def log_hybrid_interaction(self, 
+                              query: str,
+                              ml_prediction: Dict[str, Any],
+                              llm_outputs: Dict[str, Any],
+                              final_decision: str,
+                              final_recommendations: List[str],
+                              source: str,
+                              feedback: Optional[Dict[str, Any]] = None,
+                              session_id: Optional[str] = None) -> str:
+        """
+        Log hybrid filter interaction with raw and parsed outputs for self-learning.
+        
+        Args:
+            query: User's input query
+            ml_prediction: ML model's prediction and confidence
+            llm_outputs: Dictionary containing LLM raw and parsed outputs
+            final_decision: Final decision made by hybrid filter
+            final_recommendations: Final recommendations provided to user
+            source: Source of final recommendations (ml_validated, llm_fallback, etc.)
+            feedback: Optional user feedback (thumbs up/down, ratings)
+            session_id: Optional session identifier
+            
+        Returns:
+            str: Generated query ID
+        """
+        query_id = self._generate_query_id()
+        
+        # Create comprehensive log entry for self-learning
+        log_entry = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "query_id": query_id,
+            "session_id": session_id or f"session_{hash(query) % 10000}",
+            "query": query,
+            "ml_prediction": ml_prediction,
+            "llm_interpret_raw": llm_outputs.get("interpret_raw", ""),
+            "llm_interpret_parsed": llm_outputs.get("interpret_parsed", []),
+            "llm_interpret_parse_status": llm_outputs.get("interpret_parse_status", "none"),
+            "llm_validation_raw": llm_outputs.get("validation_raw", ""),
+            "llm_validation_parsed": llm_outputs.get("validation_parsed", []),
+            "llm_validation_parse_status": llm_outputs.get("validation_parse_status", "none"),
+            "final_decision": final_decision,
+            "final_recommendations": final_recommendations,
+            "source": source,
+            "feedback": feedback or {},
+            "api_version": "v2.0",
+            "system_status": "operational",
+            "tags": ["hybrid_filter", "self_learning"],
+            "quality_score": self._calculate_quality_score(llm_outputs),
+            "notes": f"Hybrid filter interaction logged for {final_decision} decision"
+        }
+        
+        try:
+            with self._lock:
+                # Write to main query logs
+                with open(self.log_file, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+                
+                # Also write to recommendation logs for retraining
+                recommendation_log_file = self.log_dir / "recommendation_logs.jsonl"
+                with open(recommendation_log_file, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+                
+                logger.info(f"Hybrid interaction logged: {query_id} -> {final_decision}")
+                
+        except Exception as e:
+            logger.error(f"Failed to log hybrid interaction: {e}")
+            # Fallback to error logging
+            self.log_error("hybrid_interaction_logging", str(e), {"query_id": query_id})
+        
+        return query_id
+    
+    def _calculate_quality_score(self, llm_outputs: Dict[str, Any]) -> float:
+        """
+        Calculate quality score based on LLM output parse status.
+        
+        Returns:
+            float: Quality score from 0.0 to 1.0
+        """
+        interpret_status = llm_outputs.get("interpret_parse_status", "none")
+        validation_status = llm_outputs.get("validation_parse_status", "none")
+        
+        # Quality scoring based on parse status
+        status_scores = {
+            "json": 1.0,
+            "code_block": 0.9,
+            "list_regex": 0.7,
+            "heuristic": 0.5,
+            "none": 0.0
+        }
+        
+        interpret_score = status_scores.get(interpret_status, 0.0)
+        validation_score = status_scores.get(validation_status, 0.0)
+        
+        # Average the scores, with interpret weighted higher
+        quality_score = (interpret_score * 0.7) + (validation_score * 0.3)
+        
+        return round(quality_score, 2)
 
 # Global logger instance
 query_logger = QueryLogger()

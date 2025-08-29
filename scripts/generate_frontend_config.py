@@ -1,118 +1,108 @@
 #!/usr/bin/env python3
 """
-Generate Frontend Config from .env
+Generate Secure Frontend Config
 ----------------------------------
-This script reads the .env file and generates frontend/config.js
-with the actual API keys for browser use.
+This script generates frontend/config.js with secure configuration
+that uses proxy endpoints instead of exposing API keys.
 """
 
 import os
 import re
 from pathlib import Path
 
-def parse_env_file(env_path):
-    """Parse .env file and extract key-value pairs."""
-    config = {}
-    if not os.path.exists(env_path):
-        print(f"Warning: {env_path} not found")
-        return config
+def generate_secure_frontend_config():
+    """Generate secure frontend config that uses proxy endpoints."""
     
-    with open(env_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
-                config[key] = value
-    
-    return config
-
-def generate_frontend_config(env_config):
-    """Generate frontend/config.js content from .env values."""
-    
-    # Get API keys from .env
-    gaode_api_key = env_config.get('GAODE_API_KEY', '')
-    openrouter_api_key = env_config.get('OPENROUTER_API_KEY', '')
-    
-    config_content = f'''// Frontend Configuration
-// Auto-generated from .env file - DO NOT EDIT MANUALLY
+    config_content = '''// Frontend Configuration
+// SECURE CONFIGURATION - No API keys exposed to frontend
+// All API calls go through secure backend proxy endpoints
+// Auto-generated - DO NOT EDIT MANUALLY
 // Run: python scripts/generate_frontend_config.py
 
-const config = {{
+const config = {
     // API Configuration
     API_BASE: 'http://localhost:8000',
     
-    // Weather API Configuration
-    WEATHER: {{
-        // Gaode/Amap API Key (from .env file)
-        GAODE_API_KEY: '{gaode_api_key}',
-        
-        // Fallback weather settings
-        ENABLE_FALLBACK: true,
-        FALLBACK_TIMEOUT: 5000,
-        
-        // Default coordinates (San Francisco) if geolocation fails
-        DEFAULT_LAT: 37.7749,
-        DEFAULT_LNG: -122.4194
-    }},
+    // Secure Proxy Endpoints
+    PROXY: {
+        // OpenRouter proxy endpoint
+        CHAT: '/api/chat',
+        // Gaode geocoding proxy endpoint
+        GEOCODE: '/api/geocode',
+        // Gaode weather proxy endpoint
+        WEATHER: '/api/weather',
+        // Health check endpoint
+        HEALTH: '/api/health'
+    },
     
-    // LLM API Configuration
-    LLM: {{
-        // OpenRouter API Key (from .env file)
-        OPENROUTER_API_KEY: '{openrouter_api_key}',
-        MODEL: 'deepseek/deepseek-r1-0528:free'
-    }},
+    // Weather Configuration (no API keys in frontend)
+    WEATHER: {
+        // Enable fallback weather detection
+        ENABLE_FALLBACK: true,
+        // Fallback timeout in seconds
+        FALLBACK_TIMEOUT: 5,
+        // Default coordinates (Beijing)
+        DEFAULT_LAT: 39.9042,
+        DEFAULT_LNG: 116.4074
+    },
+    
+    // LLM Configuration (no API keys in frontend)
+    LLM: {
+        MODEL: 'deepseek/deepseek-r1-0528:free',
+        MAX_TOKENS: 256,
+        TEMPERATURE: 0.0
+    },
     
     // UI Configuration
-    UI: {{
-        REFRESH_INTERVAL: 300000, // 5 minutes
-        LOADING_TIMEOUT: 10000,   // 10 seconds
-        ANIMATION_DURATION: 300   // 300ms
-    }}
-}};
+    UI: {
+        // Animation duration in milliseconds
+        ANIMATION_DURATION: 300,
+        // Auto-refresh interval in seconds
+        AUTO_REFRESH_INTERVAL: 30,
+        // Loading timeout in seconds
+        LOADING_TIMEOUT: 10
+    }
+};
 
 // Export for use in other scripts
-if (typeof module !== 'undefined' && module.exports) {{
+if (typeof module !== 'undefined' && module.exports) {
     module.exports = config;
-}} else {{
+} else {
     // Browser environment
     window.appConfig = config;
-}}
+}
 '''
     
     return config_content
 
 def main():
-    """Main function to generate frontend config."""
+    """Main function to generate secure frontend config."""
     
     # Paths
-    env_path = Path('.env')
     config_path = Path('frontend/config.js')
     
-    print("🔧 Generating frontend config from .env file...")
+    print("🔧 Generating secure frontend config...")
+    print("✅ No API keys will be exposed to frontend")
+    print("✅ All API calls will go through secure proxy endpoints")
     
-    # Parse .env file
-    env_config = parse_env_file(env_path)
+    # Generate secure frontend config
+    config_content = generate_secure_frontend_config()
     
-    if not env_config:
-        print("❌ No configuration found in .env file")
+    # Write to file
+    try:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(config_path, 'w') as f:
+            f.write(config_content)
+        
+        print(f"✅ Secure frontend config generated: {config_path}")
+        print("🔒 API keys are kept secure on the backend")
+        print("🌐 Frontend uses proxy endpoints for all external API calls")
+        
+    except Exception as e:
+        print(f"❌ Error generating config: {e}")
         return
     
-    # Generate frontend config
-    config_content = generate_frontend_config(env_config)
-    
-    # Write to frontend/config.js
-    config_path.parent.mkdir(exist_ok=True)
-    with open(config_path, 'w') as f:
-        f.write(config_content)
-    
-    print(f"✅ Generated {config_path}")
-    print(f"📋 Found keys: {', '.join(env_config.keys())}")
-    
-    # Show what was generated
-    if env_config.get('GAODE_API_KEY'):
-        print(f"🌤️  Gaode API Key: {env_config['GAODE_API_KEY'][:8]}...")
-    if env_config.get('OPENROUTER_API_KEY'):
-        print(f"🤖 OpenRouter API Key: {env_config['OPENROUTER_API_KEY'][:8]}...")
+    print("\n🎉 Secure frontend configuration complete!")
 
 if __name__ == "__main__":
     main()

@@ -3,85 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debug Test - Enhanced API</title>
+    <title>Debug Test - Frontend Rendering</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
-        .success { background: #d4edda; }
-        .error { background: #f8d7da; }
-        button { padding: 10px 20px; font-size: 16px; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .recommendation-card { 
+            border: 1px solid #ddd; 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .food-name { font-weight: bold; color: #333; }
+        .food-category { color: #666; font-size: 0.9em; }
+        .reasoning { margin-top: 10px; color: #555; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        #results { margin-top: 20px; }
+        .error { color: red; }
+        .success { color: green; }
     </style>
 </head>
 <body>
-    <h1>Debug Test - Enhanced API</h1>
-    <button onclick="testAPI()">Test Enhanced API</button>
-    <div id="result"></div>
+    <h1>Frontend Rendering Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Manual Data Rendering</h2>
+        <button onclick="testManualRendering()">Test Manual Rendering</button>
+        <div id="manualResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: API Call Test</h2>
+        <button onclick="testAPICall()">Test API Call</button>
+        <div id="apiResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Function Test</h2>
+        <button onclick="testFunctions()">Test Functions</button>
+        <div id="functionResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Console Logs</h2>
+        <div id="consoleLogs"></div>
+    </div>
 
     <script>
-        const API_BASE = 'http://127.0.0.1:8000';
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logsDiv = document.getElementById('consoleLogs');
+        
+        function addLog(message, type = 'log') {
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '), 'success');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog(args.join(' '), 'error');
+        };
 
-        async function testAPI() {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '<div class="result">Testing API...</div>';
-
-            try {
-                console.log('🚀 Starting API test...');
-                
-                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text_input: "I want something warm and comforting",
-                        top_k: 3
-                    })
-                });
-
-                console.log('📡 Response status:', response.status);
-                console.log('📡 Response headers:', response.headers);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('📊 Data received:', data);
-                    
-                    resultDiv.innerHTML = `
-                        <div class="result success">
-                            <h3>✅ API Test Successful!</h3>
-                            <p><strong>Processing Time:</strong> ${data.processing_time.toFixed(2)}s</p>
-                            <p><strong>Recommendations:</strong> ${data.recommendations.length}</p>
-                            <p><strong>Intent:</strong> ${data.intent_prediction?.primary_intent || 'N/A'}</p>
-                            <p><strong>Confidence:</strong> ${data.intent_prediction?.confidence || 'N/A'}</p>
-                        </div>
-                    `;
-                } else {
-                    const errorText = await response.text();
-                    console.error('❌ API Error:', response.status, errorText);
-                    
-                    resultDiv.innerHTML = `
-                        <div class="result error">
-                            <h3>❌ API Test Failed</h3>
-                            <p><strong>Status:</strong> ${response.status}</p>
-                            <p><strong>Error:</strong> ${errorText}</p>
-                        </div>
-                    `;
+        // Test data (same format as API response)
+        const testData = {
+            "recommendations": [
+                {
+                    "food_name": "spicy curry",
+                    "food_category": "hybrid_generated",
+                    "food_region": "unknown",
+                    "food_culture": "unknown",
+                    "food_tags": [],
+                    "score": 1.0,
+                    "mood_match": 1.0,
+                    "context_match": 1.0,
+                    "personalization_score": 0.8,
+                    "reasoning": "ML prediction 'WEATHER_HOT' meets confidence threshold.",
+                    "restaurant": null
+                },
+                {
+                    "food_name": "hot soup",
+                    "food_category": "hybrid_generated",
+                    "food_region": "unknown",
+                    "food_culture": "unknown",
+                    "food_tags": [],
+                    "score": 0.9,
+                    "mood_match": 1.0,
+                    "context_match": 1.0,
+                    "personalization_score": 0.8,
+                    "reasoning": "ML prediction 'WEATHER_HOT' meets confidence threshold.",
+                    "restaurant": null
                 }
-            } catch (error) {
-                console.error('💥 Network Error:', error);
+            ],
+            "intent_prediction": {
+                "primary_intent": "WEATHER_HOT",
+                "confidence": 0.578
+            }
+        };
+
+        function testManualRendering() {
+            console.log("Testing manual rendering...");
+            const resultsDiv = document.getElementById('manualResults');
+            
+            try {
+                let html = '<h3>Manual Rendering Results:</h3>';
                 
-                resultDiv.innerHTML = `
-                    <div class="result error">
-                        <h3>❌ Network Error</h3>
-                        <p><strong>Error:</strong> ${error.message}</p>
-                        <p><strong>Type:</strong> ${error.name}</p>
-                    </div>
-                `;
+                testData.recommendations.forEach((rec, index) => {
+                    html += `
+                        <div class="recommendation-card">
+                            <div class="food-name">${rec.food_name}</div>
+                            <div class="food-category">${rec.food_category}</div>
+                            <div class="reasoning">${rec.reasoning}</div>
+                        </div>
+                    `;
+                });
+                
+                resultsDiv.innerHTML = html;
+                console.log("Manual rendering completed successfully");
+                
+            } catch (error) {
+                console.error("Manual rendering failed:", error);
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
             }
         }
 
-        // Test on page load
-        window.onload = function() {
-            console.log('🔧 Debug page loaded');
-            console.log('🌐 API_BASE:', API_BASE);
-        };
+        function testAPICall() {
+            console.log("Testing API call...");
+            const resultsDiv = document.getElementById('apiResults');
+            
+            fetch('/enhanced-recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text_input: "I want something spicy",
+                    user_context: {
+                        session_id: "debug_test",
+                        user_id: "debug_user"
+                    }
+                })
+            })
+            .then(response => {
+                console.log("API response status:", response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log("API response data:", data);
+                
+                let html = '<h3>API Call Results:</h3>';
+                html += `<p>Status: Success</p>`;
+                html += `<p>Recommendations count: ${data.recommendations ? data.recommendations.length : 0}</p>`;
+                
+                if (data.recommendations && data.recommendations.length > 0) {
+                    data.recommendations.forEach((rec, index) => {
+                        html += `
+                            <div class="recommendation-card">
+                                <div class="food-name">${rec.food_name || 'Unknown'}</div>
+                                <div class="food-category">${rec.food_category || 'N/A'}</div>
+                                <div class="reasoning">${rec.reasoning || 'No reasoning'}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<p class="error">No recommendations in response</p>';
+                }
+                
+                resultsDiv.innerHTML = html;
+                
+            })
+            .catch(error => {
+                console.error("API call failed:", error);
+                resultsDiv.innerHTML = `<div class="error">API call failed: ${error.message}</div>`;
+            });
+        }
+
+        function testFunctions() {
+            console.log("Testing functions...");
+            const resultsDiv = document.getElementById('functionResults');
+            
+            try {
+                // Test if we can access the main page functions
+                if (typeof showResults === 'function') {
+                    console.log("showResults function is available");
+                    resultsDiv.innerHTML = '<div class="success">showResults function is available</div>';
+                } else {
+                    console.log("showResults function is NOT available");
+                    resultsDiv.innerHTML = '<div class="error">showResults function is NOT available</div>';
+                }
+                
+                // Test HTML element access
+                const testElement = document.createElement('div');
+                testElement.id = 'testElement';
+                document.body.appendChild(testElement);
+                
+                const foundElement = document.getElementById('testElement');
+                if (foundElement) {
+                    console.log("HTML element access works");
+                    resultsDiv.innerHTML += '<div class="success">HTML element access works</div>';
+                } else {
+                    console.log("HTML element access failed");
+                    resultsDiv.innerHTML += '<div class="error">HTML element access failed</div>';
+                }
+                
+                // Clean up
+                document.body.removeChild(testElement);
+                
+            } catch (error) {
+                console.error("Function test failed:", error);
+                resultsDiv.innerHTML = `<div class="error">Function test failed: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            console.log("Debug test page loaded");
+            console.log("Test data available:", testData);
+        });
     </script>
 </body>
 </html>

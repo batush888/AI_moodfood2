@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Query Field - API Input Flexibility</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API Input Flexibility</h1>
+        <p>This page tests the enhanced API that accepts both <code>text_input</code> and <code>query</code> fields.</p>
+        
+        <div class="test-section">
+            <h3>✅ Test 1: Using 'query' field (New Format)</h3>
+            <div class="input-group">
+                <label for="queryInput">Enter your food request:</label>
+                <input type="text" id="queryInput" placeholder="I want spicy food" value="I want spicy food">
+            </div>
+            <button onclick="testQueryField()">Test with 'query' field</button>
+            <div id="queryResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Test 2: Using 'text_input' field (Legacy Format)</h3>
+            <div class="input-group">
+                <label for="textInput">Enter your food request:</label>
+                <input type="text" id="textInput" placeholder="I want comfort food" value="I want comfort food">
+            </div>
+            <button onclick="testTextInputField()">Test with 'text_input' field</button>
+            <div id="textInputResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Test 3: Both fields present (text_input preferred)</h3>
+            <div class="input-group">
+                <label for="bothInput1">text_input (will be preferred):</label>
+                <input type="text" id="bothInput1" placeholder="I want ramen" value="I want ramen">
+            </div>
+            <div class="input-group">
+                <label for="bothInput2">query (will be ignored):</label>
+                <input type="text" id="bothInput2" placeholder="I want sushi" value="I want sushi">
+            </div>
+            <button onclick="testBothFields()">Test with both fields</button>
+            <div id="bothResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>❌ Test 4: Invalid request (no text)</h3>
+            <button onclick="testInvalidRequest()">Test invalid request</button>
+            <div id="invalidResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        async function testQueryField() {
+            const resultDiv = document.getElementById('queryResult');
+            const query = document.getElementById('queryInput').value;
+            
+            resultDiv.innerHTML = '<span class="info">🔄 Testing with query field...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ SUCCESS with 'query' field!</span>
+                        
+                        Request: {"query": "${query}"}
+                        
+                        Response Status: ${response.status}
+                        Processing Time: ${(data.processing_time * 1000).toFixed(2)}ms
+                        Recommendations: ${data.recommendations.length}
+                        
+                        First Recommendation: ${data.recommendations[0]?.food_name || 'N/A'}
+                        
+                        Full Response:
+                        ${JSON.stringify(data, null, 2)}
+                    `;
+                } else {
+                    const errorData = await response.text();
+                    resultDiv.innerHTML = `
+                        <span class="error">❌ ERROR with 'query' field</span>
+                        
+                        Status: ${response.status}
+                        Error: ${errorData}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <span class="error">❌ CONNECTION ERROR</span>
+                    
+                    Error: ${error.message}
+                    Make sure the server is running on port 8000
+                `;
+            }
+        }
+
+        async function testTextInputField() {
+            const resultDiv = document.getElementById('textInputResult');
+            const textInput = document.getElementById('textInput').value;
+            
+            resultDiv.innerHTML = '<span class="info">🔄 Testing with text_input field...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text_input: textInput })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ SUCCESS with 'text_input' field!</span>
+                        
+                        Request: {"text_input": "${textInput}"}
+                        
+                        Response Status: ${response.status}
+                        Processing Time: ${(data.processing_time * 1000).toFixed(2)}ms
+                        Recommendations: ${data.recommendations.length}
+                        
+                        First Recommendation: ${data.recommendations[0]?.food_name || 'N/A'}
+                        
+                        Full Response:
+                        ${JSON.stringify(data, null, 2)}
+                    `;
+                } else {
+                    const errorData = await response.text();
+                    resultDiv.innerHTML = `
+                        <span class="error">❌ ERROR with 'text_input' field</span>
+                        
+                        Status: ${response.status}
+                        Error: ${errorData}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <span class="error">❌ CONNECTION ERROR</span>
+                    
+                    Error: ${error.message}
+                    Make sure the server is running on port 8000
+                `;
+            }
+        }
+
+        async function testBothFields() {
+            const resultDiv = document.getElementById('bothResult');
+            const textInput = document.getElementById('bothInput1').value;
+            const query = document.getElementById('bothInput2').value;
+            
+            resultDiv.innerHTML = '<span class="info">🔄 Testing with both fields...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        text_input: textInput,
+                        query: query 
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ SUCCESS with both fields!</span>
+                        
+                        Request: {"text_input": "${textInput}", "query": "${query}"}
+                        
+                        Note: text_input was preferred over query (backward compatibility)
+                        
+                        Response Status: ${response.status}
+                        Processing Time: ${(data.processing_time * 1000).toFixed(2)}ms
+                        Recommendations: ${data.recommendations.length}
+                        
+                        First Recommendation: ${data.recommendations[0]?.food_name || 'N/A'}
+                        
+                        Full Response:
+                        ${JSON.stringify(data, null, 2)}
+                    `;
+                } else {
+                    const errorData = await response.text();
+                    resultDiv.innerHTML = `
+                        <span class="error">❌ ERROR with both fields</span>
+                        
+                        Status: ${response.status}
+                        Error: ${errorData}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <span class="error">❌ CONNECTION ERROR</span>
+                    
+                    Error: ${error.message}
+                    Make sure the server is running on port 8000
+                `;
+            }
+        }
+
+        async function testInvalidRequest() {
+            const resultDiv = document.getElementById('invalidResult');
+            
+            resultDiv.innerHTML = '<span class="info">🔄 Testing invalid request...</span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/enhanced-recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ foo: "bar" })
+                });
+                
+                if (response.status === 422) {
+                    const errorData = await response.text();
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ CORRECTLY REJECTED invalid request!</span>
+                        
+                        Request: {"foo": "bar"}
+                        
+                        Status: ${response.status} (Unprocessable Entity)
+                        Expected Error: "Either 'text_input' or 'query' is required"
+                        
+                        Actual Response:
+                        ${errorData}
+                    `;
+                } else {
+                    const data = await response.text();
+                    resultDiv.innerHTML = `
+                        <span class="error">❌ UNEXPECTED: Request was accepted</span>
+                        
+                        Status: ${response.status}
+                        Response: ${data}
+                        
+                        This should have been rejected with 422
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <span class="error">❌ CONNECTION ERROR</span>
+                    
+                    Error: ${error.message}
+                    Make sure the server is running on port 8000
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

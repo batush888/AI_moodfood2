@@ -15,10 +15,19 @@ import json
 import logging
 import sys
 import shutil
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 import traceback
+
+# Try to import MLflow for experiment tracking
+try:
+    import mlflow
+    MLFLOW_AVAILABLE = True
+except ImportError:
+    MLFLOW_AVAILABLE = False
+    logging.warning("MLflow not available - experiment tracking disabled")
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -45,6 +54,12 @@ MAPPING_FILE = os.path.join(MODEL_DIR, "label_mappings.json")
 METRICS_FILE = os.path.join(MODEL_DIR, "metrics.json")
 RETRAIN_LOG = "data/logs/retrain_history.jsonl"
 
+# Versioning and deployment paths
+VERSIONS_DIR = os.path.join(MODEL_DIR, "versions")
+CURRENT_SYMLINK = os.path.join(MODEL_DIR, "current")
+VERSIONS_INDEX = os.path.join(VERSIONS_DIR, "versions.json")
+ABTEST_CONFIG = os.path.join(MODEL_DIR, "abtest.json")
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -55,6 +70,32 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("RetrainingPipeline")
+
+# Versioning helper functions
+def _read_versions_index() -> Dict[str, Any]:
+    """Read the versions index file."""
+    try:
+        if os.path.exists(VERSIONS_INDEX):
+            with open(VERSIONS_INDEX, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        logger.exception("Failed reading versions index")
+    return {}
+
+def _write_versions_index(idx: Dict[str, Any]):
+    """Write the versions index file."""
+    try:
+        os.makedirs(VERSIONS_DIR, exist_ok=True)
+        with open(VERSIONS_INDEX, "w", encoding="utf-8") as f:
+            json.dump(idx, f, indent=2, ensure_ascii=False)
+    except Exception:
+        logger.exception("Failed writing versions index")
+
+def _create_version_directory(version_id: str) -> str:
+    """Create a version directory and return its path."""
+    version_path = os.path.join(VERSIONS_DIR, version_id)
+    os.makedirs(version_path, exist_ok=True)
+    return version_path
 
 class AutomatedRetrainer:
     """Automated retraining pipeline for continuous model improvement"""
@@ -479,11 +520,24 @@ class AutomatedRetrainer:
         
         return comparison['should_deploy'], comparison
 
-    def _save_model(self, classifier: Any, vectorizer: Any, labels: List[str]):
-        """Save trained model and components"""
+    def _save_model(self, classifier: Any, vectorizer: Any, labels: List[str], deploy: bool = True, deploy_mode: str = "full") -> str:
+        """
+        Save trained model as a new version. If deploy==True, atomically update 'current' symlink.
         
+        Args:
+            classifier: Trained classifier
+            vectorizer: Trained vectorizer
+            labels: List of labels
+            deploy: Whether to deploy immediately
+            deploy_mode: Deployment mode (full, canary)
+            
+        Returns:
+            str: Version ID of the saved model
+        """
         try:
-            os.makedirs(MODEL_DIR, exist_ok=True)
+            # Generate version ID
+            version_id = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
+            version_path = _create_version_directory(version_id)
             
             # Save model components
             import joblib
@@ -495,7 +549,7 @@ class AutomatedRetrainer:
                 'metrics': self.training_metrics
             }
             
-            joblib.dump(model_data, MODEL_FILE)
+            joblib.dump(model_data, os.path.join(version_path, "model.joblib"))
             
             # Save label mappings
             label_mappings = {
@@ -505,18 +559,286 @@ class AutomatedRetrainer:
                 'training_metrics': self.training_metrics
             }
             
-            with open(MAPPING_FILE, 'w', encoding='utf-8') as f:
+            with open(os.path.join(version_path, "label_mappings.json"), 'w', encoding='utf-8') as f:
                 json.dump(label_mappings, f, indent=2, ensure_ascii=False)
             
-            # Save metrics separately for easy comparison
-            self._save_metrics(self.training_metrics)
+            # Save metrics
+            with open(os.path.join(version_path, "metrics.json"), 'w', encoding='utf-8') as f:
+                json.dump(self.training_metrics, f, indent=2, ensure_ascii=False)
             
-            logger.info(f"✅ Model saved to: {MODEL_FILE}")
-            logger.info(f"✅ Label mappings saved to: {MAPPING_FILE}")
+            # Update versions index
+            idx = _read_versions_index()
+            idx[version_id] = {
+                "created": datetime.now().isoformat(),
+                "path": version_path,
+                "metrics": self.training_metrics,
+                "deployed": False,
+                "deploy_mode": None
+            }
+            _write_versions_index(idx)
+            
+            logger.info(f"✅ Model version {version_id} saved to: {version_path}")
+            
+            # Optional MLflow logging
+            if MLFLOW_AVAILABLE:
+                try:
+                    mlflow.set_experiment("moodfood_retraining")
+                    with mlflow.start_run(run_name=version_id):
+                        mlflow.log_metrics({
+                            "accuracy": self.training_metrics.get("accuracy", 0),
+                            "f1_macro": self.training_metrics.get("f1_macro", 0),
+                        })
+                        # Log model artifact
+                        mlflow.log_artifact(os.path.join(version_path, "model.joblib"))
+                except Exception:
+                    logger.exception("MLflow logging failed")
+            
+            # If deploy requested, call deploy_version
+            if deploy:
+                self.deploy_version(version_id, mode=deploy_mode)
+            
+            return version_id
             
         except Exception as e:
-            logger.error(f"Failed to save model: {e}")
+            logger.error(f"Failed to save model version: {e}")
             raise
+    
+    def deploy_version(self, version_id: str, mode: str = "full") -> bool:
+        """
+        Deploy a version atomically.
+        
+        Args:
+            version_id: Version ID to deploy
+            mode: "full" or "canary". For canary, we still symlink current -> version but record canary flag.
+            
+        Returns:
+            bool: True if deployment successful, False otherwise
+        """
+        try:
+            idx = _read_versions_index()
+            if version_id not in idx:
+                logger.error(f"Version {version_id} not found in versions index")
+                return False
+            
+            version_path = idx[version_id]["path"]
+            if not os.path.exists(version_path):
+                logger.error(f"Version path does not exist: {version_path}")
+                return False
+            
+            # Create temporary symlink and then swap atomically
+            tmp_link = os.path.join(MODEL_DIR, f"current_tmp_{uuid.uuid4().hex[:6]}")
+            if os.path.exists(tmp_link):
+                os.remove(tmp_link)
+            
+            # Create symlink pointing to new version
+            os.symlink(version_path, tmp_link)
+            
+            # Atomic replace
+            if os.path.exists(CURRENT_SYMLINK):
+                os.remove(CURRENT_SYMLINK)
+            os.rename(tmp_link, CURRENT_SYMLINK)
+            
+            # Update index
+            for v in idx:
+                idx[v]["deployed"] = False
+                idx[v]["deploy_mode"] = None
+            idx[version_id]["deployed"] = True
+            idx[version_id]["deploy_mode"] = mode
+            _write_versions_index(idx)
+            
+            logger.info(f"✅ Deployed version {version_id} mode={mode}")
+            
+            # Notify hot-loader to reload
+            try:
+                from core.nlu.model_loader import reload_current_model
+                reload_current_model()
+                logger.info("✅ Hot-reload completed")
+            except Exception as e:
+                logger.warning(f"Hot reload call failed: {e}")
+            
+            return True
+            
+        except Exception as e:
+            logger.exception(f"Deploy failed for version {version_id}")
+            return False
+    
+    def rollback_to_version(self, version_id: str) -> bool:
+        """
+        Rollback to a previous version.
+        
+        Args:
+            version_id: Version ID to rollback to
+            
+        Returns:
+            bool: True if rollback successful, False otherwise
+        """
+        try:
+            idx = _read_versions_index()
+            if version_id not in idx:
+                logger.error(f"Version {version_id} not found in versions index")
+                return False
+            
+            version_path = idx[version_id]["path"]
+            if not os.path.exists(version_path):
+                logger.error(f"Version path missing: {version_path}")
+                return False
+            
+            # Swap symlink similarly
+            tmp_link = os.path.join(MODEL_DIR, f"current_tmp_{uuid.uuid4().hex[:6]}")
+            os.symlink(version_path, tmp_link)
+            
+            if os.path.exists(CURRENT_SYMLINK):
+                os.remove(CURRENT_SYMLINK)
+            os.rename(tmp_link, CURRENT_SYMLINK)
+            
+            # Mark index
+            for v in idx:
+                idx[v]["deployed"] = False
+                idx[v]["deploy_mode"] = None
+            idx[version_id]["deployed"] = True
+            idx[version_id]["deploy_mode"] = "rollback"
+            _write_versions_index(idx)
+            
+            # Notify hot-loader
+            try:
+                from core.nlu.model_loader import reload_current_model
+                reload_current_model()
+                logger.info("✅ Hot-reload completed after rollback")
+            except Exception as e:
+                logger.warning(f"Hot reload call failed after rollback: {e}")
+            
+            logger.info(f"✅ Rollback completed to {version_id}")
+            return True
+            
+        except Exception as e:
+            logger.exception(f"Rollback failed to version {version_id}")
+            return False
+    
+    def list_versions(self) -> Dict[str, Any]:
+        """
+        List all available model versions.
+        
+        Returns:
+            Dict containing version information
+        """
+        try:
+            idx = _read_versions_index()
+            return {
+                "versions": idx,
+                "current_symlink": os.readlink(CURRENT_SYMLINK) if os.path.exists(CURRENT_SYMLINK) else None,
+                "total_versions": len(idx)
+            }
+        except Exception as e:
+            logger.error(f"Failed to list versions: {e}")
+            return {"versions": {}, "current_symlink": None, "total_versions": 0}
+    
+    def get_version_info(self, version_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get information about a specific version.
+        
+        Args:
+            version_id: Version ID to get info for
+            
+        Returns:
+            Dict containing version info or None if not found
+        """
+        try:
+            idx = _read_versions_index()
+            if version_id in idx:
+                return idx[version_id]
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get version info for {version_id}: {e}")
+            return None
+    
+    def start_abtest(self, version_id: str, fraction: float = 0.05) -> bool:
+        """
+        Start an A/B test with a canary version.
+        
+        Args:
+            version_id: Version ID to test
+            fraction: Fraction of traffic to route to canary (0.0 to 1.0)
+            
+        Returns:
+            bool: True if A/B test started successfully
+        """
+        try:
+            # Validate version exists
+            if not self.get_version_info(version_id):
+                logger.error(f"Cannot start A/B test: version {version_id} not found")
+                return False
+            
+            # Validate fraction
+            if not 0.0 <= fraction <= 1.0:
+                logger.error(f"Invalid fraction: {fraction}. Must be between 0.0 and 1.0")
+                return False
+            
+            # Create A/B test config
+            config = {
+                "version": version_id,
+                "fraction": fraction,
+                "started": datetime.now().isoformat(),
+                "status": "active"
+            }
+            
+            # Ensure MODEL_DIR exists
+            os.makedirs(MODEL_DIR, exist_ok=True)
+            
+            # Write config
+            with open(ABTEST_CONFIG, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"✅ A/B test started for version {version_id} with {fraction*100}% traffic")
+            return True
+            
+        except Exception as e:
+            logger.exception(f"Failed to start A/B test for version {version_id}")
+            return False
+    
+    def stop_abtest(self) -> bool:
+        """
+        Stop the currently running A/B test.
+        
+        Returns:
+            bool: True if A/B test stopped successfully
+        """
+        try:
+            if os.path.exists(ABTEST_CONFIG):
+                os.remove(ABTEST_CONFIG)
+                logger.info("✅ A/B test stopped")
+                return True
+            else:
+                logger.info("No A/B test currently running")
+                return True
+                
+        except Exception as e:
+            logger.exception("Failed to stop A/B test")
+            return False
+    
+    def get_abtest_status(self) -> Optional[Dict[str, Any]]:
+        """
+        Get current A/B test status.
+        
+        Returns:
+            Dict containing A/B test config or None if no test running
+        """
+        try:
+            if os.path.exists(ABTEST_CONFIG):
+                with open(ABTEST_CONFIG, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get A/B test status: {e}")
+            return None
+    
+    def is_abtest_active(self) -> bool:
+        """
+        Check if A/B test is currently active.
+        
+        Returns:
+            bool: True if A/B test is active
+        """
+        return self.get_abtest_status() is not None
     
     def _validate_model(self) -> bool:
         """Validate the newly trained model with diverse test queries"""

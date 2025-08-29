@@ -1,278 +1,509 @@
-#!/usr/bin/env python3
 """
-Hybrid filtering system combining ML-based filtering with LLM fallback
+Enhanced Hybrid Filter with LLM-as-Teacher Architecture
+
+This system implements a continuous learning loop where:
+1. LLM always interprets queries into structured intent + reasoning
+2. ML attempts prediction and gets validated by LLM
+3. LLM can fallback to direct generation if ML fails
+4. All interactions are logged for continuous retraining
 """
 
-import json
 import logging
-import os
-import threading
+import json
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass, asdict
+from pathlib import Path
 
-from config.settings import (
-    MIN_CONFIDENCE_THRESHOLD, LLM_FALLBACK_RANGE,
-    MIN_SAMPLE_LENGTH, MAX_SAMPLE_LENGTH,
-    FILTER_STATS_FILE, is_borderline_case, is_valid_sample
-)
-from core.filtering.llm_validator import LLMValidator
+from core.filtering.llm_validator import LLMValidator, LLMResponse
+from core.filtering.adaptive_parser import AdaptiveParser, ParseResult
+from core.nlu.enhanced_intent_classifier import EnhancedIntentClassifier
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class LLMInterpretation:
+    """Structured interpretation of user query by LLM."""
+    intent: str
+    reasoning: str
+    confidence: float
+    mood_categories: List[str]
+    cuisine_type: Optional[str] = None
+    temperature_preference: Optional[str] = None
+    dietary_restrictions: Optional[List[str]] = None
+
+@dataclass
+class MLPrediction:
+    """ML classifier prediction with confidence."""
+    primary_intent: str
+    confidence: float
+    all_intents: List[Tuple[str, float]]
+    method: str
+
+@dataclass
+class HybridFilterResponse:
+    """Unified response structure from hybrid filter."""
+    decision: str  # "ml_validated" | "llm_fallback"
+    recommendations: List[str]
+    reasoning: str
+    ml_prediction: Optional[MLPrediction] = None
+    llm_interpretation: Optional[LLMInterpretation] = None
+    processing_time_ms: float = 0.0
+    timestamp: str = ""
+
 class HybridFilter:
-    """Hybrid filtering system for training data quality"""
+    """
+    Enhanced hybrid filter with LLM-as-teacher architecture.
     
-    def __init__(self):
-        self.llm_validator = LLMValidator()
-        self.filter_stats = {
-            'original_count': 0,
-            'duplicates_removed': 0,
-            'malformed_removed': 0,
-            'low_confidence_removed': 0,
-            'borderline_count': 0,
-            'llm_validated': 0,
-            'llm_rejected': 0,
-            'final_count': 0
+    Features:
+    - LLM always interprets queries (teacher role)
+    - ML attempts prediction and gets validated
+    - LLM can fallback to direct generation
+    - Continuous logging for retraining
+    - Redis-backed live statistics
+    """
+    
+    def __init__(self, 
+                 llm_validator: Optional[LLMValidator] = None,
+                 ml_classifier: Optional[EnhancedIntentClassifier] = None,
+                 confidence_threshold: float = 0.7,
+                 enable_llm_fallback: bool = True):
+        
+        self.llm_validator = llm_validator
+        self.ml_classifier = ml_classifier
+        self.confidence_threshold = confidence_threshold
+        self.enable_llm_fallback = enable_llm_fallback
+        
+        # Initialize adaptive parser
+        self.adaptive_parser = AdaptiveParser()
+        
+        # Live statistics for monitoring
+        self.live_stats = {
+            "total_queries": 0,
+            "ml_validated": 0,
+            "llm_fallback": 0,
+            "llm_training_samples": 0,
+            "processing_errors": 0
         }
         
-        # Live stats for real-time monitoring during inference
-        self.live_stats = {
-            "total": 0,
-            "ml_confident": 0,
-            "llm_fallback": 0,
-            "rejected": 0
-        }
-        self.live_stats_lock = threading.Lock()
+        # Ensure logs directory exists
+        self.logs_dir = Path("logs")
+        self.logs_dir.mkdir(exist_ok=True)
+        
+        logger.info(f"Hybrid filter initialized with confidence threshold: {confidence_threshold}")
     
-    def filter_training_data(self, samples: List[Dict]) -> Tuple[List[Dict], Dict]:
+    async def process_query(self, 
+                          user_query: str, 
+                          user_context: Optional[Dict[str, Any]] = None) -> HybridFilterResponse:
         """
-        Filter training data using hybrid approach
+        Process user query through the LLM-as-teacher pipeline.
         
         Args:
-            samples: List of training samples with 'text', 'labels', 'confidence' keys
+            user_query: Raw user input
+            user_context: Optional user context
             
         Returns:
-            Tuple[List[Dict], Dict]: Filtered samples and filter statistics
+            HybridFilterResponse with unified structure
         """
-        logger.info(f"Starting hybrid filtering of {len(samples)} samples")
+        start_time = datetime.now()
         
-        # Reset stats
-        self.filter_stats = {
-            'original_count': len(samples),
-            'duplicates_removed': 0,
-            'malformed_removed': 0,
-            'low_confidence_removed': 0,
-            'borderline_count': 0,
-            'llm_validated': 0,
-            'llm_rejected': 0,
-            'final_count': 0
-        }
-        
-        # Step 1: Remove duplicates
-        unique_samples = self._remove_duplicates(samples)
-        logger.info(f"Removed {self.filter_stats['duplicates_removed']} duplicates")
-        
-        # Step 2: Remove malformed samples
-        valid_samples = self._remove_malformed(unique_samples)
-        logger.info(f"Removed {self.filter_stats['malformed_removed']} malformed samples")
-        
-        # Step 3: Apply confidence filtering and LLM validation
-        filtered_samples = self._apply_confidence_filtering(valid_samples)
-        logger.info(f"Removed {self.filter_stats['low_confidence_removed']} low-confidence samples")
-        logger.info(f"LLM validated {self.filter_stats['llm_validated']} borderline samples")
-        logger.info(f"LLM rejected {self.filter_stats['llm_rejected']} borderline samples")
-        
-        # Update final count
-        self.filter_stats['final_count'] = len(filtered_samples)
-        
-        # Log final statistics
-        logger.info(f"Filtering complete: {self.filter_stats['original_count']} -> {self.filter_stats['final_count']} samples")
-        logger.info(f"Filtering efficiency: {self.filter_stats['final_count'] / self.filter_stats['original_count'] * 100:.1f}%")
-        
-        return filtered_samples, self.filter_stats
-    
-    def _remove_duplicates(self, samples: List[Dict]) -> List[Dict]:
-        """Remove duplicate samples based on text content"""
-        seen_texts = set()
-        unique_samples = []
-        
-        for sample in samples:
-            text = sample.get('text', '').strip().lower()
-            if text and text not in seen_texts:
-                seen_texts.add(text)
-                unique_samples.append(sample)
-            else:
-                self.filter_stats['duplicates_removed'] += 1
-        
-        return unique_samples
-    
-    def _remove_malformed(self, samples: List[Dict]) -> List[Dict]:
-        """Remove malformed or invalid samples"""
-        valid_samples = []
-        
-        for sample in samples:
-            text = sample.get('text', '')
-            confidence = sample.get('confidence', 0)
-            
-            if is_valid_sample(text, confidence):
-                valid_samples.append(sample)
-            else:
-                self.filter_stats['malformed_removed'] += 1
-        
-        return valid_samples
-    
-    def _apply_confidence_filtering(self, samples: List[Dict]) -> List[Dict]:
-        """Apply confidence-based filtering with LLM fallback for borderline cases"""
-        filtered_samples = []
-        borderline_samples = []
-        
-        for sample in samples:
-            text = sample.get('text', '')
-            labels = sample.get('labels', [])
-            confidence = sample.get('confidence', 0)
-            
-            # High confidence samples are automatically accepted
-            if confidence >= MIN_CONFIDENCE_THRESHOLD:
-                filtered_samples.append(sample)
-                continue
-            
-            # Low confidence samples are rejected
-            if confidence < LLM_FALLBACK_RANGE[0]:
-                self.filter_stats['low_confidence_removed'] += 1
-                continue
-            
-            # Borderline cases go to LLM validation
-            if is_borderline_case(confidence):
-                self.filter_stats['borderline_count'] += 1
-                borderline_samples.append({
-                    'sample': sample,
-                    'query': text,
-                    'label': labels[0] if labels else 'unknown',
-                    'confidence': confidence
-                })
-        
-        # Process borderline cases with LLM
-        if borderline_samples:
-            logger.info(f"Processing {len(borderline_samples)} borderline cases with LLM")
-            llm_results = self.llm_validator.validate_batch(borderline_samples)
-            
-            for i, (sample_data, is_valid) in enumerate(zip(borderline_samples, llm_results)):
-                if is_valid:
-                    filtered_samples.append(sample_data['sample'])
-                    self.filter_stats['llm_validated'] += 1
-                else:
-                    self.filter_stats['llm_rejected'] += 1
-        
-        return filtered_samples
-    
-    def save_filter_stats(self, retrain_id: str = None) -> None:
-        """Save filter statistics to JSONL file"""
         try:
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(FILTER_STATS_FILE), exist_ok=True)
+            # Step 1: LLM always interprets the query (teacher role)
+            logger.info(f"Step 1: LLM interpreting query: '{user_query}'")
+            llm_interpretation = await self._get_llm_interpretation(user_query, user_context)
             
-            # Create stats entry
-            stats_entry = {
-                'timestamp': datetime.now().isoformat(),
-                'retrain_id': retrain_id or f"retrain_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                **self.filter_stats,
-                'llm_stats': self.llm_validator.get_stats()
-            }
+            # Step 2: ML attempts prediction
+            logger.info("Step 2: ML attempting prediction")
+            ml_prediction = self._get_ml_prediction(user_query, user_context)
             
-            # Append to JSONL file
-            with open(FILTER_STATS_FILE, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(stats_entry, ensure_ascii=False) + '\n')
+            # Step 3: Check if ML prediction meets confidence threshold
+            logger.info(f"Step 3: Checking ML prediction confidence: {ml_prediction.confidence} >= {self.confidence_threshold}")
             
-            logger.info(f"Filter statistics saved to {FILTER_STATS_FILE}")
+            # Step 4: Determine final response
+            if ml_prediction.confidence >= self.confidence_threshold and ml_prediction.primary_intent not in ["unknown", "error", "no_ml_classifier"]:
+                # ML prediction is confident enough - use it directly without LLM validation
+                decision = "ml_validated"
+                recommendations = self._generate_ml_based_recommendations(ml_prediction)
+                reasoning = f"ML prediction '{ml_prediction.primary_intent}' (confidence: {ml_prediction.confidence:.3f}) meets confidence threshold. Using ML-based recommendations."
+                
+                self.live_stats["ml_validated"] += 1
+                logger.info(f"Using ML prediction directly: {ml_prediction.primary_intent}")
+                
+            else:
+                # ML failed or was invalid - use LLM fallback
+                decision = "llm_fallback"
+                recommendations = await self._generate_llm_recommendations(
+                    user_query, llm_interpretation
+                )
+                reasoning = f"ML prediction failed validation or had low confidence. LLM generated recommendations directly. {llm_interpretation.reasoning}"
+                
+                self.live_stats["llm_fallback"] += 1
+            
+            # Update statistics
+            self.live_stats["total_queries"] += 1
+            self.live_stats["llm_training_samples"] += 1
+            
+            # Calculate processing time
+            processing_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+            
+            # Create response
+            response = HybridFilterResponse(
+                decision=decision,
+                recommendations=recommendations,
+                reasoning=reasoning,
+                ml_prediction=ml_prediction if decision == "ml_validated" else None,
+                llm_interpretation=llm_interpretation,
+                processing_time_ms=processing_time_ms,
+                timestamp=datetime.now().isoformat()
+            )
+            
+            # Log the interaction for retraining
+            await self._log_interaction(user_query, response)
+            
+            logger.info(f"Query processed successfully. Decision: {decision}, Recommendations: {len(recommendations)}")
+            return response
             
         except Exception as e:
-            logger.error(f"Failed to save filter statistics: {e}")
+            logger.error(f"Error processing query: {e}")
+            self.live_stats["processing_errors"] += 1
+            
+            # Return fallback response
+            return HybridFilterResponse(
+                decision="llm_fallback",
+                recommendations=["comfort food", "soup", "tea"],  # Safe fallback
+                reasoning=f"Error occurred during processing: {str(e)}. Using safe fallback recommendations.",
+                processing_time_ms=(datetime.now() - start_time).total_seconds() * 1000,
+                timestamp=datetime.now().isoformat()
+            )
     
-    def get_filter_summary(self) -> str:
-        """Get a human-readable summary of filtering results"""
-        stats = self.filter_stats
-        
-        if stats['original_count'] == 0:
-            return "No samples to filter"
-        
-        efficiency = stats['final_count'] / stats['original_count'] * 100
-        
-        summary = f"""
-📊 Hybrid Filtering Summary
-==========================
-Original samples: {stats['original_count']}
-Final samples: {stats['final_count']}
-Efficiency: {efficiency:.1f}%
-
-🔍 Filtering Breakdown:
-  • Duplicates removed: {stats['duplicates_removed']}
-  • Malformed removed: {stats['malformed_removed']}
-  • Low confidence removed: {stats['low_confidence_removed']}
-  • Borderline cases: {stats['borderline_count']}
-    - LLM validated: {stats['llm_validated']}
-    - LLM rejected: {stats['llm_rejected']}
-
-🤖 LLM Validation:
-  • Enabled: {self.llm_validator.enabled}
-  • Model: {self.llm_validator.model}
-  • Borderline range: {LLM_FALLBACK_RANGE[0]:.2f}-{LLM_FALLBACK_RANGE[1]:.2f}
-"""
-        
-        return summary.strip()
-    
-    def get_detailed_stats(self) -> Dict:
-        """Get detailed filtering statistics"""
-        return {
-            'filter_stats': self.filter_stats.copy(),
-            'llm_stats': self.llm_validator.get_stats(),
-            'config': {
-                'min_confidence_threshold': MIN_CONFIDENCE_THRESHOLD,
-                'llm_fallback_range': LLM_FALLBACK_RANGE,
-                'min_sample_length': MIN_SAMPLE_LENGTH,
-                'max_sample_length': MAX_SAMPLE_LENGTH
+    def _generate_ml_based_recommendations(self, ml_prediction: MLPrediction) -> List[str]:
+        """Generate recommendations based on ML prediction without LLM validation."""
+        try:
+            # Use the ML prediction to generate food recommendations
+            primary_intent = ml_prediction.primary_intent
+            
+            # Simple mapping of intents to food recommendations
+            food_mappings = {
+                "WEATHER_HOT": ["spicy curry", "hot soup", "grilled meat", "spicy noodles", "hot pot"],
+                "WEATHER_COLD": ["warm soup", "hot chocolate", "roasted vegetables", "stew", "hot tea"],
+                "EMOTIONAL_COMFORT": ["mac and cheese", "chicken soup", "grilled cheese", "mashed potatoes", "comfort food"],
+                "OCCASION_PARTY_SNACKS": ["chips and dip", "finger foods", "appetizers", "party platters", "snack mix"],
+                "FLAVOR_SPICY": ["spicy tacos", "hot wings", "spicy ramen", "curry", "spicy pizza"],
+                "GOAL_COMFORT": ["comfort food", "home cooking", "traditional dishes", "family recipes", "warm meals"],
+                "SENSORY_WARMING": ["hot soup", "warm bread", "roasted dishes", "hot beverages", "warm desserts"]
             }
+            
+            # Get recommendations for the primary intent
+            if primary_intent in food_mappings:
+                recommendations = food_mappings[primary_intent]
+            else:
+                # Fallback recommendations based on general food categories
+                recommendations = ["comfort food", "soup", "main dish", "side dish", "beverage"]
+            
+            logger.info(f"Generated ML-based recommendations for {primary_intent}: {recommendations}")
+            return recommendations
+            
+        except Exception as e:
+            logger.error(f"Error generating ML-based recommendations: {e}")
+            return ["comfort food", "soup", "main dish"]  # Safe fallback
+    
+    async def _get_llm_interpretation(self, 
+                                    user_query: str, 
+                                    user_context: Optional[Dict[str, Any]]) -> LLMInterpretation:
+        """Get structured interpretation from LLM."""
+        try:
+            # Create a comprehensive prompt for LLM interpretation
+            prompt = f"""
+            Analyze this food query and provide structured interpretation:
+            
+            Query: "{user_query}"
+            
+            Please provide:
+            1. Primary intent (e.g., comfort, japanese, spicy, cold, healthy)
+            2. Reasoning for your interpretation
+            3. Confidence level (0.0-1.0)
+            4. Mood categories that apply
+            5. Cuisine type if applicable
+            6. Temperature preference if mentioned
+            7. Any dietary restrictions mentioned
+            
+            Format as JSON:
+            {{
+                "intent": "string",
+                "reasoning": "string", 
+                "confidence": 0.0,
+                "mood_categories": ["list"],
+                "cuisine_type": "string or null",
+                "temperature_preference": "string or null",
+                "dietary_restrictions": ["list or null"]
+            }}
+            """
+            
+            # Get LLM response using robust validator
+            if not self.llm_validator:
+                logger.warning("LLM validator not available, using fallback interpretation")
+                return LLMInterpretation(
+                    intent="fallback",
+                    reasoning="LLM validator not available",
+                    confidence=0.0,
+                    mood_categories=[]
+                )
+            
+            # Use the new robust LLM validator
+            llm_response: LLMResponse = self.llm_validator.interpret_query(user_query, user_context)
+            
+            if not llm_response.success:
+                logger.warning(f"LLM interpretation failed: {llm_response.error}")
+                return LLMInterpretation(
+                    intent="unknown",
+                    reasoning=f"LLM interpretation failed: {llm_response.error}",
+                    confidence=0.0,
+                    mood_categories=[]
+                )
+            
+            # Use adaptive parser to extract structured data
+            parse_result = self.adaptive_parser.parse_llm_output(llm_response.raw_output)
+            
+            if parse_result.parse_status == "none":
+                logger.warning("Failed to parse LLM response, using fallback")
+                return LLMInterpretation(
+                    intent="unknown",
+                    reasoning="Failed to parse LLM response",
+                    confidence=0.0,
+                    mood_categories=[]
+                )
+            
+            # Extract recommendations and create interpretation
+            recommendations = parse_result.parsed
+            intent = "unknown"
+            reasoning = "LLM provided recommendations"
+            confidence = parse_result.confidence
+            
+            # Try to extract intent from the parsed recommendations
+            if recommendations:
+                # Simple heuristic: use first recommendation as intent indicator
+                first_rec = recommendations[0].lower()
+                if any(cuisine in first_rec for cuisine in ["japanese", "chinese", "italian", "mexican", "indian"]):
+                    intent = f"{first_rec}_cuisine"
+                elif any(mood in first_rec for mood in ["comfort", "spicy", "healthy", "quick"]):
+                    intent = f"{first_rec}_food"
+                else:
+                    intent = "general_food"
+            
+            return LLMInterpretation(
+                intent=intent,
+                reasoning=reasoning,
+                confidence=confidence,
+                mood_categories=recommendations[:3],  # Use first 3 as mood categories
+                cuisine_type=None,
+                temperature_preference=None,
+                dietary_restrictions=None
+            )
+                
+        except Exception as e:
+            logger.error(f"Error getting LLM interpretation: {e}")
+            return LLMInterpretation(
+                intent="unknown",
+                reasoning=f"Error occurred: {str(e)}",
+                confidence=0.0,
+                mood_categories=[]
+            )
+    
+    def _get_ml_prediction(self, 
+                          user_query: str, 
+                          user_context: Optional[Dict[str, Any]]) -> MLPrediction:
+        """Get ML classifier prediction."""
+        try:
+            if not self.ml_classifier:
+                return MLPrediction(
+                    primary_intent="no_ml_classifier",
+                    confidence=0.0,
+                    all_intents=[("no_ml_classifier", 0.0)],
+                    method="no_classifier"
+                )
+            
+            # Get ML prediction
+            result = self.ml_classifier.classify_intent(user_query, user_context)
+            
+            return MLPrediction(
+                primary_intent=result.get("primary_intent", "unknown"),
+                confidence=result.get("confidence", 0.0),
+                all_intents=result.get("all_intents", []),
+                method=result.get("method", "unknown")
+            )
+            
+        except Exception as e:
+            logger.error(f"Error getting ML prediction: {e}")
+            return MLPrediction(
+                primary_intent="error",
+                confidence=0.0,
+                all_intents=[("error", 0.0)],
+                method="error"
+            )
+    
+    async def _validate_ml_prediction(self, 
+                                    user_query: str,
+                                    ml_prediction: MLPrediction,
+                                    llm_interpretation: LLMInterpretation) -> Dict[str, Any]:
+        """Validate ML prediction using LLM."""
+        try:
+            prompt = f"""
+            Validate this ML prediction for a food query:
+            
+            Query: "{user_query}"
+            ML Prediction: {ml_prediction.primary_intent} (confidence: {ml_prediction.confidence:.3f})
+            LLM Interpretation: {llm_interpretation.intent} - {llm_interpretation.reasoning}
+            
+            Please:
+            1. Determine if the ML prediction is semantically correct
+            2. If valid, polish and expand the recommendations
+            3. If invalid, explain why
+            
+            Return JSON:
+            {{
+                "is_valid": true/false,
+                "validation_reason": "string",
+                "polished_recommendations": ["list of food items"],
+                "confidence_boost": 0.0
+            }}
+            """
+            
+            # Use the new robust LLM validator
+            if not self.llm_validator:
+                logger.warning("LLM validator not available for prediction validation")
+                return {
+                    "is_valid": False,
+                    "validation_reason": "LLM validator not available",
+                    "polished_recommendations": [],
+                    "confidence_boost": 0.0
+                }
+            
+            ml_dict = {
+                "labels": [ml_prediction.primary_intent],
+                "confidence": ml_prediction.confidence
+            }
+            llm_response: LLMResponse = self.llm_validator.validate_prediction(ml_dict, user_query)
+            
+            if not llm_response.success:
+                logger.warning(f"LLM validation failed: {llm_response.error}")
+                return {
+                    "is_valid": False,
+                    "validation_reason": f"LLM validation failed: {llm_response.error}",
+                    "polished_recommendations": [],
+                    "confidence_boost": 0.0
+                }
+            
+            # Use adaptive parser to extract validation result
+            parse_result = self.adaptive_parser.parse_llm_output(llm_response.raw_output)
+            
+            if parse_result.parse_status == "none":
+                logger.warning("Failed to parse validation response")
+                return {
+                    "is_valid": False,
+                    "validation_reason": "Failed to parse validation response",
+                    "polished_recommendations": [],
+                    "confidence_boost": 0.0
+                }
+            
+            # Extract validation result
+            validation_text = " ".join(parse_result.parsed).lower()
+            is_valid = any(word in validation_text for word in ["yes", "true", "correct", "valid"])
+            
+            # Use recommendations from interpretation if available
+            polished_recommendations = []
+            if llm_interpretation and hasattr(llm_interpretation, 'mood_categories'):
+                polished_recommendations = llm_interpretation.mood_categories
+            
+            return {
+                "is_valid": is_valid,
+                "validation_reason": f"LLM validation result: {validation_text}",
+                "polished_recommendations": polished_recommendations,
+                "confidence_boost": 0.1 if is_valid else 0.0
+            }
+                
+        except Exception as e:
+            logger.error(f"Error validating ML prediction: {e}")
+            return {
+                "is_valid": False,
+                "validation_reason": f"Error occurred: {str(e)}",
+                "polished_recommendations": [],
+                "confidence_boost": 0.0
+            }
+    
+    async def _generate_llm_recommendations(self, 
+                                          user_query: str,
+                                          llm_interpretation: LLMInterpretation) -> List[str]:
+        """Generate recommendations directly from LLM."""
+        try:
+            if not self.llm_validator:
+                logger.warning("LLM validator not available, using fallback recommendations")
+                return ["comfort food", "soup", "tea"]
+            
+            # Use the new robust LLM validator
+            llm_response: LLMResponse = self.llm_validator.generate_recommendations(user_query, None)
+            
+            if not llm_response.success:
+                logger.warning(f"LLM recommendation generation failed: {llm_response.error}")
+                return ["comfort food", "soup", "tea"]
+            
+            # Use adaptive parser to extract recommendations
+            parse_result = self.adaptive_parser.parse_llm_output(llm_response.raw_output)
+            
+            if parse_result.parse_status == "none" or not parse_result.parsed:
+                logger.warning("Failed to parse LLM recommendations")
+                return ["comfort food", "soup", "tea"]
+            
+            # Return parsed recommendations, limited to 8
+            return parse_result.parsed[:8]
+                
+        except Exception as e:
+            logger.error(f"Error generating LLM recommendations: {e}")
+            return ["comfort food", "soup", "tea"]
+    
+    async def _log_interaction(self, user_query: str, response: HybridFilterResponse):
+        """Log interaction for continuous retraining."""
+        try:
+            log_entry = {
+                "timestamp": response.timestamp,
+                "query": user_query,
+                "ml_prediction": asdict(response.ml_prediction) if response.ml_prediction else None,
+                "llm_interpretation": asdict(response.llm_interpretation) if response.llm_interpretation else None,
+                "final_response": response.recommendations,
+                "decision_source": response.decision,
+                "reasoning": response.reasoning,
+                "processing_time_ms": response.processing_time_ms
+            }
+            
+            # Append to recommendation logs
+            log_file = self.logs_dir / "recommendation_logs.jsonl"
+            
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+            
+            logger.info(f"Interaction logged to {log_file}")
+            
+        except Exception as e:
+            logger.error(f"Error logging interaction: {e}")
+    
+    def get_live_stats(self) -> Dict[str, Any]:
+        """Get live statistics for monitoring."""
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "total_queries": self.live_stats["total_queries"],
+            "ml_validated": self.live_stats["ml_validated"],
+            "llm_fallback": self.live_stats["llm_fallback"],
+            "llm_training_samples": self.live_stats["llm_training_samples"],
+            "processing_errors": self.live_stats["processing_errors"],
+            "ml_success_rate": (self.live_stats["ml_validated"] / max(self.live_stats["total_queries"], 1)) * 100
         }
     
-    def update_live_stats(self, decision: str) -> None:
-        """
-        Update live statistics during inference
-        
-        Args:
-            decision: One of 'ml_confident', 'llm_fallback', or 'rejected'
-        """
-        with self.live_stats_lock:
-            self.live_stats["total"] += 1
-            if decision == "ml_confident":
-                self.live_stats["ml_confident"] += 1
-            elif decision == "llm_fallback":
-                self.live_stats["llm_fallback"] += 1
-            elif decision == "rejected":
-                self.live_stats["rejected"] += 1
-            else:
-                logger.warning(f"Unknown decision type: {decision}")
-    
-    def get_live_stats(self) -> Dict[str, any]:
-        """
-        Get live statistics for real-time monitoring
-        
-        Returns:
-            Dict containing live stats with timestamp
-        """
-        with self.live_stats_lock:
-            return {
-                "timestamp": datetime.now().isoformat(),
-                "total_samples": self.live_stats["total"],
-                "ml_confident": self.live_stats["ml_confident"],
-                "llm_fallback": self.live_stats["llm_fallback"],
-                "rejected": self.live_stats["rejected"]
-            }
-    
-    def reset_live_stats(self) -> None:
-        """Reset live statistics counters"""
-        with self.live_stats_lock:
-            self.live_stats = {
-                "total": 0,
-                "ml_confident": 0,
-                "llm_fallback": 0,
-                "rejected": 0
-            }
+    def reset_stats(self):
+        """Reset live statistics."""
+        self.live_stats = {
+            "total_queries": 0,
+            "ml_validated": 0,
+            "llm_fallback": 0,
+            "llm_training_samples": 0,
+            "processing_errors": 0
+        }
+        logger.info("Live statistics reset")

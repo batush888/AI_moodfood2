@@ -29,6 +29,7 @@ Your `.env` file should look like this:
 ```env
 # API Keys - Keep these secure and never expose to frontend
 OPENROUTER_API_KEY=sk-or-v1-your-actual-openrouter-key-here
+DEEPSEEK_API_KEY=sk-or-v1-your-actual-deepseek-key-here
 GAODE_API_KEY=your-actual-gaode-key-here
 
 # Application Configuration

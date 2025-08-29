@@ -268,6 +268,7 @@ class MoodBasedRecommendationEngine:
             'health_detox': ['HEALTH_DETOX', 'goal_light', 'sensory_refreshing'],
             'goal_health': ['goal_healthy', 'HEALTH_DETOX', 'goal_light'],
             'goal_healthy': ['goal_healthy', 'HEALTH_DETOX', 'goal_light'],
+            'health': ['HEALTH_ILLNESS', 'health_recovery', 'sensory_gentle', 'goal_soothing'],
             
             # Comfort and soothing
             'comfort': ['EMOTIONAL_COMFORT', 'goal_comfort', 'sensory_comforting', 'SEASON_WINTER', 'SENSORY_WARMING'],
@@ -341,7 +342,19 @@ class MoodBasedRecommendationEngine:
             'goal_satisfaction': ['goal_satisfaction', 'sensory_satisfying', 'goal_comfort'],
             'goal_healthy': ['goal_healthy', 'HEALTH_DETOX', 'goal_light'],
             'emotional_romantic': ['EMOTIONAL_ROMANTIC', 'occasion_romantic', 'sensory_elegant'],
-            'health': ['HEALTH_ILLNESS', 'health_recovery', 'sensory_gentle', 'goal_soothing']
+            
+            # Cuisine-specific intents
+            'japanese': ['japanese_cuisine', 'sensory_light', 'goal_healthy', 'sensory_refreshing'],
+            'cold': ['sensory_cooling', 'sensory_refreshing', 'goal_hydration', 'temperature_cold'],
+            'spicy': ['sensory_spicy', 'goal_energy', 'sensory_warming', 'goal_indulgence'],
+            'southeast_asian': ['southeast_asian_cuisine', 'sensory_spicy', 'sensory_refreshing', 'goal_healthy'],
+            'chinese': ['chinese_cuisine', 'sensory_rich', 'goal_comfort', 'sensory_warming'],
+            'italian': ['italian_cuisine', 'sensory_rich', 'goal_comfort', 'EMOTIONAL_COMFORT'],
+            'mexican': ['mexican_cuisine', 'sensory_spicy', 'goal_indulgence', 'sensory_rich'],
+            'indian': ['indian_cuisine', 'sensory_spicy', 'sensory_rich', 'goal_comfort'],
+            'mediterranean': ['mediterranean_cuisine', 'goal_healthy', 'sensory_light', 'sensory_refreshing'],
+            'american': ['american_cuisine', 'goal_comfort', 'sensory_rich', 'goal_indulgence'],
+            'french': ['french_cuisine', 'sensory_elegant', 'goal_romantic', 'sensory_rich']
         }
         
         # Get primary mood categories from enhanced intent
