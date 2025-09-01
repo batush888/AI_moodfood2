@@ -790,6 +790,22 @@ async def serve_frontend():
         logger.error(f"Error serving frontend: {e}")
         return {"error": "Failed to serve frontend"}
 
+@app.get("/enhanced-recommend")
+async def enhanced_recommend_get():
+    """Handle GET requests to /enhanced-recommend endpoint."""
+    return {
+        "message": "This endpoint requires a POST request",
+        "usage": "Use POST /enhanced-recommend with JSON body containing 'text_input' or 'query'",
+        "example": {
+            "method": "POST",
+            "url": "/enhanced-recommend",
+            "body": {
+                "text_input": "I want something spicy and bold"
+            }
+        },
+        "frontend": "Visit the main page at / to use the web interface"
+    }
+
 @app.get("/ui")
 async def serve_ui():
     """Alternative route to serve the frontend."""

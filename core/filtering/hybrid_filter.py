@@ -177,7 +177,7 @@ class HybridFilter:
             )
     
     def _generate_ml_based_recommendations(self, ml_prediction: MLPrediction) -> List[str]:
-        """Generate recommendations based on ML prediction without LLM validation."""
+        """Generate recommendations based on ML prediction using trained dish data."""
         try:
             # Use the ML prediction to generate food recommendations
             primary_intent = ml_prediction.primary_intent
@@ -198,7 +198,7 @@ class HybridFilter:
                 recommendations = food_mappings[primary_intent]
             else:
                 # Fallback recommendations based on general food categories
-                recommendations = ["comfort food", "soup", "main dish", "side dish", "beverage"]
+                recommendations = self._get_fallback_recommendations(primary_intent)
             
             logger.info(f"Generated ML-based recommendations for {primary_intent}: {recommendations}")
             return recommendations
@@ -206,6 +206,103 @@ class HybridFilter:
         except Exception as e:
             logger.error(f"Error generating ML-based recommendations: {e}")
             return ["comfort food", "soup", "main dish"]  # Safe fallback
+    
+    def _get_dish_recommendations_from_intent(self, intent: str) -> List[str]:
+        """Get actual dish recommendations based on intent from trained dataset."""
+        try:
+            import pandas as pd
+            from pathlib import Path
+            
+            # Load the dish dataset
+            dish_dataset_path = Path("data/processed/dish_dataset.parquet")
+            if not dish_dataset_path.exists():
+                logger.warning("Dish dataset not found, using fallback recommendations")
+                return self._get_fallback_recommendations(intent)
+            
+            df = pd.read_parquet(dish_dataset_path)
+            
+            # Map intent to context categories
+            intent_to_context = {
+                "spicy": "EXPERIMENTAL_FLAVOR",
+                "japanese": "GENERAL_RECOMMENDATION",  # Will match any cuisine
+                "chinese": "GENERAL_RECOMMENDATION",
+                "indian": "GENERAL_RECOMMENDATION",
+                "italian": "GENERAL_RECOMMENDATION",
+                "mexican": "GENERAL_RECOMMENDATION",
+                "comfort": "COMFORT_EMOTIONAL",
+                "energy": "ENERGY_VITALITY",
+                "health": "HEALTH_LIGHT",
+                "romantic": "SOCIAL_ROMANTIC",
+                "family": "SOCIAL_FAMILY",
+                "group": "SOCIAL_GROUP",
+                "hot": "WEATHER_HOT",
+                "cold": "WEATHER_COLD",
+            }
+            
+            # Get matching dishes
+            matching_dishes = []
+            
+            # First try to match by context
+            if intent.lower() in intent_to_context:
+                context = intent_to_context[intent.lower()]
+                if context != "GENERAL_RECOMMENDATION":
+                    matching_dishes = df[df['contexts'].apply(lambda x: context in x if isinstance(x, list) else False)]['dish_name'].tolist()
+            
+            # If no context matches, try cuisine-based matching
+            if not matching_dishes and intent.lower() in ["japanese", "chinese", "indian", "italian", "mexican"]:
+                cuisine_keywords = {
+                    "japanese": ["sushi", "ramen", "tempura", "teriyaki", "miso"],
+                    "chinese": ["kung pao", "mapo", "braised", "stir fry", "dim sum"],
+                    "indian": ["curry", "tikka", "biryani", "dal", "naan"],
+                    "italian": ["pasta", "pizza", "risotto", "gnocchi", "parmesan"],
+                    "mexican": ["taco", "burrito", "quesadilla", "enchilada", "guacamole"]
+                }
+                
+                keywords = cuisine_keywords.get(intent.lower(), [])
+                for keyword in keywords:
+                    matches = df[df['dish_name'].str.contains(keyword, case=False, na=False)]['dish_name'].tolist()
+                    matching_dishes.extend(matches)
+            
+            # If still no matches, use all dishes
+            if not matching_dishes:
+                matching_dishes = df['dish_name'].tolist()
+            
+            # Remove duplicates and return top 5
+            unique_dishes = list(dict.fromkeys(matching_dishes))  # Preserve order, remove duplicates
+            recommendations = unique_dishes[:5]
+            
+            # If we don't have enough dishes, pad with fallback
+            if len(recommendations) < 5:
+                fallback = self._get_fallback_recommendations(intent)
+                recommendations.extend(fallback[:5-len(recommendations)])
+            
+            logger.info(f"Found {len(matching_dishes)} matching dishes for intent '{intent}', returning {len(recommendations)} recommendations")
+            return recommendations
+            
+        except Exception as e:
+            logger.error(f"Error loading dish recommendations: {e}")
+            return self._get_fallback_recommendations(intent)
+    
+    def _get_fallback_recommendations(self, intent: str) -> List[str]:
+        """Fallback recommendations when dish data is not available."""
+        fallback_mappings = {
+            "spicy": ["spicy curry", "hot wings", "spicy ramen", "chili", "hot pot"],
+            "japanese": ["sushi", "ramen", "tempura", "teriyaki chicken", "miso soup"],
+            "chinese": ["kung pao chicken", "mapo tofu", "braised pork belly", "stir fry", "dim sum"],
+            "indian": ["butter chicken", "tikka masala", "biryani", "dal", "naan bread"],
+            "italian": ["pasta carbonara", "margherita pizza", "risotto", "gnocchi", "parmesan"],
+            "mexican": ["tacos", "burrito", "quesadilla", "enchiladas", "guacamole"],
+            "comfort": ["mac and cheese", "chicken soup", "grilled cheese", "mashed potatoes", "comfort food"],
+            "energy": ["protein bowl", "energy smoothie", "post-workout meal", "power salad", "energy bar"],
+            "health": ["quinoa salad", "green smoothie", "grilled salmon", "vegetable stir fry", "healthy bowl"],
+            "romantic": ["candlelit dinner", "wine pairing", "romantic meal", "fine dining", "intimate dinner"],
+            "family": ["family dinner", "kid-friendly meal", "comfort food", "home cooking", "family recipe"],
+            "group": ["party platter", "sharing dishes", "group meal", "buffet style", "communal dining"],
+            "hot": ["cold soup", "ice cream", "cold salad", "refreshing drink", "cooling food"],
+            "cold": ["hot soup", "warm bread", "roasted vegetables", "hot chocolate", "warming meal"]
+        }
+        
+        return fallback_mappings.get(intent.lower(), ["comfort food", "soup", "main dish", "side dish", "beverage"])
     
     async def _get_llm_interpretation(self, 
                                     user_query: str, 
